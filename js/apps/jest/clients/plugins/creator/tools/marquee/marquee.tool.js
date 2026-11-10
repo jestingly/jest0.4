@@ -11,28 +11,31 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/marq
 // This class frames an [object] that serves as a base usable tool.
 class JestToolMarquee extends JestTool {
 	// Object propert(ies)
-	target		= null;			// [object] ElementCanvas for drawing.
-	tracer		= null;			// [object] Anchor used for active tracing.
+	target        = null;       // [object] ElementCanvas for drawing.
+	tracer        = null;       // [object] Anchor used for active tracing.
 	// New Selection Region Stack
-	multiselect	= true;			// [bool] Whether multiselection is possible (add/subtract).
-	rects 		= [];			// List of all additive and subtractive selections
-	bounds		= null;			// [object] of total rect(s) boundaries.
-	mask		= null;			// 2d [array] of mask using add/subtract rect(s).
+	multiselect = true;         // [bool] Whether multiselection is possible (add/subtract).
+	rects         = [];         // List of all additive and subtractive selections
+	bounds        = null;       // [object] of total rect(s) boundaries.
+	mask          = null;       // 2d [array] of mask using add/subtract rect(s).
 	// Miscellaneous variables
-	contents	= null;			// [...] Contents of the marquee
+	contents      = null;       // [...] Contents of the marquee
 	// Measurement propert(ies)
-	clickX		= null;			// [number] Click start x location of selection.
-	clickY		= null;			// [number] Click start y location of selection.
-	originX		= null;			// [number] Far left x location of active selection.
-	originY		= null;			// [number] Far top y location of active selection.
-	dragStartX	= null;			// [number] Far left x origin of a new drag.
-	dragStartY	= null;			// [number] Far top y origin of a new drag selection.
-	grabOffsetX	= 0;			// [number] Grab x offset from selection top-left while dragging.
-	grabOffsetY	= 0;			// [number] Grab y offset from selection top-left while dragging.
-	layerId		= null;			// [int] Z value of layer index / id.
+	clickX        = null;       // [number] Click start x location of selection.
+	clickY        = null;       // [number] Click start y location of selection.
+	originX       = null;       // [number] Far left x location of active selection.
+	originY       = null;       // [number] Far top y location of active selection.
+	dragStartX    = null;       // [number] Far left x origin of a new drag.
+	dragStartY    = null;       // [number] Far top y origin of a new drag selection.
+	grabOffsetX   = 0;          // [number] Grab x offset from selection top-left while dragging.
+	grabOffsetY   = 0;          // [number] Grab y offset from selection top-left while dragging.
+	layerId       = null;       // [int] Z value of layer index / id.
 	// Boolean flags
-	moved		= false;		// [bool] Whether the marquee has been moved during selection.
-	lastState	= null;			// history save state
+	moved         = false;      // [bool] Whether the marquee has been moved during selection.
+	lastState     = null;       // history save state	// Transform state
+	// Transform capabilities.
+	transform     = null;       // Immutable source kept until the floating selection is dropped.
+	transformDrag = null;       // Current handle drag and its starting bounds.
 
 	// --------------------------------
 	// Constructor
@@ -177,6 +180,9 @@ class JestToolMarquee extends JestTool {
 		this.layerId	= null;			// capture layer id
 		this.mask		= null;			// reset mask
 		this.contents	= null;			// reset contents to [null]
+		// Reset the transform controls.
+		this.transform  = null;
+		this.transformDrag = null;
 		//-------------------------
 		// Remove Event Listener(s)
 		//-------------------------
@@ -187,7 +193,13 @@ class JestToolMarquee extends JestTool {
 		// Add Event Listener(s)
 		//-------------------------
 		// Create the mouse click event for selection start.
-		this.target.register( 'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
+		this.target.register(
+			'mousedown', 'selectStart',
+			e=>this.checkClick(e), 'dom' );
+		// Update the cursor when the pointer moves over the canvas.
+		this.target.register(
+			'mousemove', 'transformCursor',
+			e=>this.updateTransformCursor(e), 'dom' );
 		//-------------------------
 		// Emit Reset Event
 		//-------------------------
@@ -253,6 +265,26 @@ class JestToolMarquee extends JestTool {
 		const restart  = !( add || sub );
 		// Check if click is inside an active selection.
 		let inside     = this.isClickInsideSelection( e );
+
+		//-------------------------
+		// Capture Existing State
+		//-------------------------
+		// Let an unmodified click on a transform handle start resizing.
+		// Shift & Alt keep their existing add/subtract selection behavior.
+		if ( ['selected','floating'].includes(mode) && !add && !sub ) {
+			const handle = this.getTransformHandle( e );
+			if ( handle ) {
+				// Capture the state before lifting a selected marquee.
+				this.lastState = this.getSelectionState();
+				// Lift an ordinary selection so it has a floating tile matrix.
+				if ( mode==='selected' ) {
+					this.jot( 'mode', 'floating' );
+					this.emit( 'floated', null, this );
+				}
+				// The floating operation updates contents synchronously.
+				return this.startTransformSelection( e, handle );
+			}
+		}
 
 		//-------------------------
 		// Capture Existing State
@@ -807,27 +839,27 @@ class JestToolMarquee extends JestTool {
 	tightRectFromMask( mask, ox=0, oy=0 ) {
 		// Validate input
 		if ( !Array.isArray(mask) || !mask.length || !mask[0].length ) return null;
-		const h		= mask.length;
-		const w		= mask[0].length;
+		const h	   = mask.length;
+		const w    = mask[0].length;
 
 		// Ensure all rows are same width
 		for ( let y=0; y<h; y++ )
 			if ( mask[y].length!==w ) return null;
 
 		// Find top row with at least one true
-		let top		= 0;
+		let top    = 0;
 		while ( top<h && !mask[top].some(Boolean) ) top++;
 
 		// Find bottom row with at least one true
-		let bottom	= h - 1;
+		let bottom = h - 1;
 		while ( bottom>=0 && !mask[bottom].some(Boolean) ) bottom--;
 
 		// Bail if fully empty
 		if ( top>bottom ) return null;
 
 		// Find leftmost and rightmost cols with any true
-		let left	= 0;
-		let right	= w - 1;
+		let left   = 0;
+		let right  = w - 1;
 		while ( left<w && mask.every(row=>!row[left]) ) left++;
 		while ( right>=0 && mask.every(row=>!row[right]) ) right--;
 
@@ -841,10 +873,10 @@ class JestToolMarquee extends JestTool {
 
 		// Return cropped solid rect
 		return {
-			x	: ox + left,
-			y	: oy + top,
-			w	: right - left + 1,
-			h	: bottom - top + 1,
+			x : ox + left,
+			y : oy + top,
+			w : right - left + 1,
+			h : bottom - top + 1,
 			type : 'add'
 			};
 	}
@@ -874,16 +906,16 @@ class JestToolMarquee extends JestTool {
 		// Calculate Measurements
 		//-------------------------
 		// Store original anchor position at drag start
-		this.dragStartX = this.anchor.x;
-		this.dragStartY = this.anchor.y;
+		this.dragStartX  = this.anchor.x;
+		this.dragStartY  = this.anchor.y;
 		// Grab the current anchor bounds in grid units
-		const boxX	= this.anchor.x;
-		const boxY	= this.anchor.y;
-		const boxW	= this.anchor.width;
-		const boxH	= this.anchor.height;
+		const boxX = this.anchor.x;
+		const boxY = this.anchor.y;
+		const boxW = this.anchor.width;
+		const boxH = this.anchor.height;
 		// Calculate offset from the top-left corner
-		this.grabOffsetX	= tx - boxX;
-		this.grabOffsetY	= ty - boxY;
+		this.grabOffsetX = tx - boxX;
+		this.grabOffsetY = ty - boxY;
 
 		//-------------------------
 		// Add Event Listener(s)
@@ -896,7 +928,7 @@ class JestToolMarquee extends JestTool {
 		// Modifier: Duplicate Selection
 		// -----------------------------
 		// Get key modifiers.
-		const mod	= this.getModifiers( e );
+		const mod = this.getModifiers( e );
 		// If user holds Alt/Option while dragging, emit 'duplicate'.
 		if ( mod.duplicate )
 			this.emit( 'duplicate', null, this );
@@ -912,25 +944,25 @@ class JestToolMarquee extends JestTool {
 		// Require the tool to be available.
 		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled   = this.skim( 'enabled' );
+		const mode      = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
 
 		//-------------------------
 		// Convert Coordinates to Grid
 		//-------------------------
 		// Convert to tile coords
-		const mouse		= this.target.mousePos( e );
-		let tileX		= Math.floor( mouse.x/this.anchor.units );
-		let tileY		= Math.floor( mouse.y/this.anchor.units );
+		const mouse     = this.target.mousePos( e );
+		let tileX       = Math.floor( mouse.x/this.anchor.units );
+		let tileY       = Math.floor( mouse.y/this.anchor.units );
 		// Compute new top-left of the anchor so the relative offset remains
-		tileX			= tileX - this.grabOffsetX;
-		tileY			= tileY - this.grabOffsetY;
+		tileX           = tileX - this.grabOffsetX;
+		tileY           = tileY - this.grabOffsetY;
 		// Clamp so the entire box stays within [0..target.width) × [0..target.height)
 		/*const maxCols = this.target.width;
-		const maxRows 	= this.target.height;
-		const boxW		= this.anchor.width;
-		const boxH		= this.anchor.height;*/
+		const maxRows   = this.target.height;
+		const boxW      = this.anchor.width;
+		const boxH      = this.anchor.height;*/
 
 		//-------------------------
 		// Check Modifiers (Alt/Opt/Ctrl/Cmd)
@@ -939,17 +971,17 @@ class JestToolMarquee extends JestTool {
 		const mod		= this.getModifiers( e );
 		// Axis lock modifier.
 		if ( mod.shift ) {
-			const dx	= Math.abs( tileX - this.dragStartX );
-			const dy	= Math.abs( tileY - this.dragStartY );
+			const dx    = Math.abs( tileX - this.dragStartX );
+			const dy    = Math.abs( tileY - this.dragStartY );
 			if ( dx>dy )
-				tileY	= this.dragStartY; // lock Y
-			else tileX	= this.dragStartX; // lock X
+				tileY   = this.dragStartY; // lock Y
+			else tileX  = this.dragStartX; // lock X
 		}
 
 		// Finally, move the anchor to the new position
 		if ( tileX!==this.anchor.x || tileY!==this.anchor.y ) {
-			this.anchor.move( tileX, tileY );		// move the anchor
-			this.bounds	= this.anchor.getBounds();	// update live bounds
+			this.anchor.move( tileX, tileY );      // move the anchor
+			this.bounds = this.anchor.getBounds(); // update live bounds
 		}
 	}
 
@@ -961,8 +993,8 @@ class JestToolMarquee extends JestTool {
 		// Mode Gatekeep & Handling
 		//-------------------------
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
 		// Switch to "floating" (floated selection).
 		this.jot( 'mode', 'floating' );
@@ -1032,28 +1064,28 @@ class JestToolMarquee extends JestTool {
 	// Adjusts width, height, startX/startY based on modifier flags.
 	applyModifiersToRect( mod, clickX, clickY, tileX, tileY, tw, th ) {
 		// Calculate bounds before moving anchor
-		let startX	= Math.min( clickX, tileX );
-		let startY	= Math.min( clickY, tileY );
+		let startX = Math.min( clickX, tileX );
+		let startY = Math.min( clickY, tileY );
 
 		// Calculate span using comparing mousemove vs. original-click coordinates.
-		let endX	= Math.max( clickX, tileX );
-		let endY	= Math.max( clickY, tileY );
+		let endX   = Math.max( clickX, tileX );
+		let endY   = Math.max( clickY, tileY );
 
 		// Subtract start coordinate from end coordinate to get dimensions.
-		let width	= endX - startX;
-		let height	= endY - startY;
+		let width  = endX - startX;
+		let height = endY - startY;
 
 		// Clamp to bounds
-		startX		= Math.min( Math.max(0,startX), tw-1 );
-		startY		= Math.min( Math.max(0,startY), th-1 );
+		startX     = Math.min( Math.max(0,startX), tw-1 );
+		startY     = Math.min( Math.max(0,startY), th-1 );
 
 		// Clamp end point
-		endX		= Math.min( Math.max(0,endX), tw );
-		endY		= Math.min( Math.max(0,endY), th );
+		endX       = Math.min( Math.max(0,endX), tw );
+		endY       = Math.min( Math.max(0,endY), th );
 
 		// Recompute width/height after clamping
-		width		= endX - startX;
-		height		= endY - startY;
+		width      = endX - startX;
+		height     = endY - startY;
 
 		// -----------------------------
 		// Modifier: Force Square Mode
@@ -1097,27 +1129,32 @@ class JestToolMarquee extends JestTool {
 		const mode = this.skim( 'mode' );
 		// Log the active marquee selection state.
 		return {
-			mode	 	: ['selecting','dragging'].includes(mode)
-							? (mode==='dragging' ? 'floating' : 'selected') : mode,
-			rects		: structuredClone( this.rects ),
-			bounds  	: this.bounds ? structuredClone(this.bounds) : null,
-			layerId     : this.layerId, // level layer id / z-index
-			mask		: this.mask ? structuredClone(this.mask) : null,
-			contents	:
+			mode      : ['selecting','dragging','transforming'].includes(mode)
+							? (mode==='selecting' ? 'selected' : 'floating')
+							: mode,
+			rects     : structuredClone( this.rects ),
+			bounds    : this.bounds ? structuredClone(this.bounds) : null,
+			layerId   : this.layerId, // level layer id / z-index
+			mask      : this.mask ? structuredClone(this.mask) : null,
+			contents  :
 				this.contents ?
 					{
 					...this.contents,
-					matrix : this.contents.matrix ? structuredClone(this.contents.matrix) : null
-					} : null,
-			anchor		: {
+					matrix: this.contents.matrix ? structuredClone(this.contents.matrix) : null
+					}
+					: null,
+			anchor    : {
 				x: this.anchor.x,
 				y: this.anchor.y,
 				w: this.anchor.width,
 				h: this.anchor.height
-				}
+				},
+			transform :
+				this.transform
+					? structuredClone(this.transform)
+					: null
 		};
 	}
-
 
 	// Restore a previously captured marquee state.
 	// Does NOT emit floated/dropped events.
@@ -1128,34 +1165,301 @@ class JestToolMarquee extends JestTool {
 		this.removeGlobalListeners();
 
 		// Restore or clear the selection.
-		this.rects		= state ? structuredClone(state.rects) : [];
-		this.bounds		= state?.bounds ? structuredClone(state.bounds) : null;
-		this.layerId	= state?.layerId ?? null;
-		this.mask		= state?.mask ? structuredClone(state.mask) : null;
-		this.contents	=
+		this.rects    = state ? structuredClone(state.rects) : [];
+		this.bounds   = state?.bounds ? structuredClone(state.bounds) : null;
+		this.layerId  = state?.layerId ?? null;
+		this.mask     = state?.mask ? structuredClone(state.mask) : null;
+		this.contents =
 			state?.contents ? {
 				...state.contents,
 				matrix : state.contents.matrix ? structuredClone(state.contents.matrix) : null
 				} : null;
 
 		// Restore anchor position & size.
-		const anchor	= state?.anchor ?? { x:0, y:0, w:0, h:0 };
+		const anchor  = state?.anchor ?? { x:0, y:0, w:0, h:0 };
 		this.anchor.move( anchor.x, anchor.y );
 		this.anchor.resize( anchor.w, anchor.h );
 
 		// Reset temporary tracer.
-		this.tracer.move( 0, 0 );	// move selection
-		this.tracer.resize( 0, 0 );	// resize selection
+		this.tracer.move( 0, 0 );    // move selection
+		this.tracer.resize( 0, 0 );  // resize selection
 
 		// Restore mode without invoking board operations.
 		this.jot( 'mode', state?.mode ?? 'empty' );
 
-		// Restore the mouse listener when enabled.
-		if ( this.skim('enabled') )
-			this.target.register( 'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
+		// Create the mouse click event for selection start.
+		this.target.register(
+			'mousedown', 'selectStart',
+			e=>this.checkClick(e), 'dom'
+			);
+		// Update the cursor when the pointer moves over the canvas.
+		this.target.register(
+			'mousemove', 'transformCursor',
+			e=>this.updateTransformCursor(e), 'dom'
+			);
 		// Emit event saying selection is restored.
 		this.emit( 'selectionRestored', null, this );
 		return true;
+	}
+
+	// -----------------------------
+	// Transform Method(s)
+	// -----------------------------
+	// Find which resize handle, if any, was clicked.
+	// RETURNS: [string|null] Handle name: nw, n, ne, e, se, s, sw or w.
+	// * e - Mouse event in workspace coordinates.
+	getTransformHandle( e ) {
+		// A valid selection is required before handles can be hit-tested.
+		if ( !this.bounds || !this.mask ) return null;
+
+		// Convert marquee bounds from tile coordinates into canvas coordinates.
+		const units   = this.anchor.units;
+		const left    = this.bounds.x * units;
+		const top     = this.bounds.y * units;
+		const right   = (this.bounds.x+this.bounds.w) * units;
+		const bottom  = (this.bounds.y+this.bounds.h) * units;
+		const midX    = (left+right) / 2;
+		const midY    = (top+bottom) / 2;
+
+		// Get the mouse position in the same canvas coordinate space.
+		const mouse   = this.target.mousePos( e );
+
+		// Keep handles in a consistent clickable size in canvas pixels.
+		const hitSize = 9;
+
+		// Test corners before sides so a corner hit wins where zones meet.
+		const handles = [
+			{ name:'nw', x:left,  y:top    },
+			{ name:'ne', x:right, y:top    },
+			{ name:'se', x:right, y:bottom },
+			{ name:'sw', x:left,  y:bottom },
+			{ name:'n',  x:midX,  y:top    },
+			{ name:'e',  x:right, y:midY   },
+			{ name:'s',  x:midX,  y:bottom },
+			{ name:'w',  x:left,  y:midY   }
+			];
+
+		// Return the first handle whose hit area contains the click.
+		const handle =
+			handles.find(
+				item =>
+					Math.abs(mouse.x-item.x)<=hitSize &&
+					Math.abs(mouse.y-item.y)<=hitSize
+				);
+		return handle?.name ?? null;
+	}
+
+	// Resample a tile matrix to new dimensions using nearest-neighbor tile selection.
+	// Expansion repeats source tiles; reduction chooses representative source tiles.
+	// RETURNS: [array] New matrix with the requested width and height.
+	// * matrix	- Original 2D tile or mask matrix.
+	// * width	- [int] Requested output width in tiles.
+	// * height	- [int] Requested output height in tiles.
+	resampleMatrix( matrix, width, height ) {
+		// Reject malformed or empty inputs before calculating source coordinates.
+		if ( !Array.isArray(matrix) || !matrix.length || !matrix[0]?.length )
+			return [];
+
+		// Measure the original matrix.
+		const sourceHeight = matrix.length;
+		const sourceWidth  = matrix[0].length;
+
+		// Build every output cell directly from the original source matrix.
+		const output = [];
+		for ( let y=0; y<height; y++ ) {
+			const sourceY  =
+				Math.min(
+					sourceHeight-1,
+					Math.floor( (y+0.5)*sourceHeight/height )
+					);
+			const row = [];
+
+			for ( let x=0; x<width; x++ ) {
+				const sourceX =
+					Math.min(
+						sourceWidth-1,
+						Math.floor( (x+0.5)*sourceWidth/width )
+						);
+				// Clone tile objects so the preview cannot mutate the source snapshot.
+				row.push( structuredClone(matrix[sourceY][sourceX]) );
+			}
+			// Push the row into the output.
+			output.push( row );
+		}
+
+		// Return resampled matrix.
+		return output;
+	}
+
+	// Begin resizing from one of the eight marquee handles.
+	// Keep the original tile matrix and mask for the full uncommitted transform.
+	// RETURNS: [boolean] True when the resize gesture starts.
+	// * e		- Mouse event that began the handle drag.
+	// * handle	- Handle name returned by getTransformHandle().
+	startTransformSelection( e, handle ) {
+		// Transforming requires a usable floating selection with tile contents.
+		if ( !this.usable() || !this.contents?.matrix || !this.mask )
+			return false; // abort
+
+		// Save one immutable source snapshot on the first transform gesture.
+		// Subsequent transforms use the same snapshot until the selection drops.
+		if ( !this.transform ) {
+			this.transform = {
+				matrix : structuredClone(this.contents.matrix),
+				mask   : structuredClone(this.mask)
+				};
+		}
+
+		// Record current bounds separately; each drag anchors against the visible box.
+		this.transformDrag = {
+			handle,
+			bounds : structuredClone(this.bounds)
+			};
+
+		// Capture the pre-drag state for the existing marquee history path.
+		this.lastState = this.getSelectionState();
+
+		// Mark the tool as transforming and attach drag listeners.
+		this.jot( 'mode', 'transforming' );
+		this.target.register(
+			'mousemove', 'transforming',
+			event=>this.updateTransformSelection(event), 'window' );
+		this.target.register(
+			jsos.mouseUps, 'transformEnd',
+			event=>this.endTransformSelection(event), 'window' );
+		return true; // success
+	}
+
+	// Update the floating selection preview from the immutable transform source.
+	// RETURNS: [void].
+	// * e - Mouse event while a handle is being dragged.
+	updateTransformSelection( e ) {
+		// Ignore movement if the drag ended or the tool became unavailable.
+		if ( !this.usable() || this.skim('mode')!=='transforming' )
+			return; // abort
+		if ( !this.transform || !this.transformDrag )
+			return; // abort
+
+		// Convert the mouse position to snapped tile-boundary coordinates.
+		const mouse  = this.target.mousePos( e );
+		const units  = this.anchor.units;
+		const tileX  = Math.round( mouse.x/units );
+		const tileY  = Math.round( mouse.y/units );
+		const cols   = this.target.width / units;
+		const rows   = this.target.height / units;
+
+		// Start with the bounds that were visible when this drag began.
+		const start  = this.transformDrag.bounds;
+		let left     = start.x;
+		let top      = start.y;
+		let right    = start.x + start.w;
+		let bottom   = start.y + start.h;
+		const handle = this.transformDrag.handle;
+
+		// Move only the edges controlled by the selected handle.
+		if ( handle.includes('w') )
+			left     = Math.max( 0, Math.min(tileX, right-1) );
+		if ( handle.includes('e') )
+			right    = Math.min( cols, Math.max(tileX, left+1) );
+		if ( handle.includes('n') )
+			top      = Math.max( 0, Math.min(tileY, bottom-1) );
+		if ( handle.includes('s') )
+			bottom   = Math.min( rows, Math.max(tileY, top+1) );
+
+		// Build the new tile-aligned bounds.
+		const bounds = {
+			x : left,
+			y : top,
+			w : right-left,
+			h : bottom-top
+			};
+
+		// Skip work when snapping leaves the visible bounds unchanged.
+		if ( JSON.stringify(bounds)===JSON.stringify(this.bounds) )
+			return; // abort
+
+		// Always resample from the original matrix and mask, never the last preview.
+		const matrix = this.resampleMatrix( this.transform.matrix, bounds.w, bounds.h );
+		const mask   = this.resampleMatrix( this.transform.mask, bounds.w, bounds.h );
+
+		// Update the floating selection's geometry and tile data together.
+		this.bounds  = bounds;
+		this.mask    = mask;
+		this.rects   = [ { ...bounds, type:'replace' } ];
+		this.contents.matrix = matrix;
+		this.contents.x  = bounds.x;
+		this.contents.y  = bounds.y;
+		this.contents.w  = bounds.w;
+		this.contents.h  = bounds.h;
+
+		// Keep the anchor aligned with the resized tile region.
+		this.anchor.move( bounds.x, bounds.y );
+		this.anchor.resize( bounds.w, bounds.h );
+
+		// Notify listeners to rebuild the preview stamp from the new matrix.
+		this.emit( 'transformPreview', null, this );
+	}
+
+	// Finish a handle drag while keeping the original transform source available.
+	// RETURNS: [void].
+	// * e - Mouse-up event ending the handle drag.
+	endTransformSelection( e ) {
+		// Only finish an active transform gesture.
+		if ( this.skim('mode')!=='transforming' ) return; // abort
+
+		// Return to floating mode; the user can resize again before dropping.
+		this.jot( 'mode', 'floating' );
+
+		// Remove the active drag listeners.
+		this.target.unregister( 'mousemove', 'transforming' );
+		this.target.unregister( jsos.mouseUps, 'transformEnd' );
+		this.transformDrag = null;
+
+		// Use the existing marquee history path for the completed resize.
+		this.emit( 'transformed', null, this );
+	}
+
+	// Update the canvas cursor to match the transform handle under the pointer.
+	// RETURNS: [void].
+	// * e - Mouse event used to identify the hovered transform handle.
+	updateTransformCursor( e=null ) {
+		// Require the canvas element before changing its cursor.
+		if ( !this.target?.el ) return;
+
+		// Use the canvas's normal cursor when the tool is disabled.
+		const canvas = this.target.el;
+		if ( !this.skim('enabled') ) {
+			canvas.style.cursor = '';
+			return; // abort
+		}
+
+		// Keep the active handle's cursor while its drag is in progress.
+		const mode = this.skim( 'mode' );
+		let handle = null;
+		if ( mode==='transforming' )
+			handle = this.transformDrag?.handle ?? null;
+		// Otherwise, detect a handle under the pointer.
+		else if ( e && ['selected','floating'].includes(mode) ) {
+			// Shift and Alt keep their existing selection behavior.
+			const mod  = this.getModifiers( e );
+			if ( !mod.shift && !mod.alt )
+				handle = this.getTransformHandle( e );
+		}
+
+		// Map each handle direction to the matching browser resize cursor.
+		const cursors  = {
+			nw : 'nwse-resize',
+			se : 'nwse-resize',
+			ne : 'nesw-resize',
+			sw : 'nesw-resize',
+			n  : 'ns-resize',
+			s  : 'ns-resize',
+			e  : 'ew-resize',
+			w  : 'ew-resize'
+			};
+
+		// An empty string restores the canvas's normal CSS cursor.
+		canvas.style.cursor = cursors[handle] ?? '';
 	}
 
 	//-------------------------
@@ -1169,7 +1473,12 @@ class JestToolMarquee extends JestTool {
 		// Remove mouse move listener(s).
 		this.target.unregister( 'mousemove', 'selecting' );
 		this.target.unregister( 'mousemove', 'dragging' );
+		// Remove the transform control listener(s).
+		this.target.unregister( 'mousemove', 'transforming' );
+		// Remove the transform cursor hover listener.
+		this.target.unregister( 'mousemove', 'transformCursor' );
 	}
+	
 	// Remove window listener(s).
 	// RETURNS: [void].
 	removeGlobalListeners() {
@@ -1177,5 +1486,7 @@ class JestToolMarquee extends JestTool {
 		this.target.unregister( jsos.mouseUps, 'selected' );
 		// Remove window  event(s) for dragging release.
 		this.target.unregister( jsos.mouseUps, 'dragged' );
+		// Remove the transform control listener(s).
+		this.target.unregister( jsos.mouseUps, 'transformEnd' );
 	}
 }

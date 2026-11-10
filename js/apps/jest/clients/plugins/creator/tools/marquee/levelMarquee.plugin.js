@@ -869,6 +869,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						);
 				});
 
+			// Record each completed handle drag as one marquee history action.
+			tool.register(
+				'transformed', 'marqueeHistoryTransform',
+				( marquee ) => {
+					client.recordMarqueeHistory(
+						'marqueeMove', marquee.lastState,
+						marquee.getSelectionState(),
+						'Transform marquee.'
+						);
+				});
+
 			// Register marquee deselect callback for undo/redo.
 			tool.register(
 				'selectionCleared', 'marqueeHistoryDeselect',
@@ -973,6 +984,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					client.soundboard.playSound( 'jest_unfloat', 'wav', 1.01 );
 					// Lay tile matrix onto level surface.
 					client.toolLevelMarqueeDropRegion( tool );
+				});
+
+			// Rebuild the floating canvas whenever a transform preview changes.
+			tool.register(
+				'transformPreview', 'refreshTransformStamp',
+				( marquee ) => {
+					// The current tileset creates the canvas used by the draw hook.
+					const tileset = client.getState().tilesetView?.file?.context;
+					if ( !tileset || !marquee.contents?.matrix )
+						return; // abort
+
+					// Rebuild from the preview matrix, which was resampled from
+					// the immutable source matrix by the tool.
+					marquee.contents.stamp =
+						tileset.createStamp( marquee.contents.matrix );
 				});
 
 			// Register event listener callback(s).
@@ -1368,30 +1394,31 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					const toolMode = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
 					if ( toolMode!=='selecting' && toolMode!=='selected'
-						 && toolMode!=='floating' && toolMode!=='dragging' ) return;
+						 && toolMode!=='floating' && toolMode!=='dragging'
+						 && toolMode!=='transforming' ) return;
 
 					 // -----------------------------
 					 // Validate Marquee Mask/Trace
 					 // -----------------------------
 					 // Get tile measurements.
-					 const units	= tool.anchor.units;
+					 const units  = tool.anchor.units;
 					 // Check if current marquee has either valid mask or traced rectangle.
-					 const bounds	= tool.anchor?.getBounds?.() ?? null;
-					 const mask		= tool.mask;
-					 const tracer	= tool.tracer;
-					 const trace	= tracer?.getBounds?.() ?? null;
+					 const bounds = tool.anchor?.getBounds?.() ?? null;
+					 const mask   = tool.mask;
+					 const tracer = tool.tracer;
+					 const trace  = tracer?.getBounds?.() ?? null;
 
-					 let masked	    = false;
-					 let traced	    = false;
+					 let masked	  = false;
+					 let traced   = false;
 
 					 // Validate mask area
 					 if ( bounds && bounds.w>0 && bounds.h>0
 						  && Array.isArray(mask) && mask.length>0 )
-					 	masked	= true;
+					 	masked = true;
 
 					 // Validate traced area
 					 if ( trace && trace.w>0 && trace.h>0 )
-					 	traced	= true;
+					 	traced = true;
 
 					 // Exit if nothing to process
 					 if ( !masked && !traced ) return;
@@ -1402,19 +1429,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// -------------------------------
 					if ( toolMode==='selected' || toolMode==='selecting' ) {
 						// Determine dashed outline.
-						const dashSpeed	= 0.5;
-						const offset	= ( e.tickCount*dashSpeed ) % 10;
+						const dashSpeed  = 0.5;
+						const offset     = ( e.tickCount*dashSpeed ) % 10;
 
 						// Check if a composite selection exists.
 						if ( masked ) {
 							// Calculate dimensions.
-							const cols	= tool.target.width  / units;
-							const rows	= tool.target.height / units;
+							const cols   = tool.target.width  / units;
+							const rows   = tool.target.height / units;
 
 							// Composite stroke style(s).
 							editorCtx.save();
 							editorCtx.globalCompositeOperation = 'difference';
-							const stroke	=
+							const stroke =
 								[{
 									color  : 'rgba( 255, 255, 255, 1 )',
 									weight : 1.5,
@@ -1436,12 +1463,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						// Check if a new selection is being traced.
 						if ( traced ) {
 							// Calculate dimensions.
-							const cols	= trace.w;	// trace region width
-							const rows	= trace.h;	// trace region height
+							const cols = trace.w;	// trace region width
+							const rows = trace.h;	// trace region height
 							// Composite stroke style(s).
 							editorCtx.save();
 							editorCtx.globalCompositeOperation = 'difference';
-							const stroke	=
+							const stroke =
 								[{
 									color  : 'rgba( 255, 255, 255, 1 )',
 									weight : 1.5,
@@ -1464,16 +1491,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					//------------------------------
 					// Tool Mode: Floating / Dragging
 					//------------------------------
-					else if ( (toolMode==='floating' || toolMode==='dragging')
-							   && masked ) {
+					else if ( (toolMode==='floating' || toolMode==='dragging'
+						    || toolMode==='transforming') && masked ) {
 						//--------------------------
 						// Draw Composite Region
 						//--------------------------
 						// Get stroke offset from tick count.
-						const offset	= e.tickCount % 20;
+						const offset = e.tickCount % 20;
 
 						// Composite stroke style(s).
-						const stroke	=
+						const stroke =
 							[
 								{
 									color  : 'rgba( 155, 0, 0, 0.5 )',
@@ -1551,6 +1578,52 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							null,               // no background fill
 							stroke, null, null  // outline only; stamp already drawn
 							);
+
+						// Show resize handles for a floating marquee.
+						if ( ['floating','transforming'].includes(toolMode) && bounds ) {
+							// Convert the tile bounds to editor canvas coordinates.
+							const left   = bounds.x * units;
+							const top    = bounds.y * units;
+							const right  = (bounds.x+bounds.w) * units;
+							const bottom = (bounds.y+bounds.h) * units;
+							const midX   = (left+right) / 2;
+							const midY   = (top+bottom) / 2;
+							const size   = 8;
+
+							// Place handles at the four corners and four side centers.
+							const handles = [
+								{ x:left,  y:top    },
+								{ x:midX,  y:top    },
+								{ x:right, y:top    },
+								{ x:right, y:midY   },
+								{ x:right, y:bottom },
+								{ x:midX,  y:bottom },
+								{ x:left,  y:bottom },
+								{ x:left,  y:midY   }
+								];
+
+							// Keep handle drawing isolated from the marquee outline style.
+							editorCtx.save();
+							editorCtx.lineWidth   = 1;
+							editorCtx.fillStyle   = '#ff0000';
+							editorCtx.strokeStyle = '#202020';
+
+							// Drag transform controls.
+							for ( const handle of handles ) {
+								editorCtx.fillRect(
+									handle.x-size/2,
+									handle.y-size/2,
+									size, size
+									);
+								editorCtx.strokeRect(
+									handle.x-size/2,
+									handle.y-size/2,
+									size, size
+									);
+							}
+							// Release the canvas.
+							editorCtx.restore();
+						}
 					}
 				});
 
@@ -2273,12 +2346,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const comparable =
 					state =>
 						state ? {
-							mode    : state.mode,
-							rects   : state.rects,
-							bounds  : state.bounds,
-							layerId : state.layerId,
-							mask    : state.mask,
-							anchor  : state.anchor
+							mode     : state.mode,
+							rects    : state.rects,
+							bounds   : state.bounds,
+							layerId  : state.layerId,
+							mask     : state.mask,
+							anchor   : state.anchor,
+							contents :
+								state.contents ?
+									{
+									w      : state.contents.w,
+									h      : state.contents.h,
+									matrix : state.contents.matrix
+									}
+									: null,
 							} : null;
 				// If the marquee hasn't changed, don't log for undo/redo.
 				if ( JSON.stringify(comparable(before))===JSON.stringify(comparable(after)) )

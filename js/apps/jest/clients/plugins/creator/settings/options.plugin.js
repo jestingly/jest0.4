@@ -244,7 +244,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 					// Draw opaque one-pixel strips so intersections stay uniform.
 					sketchCtx.save();
 					sketchCtx.globalAlpha = 1;
-					sketchCtx.fillStyle   = 'rgba( 255, 0, 0, 1 )';
+					sketchCtx.fillStyle   = 'rgba( 0, 0, 0, 1 )';
 
 					// Add vertical and horizontal strips at each tile interval.
 					for ( let tile=0; tile<=limit; tile+=grid ) {

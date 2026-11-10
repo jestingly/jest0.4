@@ -1,4 +1,4 @@
-# jest0.4
+# jest0.41
 
 ```text
 //-------------------------------------------------------
@@ -22,6 +22,16 @@ Edit the following files to configure your application:
 • js/apps/jest/components/JestConfiguration_rem.js
 
 //-------------------------------------------------------
+       DEVELOPER NOTES • CHANGES from v0.4 to v0.41
+//-------------------------------------------------------
+
+• New _Grid_ feature in the options panel to display a light grid lattice at a minimum of 1 tile units up to half the canvas width & height.
+  - slider starts at 0 (no grid)
+  - max value is canvas dimensions/2
+
+• The Level Marquee has a new transform control. The rectangle appears around floating marquee selections with scale controls.
+
+//-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.3 to v0.4
 //-------------------------------------------------------
 
@@ -41,10 +51,6 @@ Edit the following files to configure your application:
   - install the database using the attached SQL file: /jest_play.sql
   - login using the generic credentials u="admin" & p="admin"
   - still under development
-
-• New _Grid_ feature in the options panel to display a light grid lattice at a minimum of 1 tile units up to half the canvas width & height.
-  - slider starts at 0 (no grid)
-  - max value is canvas dimensions/2
 
 //-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.2 to v0.3

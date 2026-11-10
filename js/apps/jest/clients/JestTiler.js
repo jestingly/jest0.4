@@ -928,10 +928,11 @@ JestAppsRegistry.AppJestTiler =
 			// Determine if editor canvas is set.
 			const editor     = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
-				console.warn( 'Editor canvas is not set or invalid' );
+				console.warn( 'Workspace canvas is not set or invalid' );
 				return; // abort
 			}
 			const editorCtx  = editor.el.getContext( '2d' );
+
 			// Determine if palette canvas is set.
 			const palette    = this.gameboard.display.getCanvas( 'palette' );
 			if ( !palette || !palette.el ) {
@@ -939,8 +940,19 @@ JestAppsRegistry.AppJestTiler =
 				return; // abort
 			}
 			const paletteCtx = palette.el.getContext( '2d' );
+
+			// Determine if sketchpad canvas is set.
+			const sketch     = this.gameboard.display.getCanvas( 'sketchpad' );
+			if ( !sketch || !sketch.el ) {
+				console.warn( 'Sketchpad canvas is not set or invalid' );
+				return; // abort
+			}
+			const sketchCtx  = sketch.el.getContext( '2d' );
+
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null, e, state, enabled, mode, editorCtx, paletteCtx );
+			this.emit( 'predraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 
 			// --------------------------------
 			// Draw Depending Upon Mode
@@ -997,8 +1009,12 @@ JestAppsRegistry.AppJestTiler =
 				default: break; // no mode to draw
 			}
 			// Emit post-draw hooks.
-			this.emit( 'draw', null, e, state, enabled, mode, editorCtx, paletteCtx );
-			this.emit( 'postdraw', null, e, state, enabled, mode, editorCtx, paletteCtx );
+			this.emit( 'draw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
+			this.emit( 'postdraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 		}
 
 		//--------------------------------

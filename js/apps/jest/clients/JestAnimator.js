@@ -27,7 +27,7 @@ JestAppsRegistry.AppJestAnimator =
 		editor			= null;				// [object] Panel container for editing arena (board & sidebar).
 		board			= null;				// [JestElement] Board for editing the jani.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
-		
+
 		// --------------------------------
 		// Constructor
 		// --------------------------------
@@ -723,21 +723,25 @@ JestAppsRegistry.AppJestAnimator =
 			// Check If Canvas Is Available
 			// --------------------------------
 			// Determine if editor canvas is set.
-			const editor	= this.gameboard.display.getCanvas( 'workspace' );
+			const editor    = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
-				console.warn( 'Editor canvas is not set or invalid' );
+				console.warn( 'workspace canvas is not set or invalid' );
 				return;
 			}
-			const ctx		= editor.el.getContext( '2d' );
-			// Determine if palette canvas is set.
-			/*const palette	= this.gameboard.display.getCanvas( 'palette' );
-			if ( !palette || !palette.el ) {
-				console.warn( 'Palette canvas is not set or invalid' );
-				return;
+			const editorCtx = editor.el.getContext( '2d' );
+
+			// Determine if sketchpad canvas is set.
+			const sketch    = this.gameboard.display.getCanvas( 'sketchpad' );
+			if ( !sketch || !sketch.el ) {
+				console.warn( 'Sketchpad canvas is not set or invalid' );
+				return; // abort
 			}
-			const paletteCtx	= palette.el.getContext( '2d' );*/
+			const sketchCtx = sketch.el.getContext( '2d' );
+
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null, e, state, enabled, mode, ctx );
+			this.emit( 'predraw', null,
+				e, state, enabled, mode,
+				editorCtx, sketchCtx );
 
 			// --------------------------------
 			// Draw Depending Upon Mode
@@ -875,8 +879,12 @@ JestAppsRegistry.AppJestAnimator =
 			// Emit Final Event(s)
 			// --------------------------------
 			// Emit post-draw hooks.
-			this.emit( 'draw', null, e, state, enabled, mode, ctx );
-			this.emit( 'postdraw', null, e, state, enabled, mode, ctx );
+			this.emit( 'draw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
+			this.emit( 'postdraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 		}
 	};
 // Make JestAnimator globally accessible for plugins

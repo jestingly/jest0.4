@@ -165,22 +165,23 @@ class JestCreator extends Jest {
 		// Setup Gameboard [object]
 		// --------------------------------
 		this.gameboard.display.addCanvas( 'workspace' ); // create gameboard canvas
-		const canvas		= this.gameboard.display.getCanvas( 'workspace' );
-		canvas.resize( 0, 0 );			// set default board width & height
+		this.gameboard.display.addCanvas( 'sketchpad' ); // create sketchpad canvas
+		const canvas = this.gameboard.display.getCanvas( 'workspace' );
+		canvas.resize( 0, 0 );          // set default board width & height
 
 		// --------------------------------
 		// Animation Handler [object]
 		// --------------------------------
 		// Assign the gameboard canvas to the animator for animation rendering
-		this.animator.canvas = canvas;	// Animator canvas is the world "screen"
+		this.animator.canvas = canvas;  // Animator canvas is the world "screen"
 
 		// --------------------------------
 		// Create File Menu [object]
 		// --------------------------------
 		// Create the file menu.
-		const filemenu		= new JestFileMenu( this );
-		this.filemenu		= filemenu;	// store ref
-		filemenu.build();				// build menu DOM
+		const filemenu = new JestFileMenu( this );
+		this.filemenu  = filemenu;      // store ref
+		filemenu.build();               // build menu DOM
 		// Create a brand logo inside the system bar.
 		//filemenu.setTitle( this.name );
 		filemenu.panel.createPanel({

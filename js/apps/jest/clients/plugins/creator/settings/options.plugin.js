@@ -26,6 +26,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 		// Called once when plugin is registered.
 		// * client - [object] reference to JestCreator
 		init: function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
+
+			//-------------------------
+			// Auto-Configure Option(s)
+			//-------------------------
 			// Keep the crosshair enabled by default unless the user changed it.
 			client.settings.crosshair ??= true;
 
@@ -138,7 +149,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 				});
 
 			// Track the pointer over the workspace through Jest's element events.
-			const workspace = client.gameboard.display.getCanvas( 'workspace' );
 			const crosshairFollower = new JestMouseFollower( client );
 			crosshairFollower.setWatchElement( workspace, client.config.tileGrid );
 			crosshairFollower.enable();
@@ -182,6 +192,74 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 					editorCtx.moveTo( x+units, 0 );
 					editorCtx.lineTo( x+units, workspace.el.height );
 					editorCtx.stroke();
+					editorCtx.restore();
+				});
+
+			//-------------------------
+			// Grid Toggle Button
+			//-------------------------
+			// Store the grid spacing in tile units; zero means no grid.
+			client.settings.grid ??= 0;
+
+			// Create the grid spacing slider.
+			const maxGrid = Math.floor( client.config.levelGrid / 2 );
+			const inputGrid =
+				new JestInputRange(
+					client, 'grid', null, client.settings.grid, 'Grid'
+					);
+			inputGrid.setMin( 0 );
+			inputGrid.setMax( maxGrid );
+			inputGrid.setStep( 1 );
+			inputGrid.build( 'input-grid' );
+			optsPanel.addField( 'grid', inputGrid );
+			inputGrid.showLabel();
+
+			// Store the selected grid spacing as a number of tile units.
+			inputGrid.register(
+				'change', 'toggleGrid',
+				value => {
+					client.settings.grid = Number( value );
+				});
+
+			// Draw the grid over the workspace after it has been rendered.
+			client.register(
+				'draw', 'gridGrid',
+				( e, state, enabled, mode, editorCtx, paletteCtx, sketchCtx ) => {
+					// Draw only while the editor is rendering an open level.
+					if ( mode!=='running' || !state.levelView ) return;
+
+					// Skip zero or invalid spacing values.
+					const grid   = Number( client.settings.grid );
+					if ( !Number.isInteger(grid) || grid<1 ) return;
+
+					// Convert tile spacing and level size into workspace pixels.
+					const units  = client.config.tileGrid;
+					const limit  = client.config.levelGrid;
+					const width  = workspace.el.width;
+					const height = workspace.el.height;
+
+					// Clear the previous frame's grid.
+					sketchCtx.clearRect( 0, 0, width, height );
+
+					// Draw opaque one-pixel strips so intersections stay uniform.
+					sketchCtx.save();
+					sketchCtx.globalAlpha = 1;
+					sketchCtx.fillStyle   = 'rgba( 255, 0, 0, 1 )';
+
+					// Add vertical and horizontal strips at each tile interval.
+					for ( let tile=0; tile<=limit; tile+=grid ) {
+						const position    = tile * units;
+						sketchCtx.fillRect( position, 0, 1, height );
+						sketchCtx.fillRect( 0, position, width, 1 );
+					}
+
+					// Restore the sketch context before compositing it.
+					sketchCtx.restore();
+
+					// Composite the complete grid with transparency.
+					editorCtx.save();
+					editorCtx.globalAlpha *= 0.25;
+					editorCtx.drawImage( sketchpad.el, 0, 0 );
 					editorCtx.restore();
 				});
 

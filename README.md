@@ -1,4 +1,4 @@
-# jest0.3
+# jest0.4
 
 ```text
 //-------------------------------------------------------
@@ -25,22 +25,26 @@ Edit the following files to configure your application:
        DEVELOPER NOTES • CHANGES from v0.3 to v0.4
 //-------------------------------------------------------
 
-• Eyedropper tool now has a new "sample preview" zoom-in feature.
+• The _Eyedropper_ tool now has a new "sample preview" zoom-in feature.
 
-• Layers are now possible; levels are migrating to v. JESTNW02 encoding.
+• _Layers_ are now possible; levels are migrating to v. JESTNW02 encoding.
   - add, remove, name and rename layers
   - show/hide & lock/unlock layers
 
 • New _Crosshair_ option to show perpendicular intersection highlights to the mouse cursor.
 
-• The Hand grab tool is now available to more easily navigate your canvas scrollable window boundaries.
+• The _Hand_ grab tool is now available to more easily navigate your canvas scrollable window boundaries.
 
-• New Eraser tool will draw with the background tile on the base layer, and will change upper tiles on higher layers transparent when erased.
+• New _Eraser_ tool will draw with the background tile on the base layer, and will change upper tiles on higher layers transparent when erased.
 
-• The login system & cloud synchronization ironed out some bugs.
+• The _Login_ system & cloud synchronization ironed out some bugs.
   - install the database using the attached SQL file: /jest_play.sql
   - login using the generic credentials u="admin" & p="admin"
   - still under development
+
+• New _Grid_ feature in the options panel to display a light grid at minimum of 1 tile units, up to half the canvas width & height.
+  - slider starts at 0 (no grid)
+  - max value is canvas dimensions/2
 
 //-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.2 to v0.3

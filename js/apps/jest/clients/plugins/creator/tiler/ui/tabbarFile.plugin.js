@@ -123,18 +123,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 				// Resize Gameboard Canvas to Match File Dimensions
 				// --------------------------------
 				// Attempt to get the canvas.
-				const canvas	= this.gameboard.display.getCanvas( 'workspace' );
+				const workspace	= this.gameboard.display.getCanvas( 'workspace' );
+				const sketchpad	= this.gameboard.display.getCanvas( 'sketchpad' );
 
-				// Determine if canvas is set.
-				if ( !canvas || !canvas.el ) {
+				// Determine if workspace is set.
+				if ( !workspace || !workspace.el ) {
 					console.warn( 'Canvas is not set or invalid' );
 					return;
 				}
 
 				// Check for an active view.
 				if ( nextView!==null ) {
-					// Resize a gameboard canvas to match new active target's viewport.
-					canvas.resize( nextView.anchor.width, nextView.anchor.height );
+					//--------------------------------
+					// Resize Canvases
+					//--------------------------------
+					// Resize canvases to match new active target's viewport.
+					workspace.resize( nextView.anchor.width, nextView.anchor.height );
+					sketchpad.resize( nextView.anchor.width, nextView.anchor.height );
+
 					//--------------------------------
 					// Switch Active File In Cabinet
 					//--------------------------------
@@ -147,6 +153,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 							this.soundboard.playSound( 'jest_tab', 'mp3', 1.05 );
 						default: break;
 					}
+					
 					//--------------------------------
 					// Toggle View-Specific Parts
 					//--------------------------------
@@ -159,11 +166,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					// Check If Canvas Is Available
 					// --------------------------------
 					// Shrink gameboard to invisible.
-					canvas.resize( 0, 0 );
+					workspace.resize( 0, 0 );
 					// Clear the canvas with a black screen.
 					// Clear the canvas contents.
-					const ctx	= canvas.el.getContext( '2d' );
-					ctx.clearRect( 0, 0, canvas.el.width, canvas.el.height );
+					const ctx	= workspace.el.getContext( '2d' );
+					ctx.clearRect( 0, 0, workspace.el.width, workspace.el.height );
 				}
 				return true; // success
 			}

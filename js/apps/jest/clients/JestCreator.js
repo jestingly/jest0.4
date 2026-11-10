@@ -12,7 +12,7 @@ class JestCreator extends Jest {
 	// Declare properties
 	icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
 	name			= 'Creator';		// name of application
-	version			= '0.1beta';		// application version
+	version			= '0.3beta';		// application version
 	id				= 'creator';		// creator application id.
 	// Server [objects]
 	//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -26,13 +26,11 @@ class JestCreator extends Jest {
 	easels			= null;				// [object] of easels that hold file views.
 	toolbar			= null;				// [JestToolbar] Tool menu selector (draw, fill, etc.)
 	toolbox			= null;				// [JestToolbox] Central tool manager for enabling/disabling tools and temp swaps
-	interactor		= null;				// [JestToolbar] Interactor menu for interactive tool actions.
+	actionbar		= null;				// [JestToolbar] Interactor menu for interactive tool actions.
 	// Editor area
 	editor			= null;				// [object] Panel container for editing arena (board & sidebar).
 	board			= null;				// [JestElement] Board for editing the file.
 	sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
-	// User login handling
-	userBadge		= null;				// [JestPanel] User login/logout badge element.
 
 	// --------------------------------
 	// Constructor
@@ -352,39 +350,6 @@ class JestCreator extends Jest {
 		const topright	= new JestDisplay( this );
 		topright.build( 'topright', ['jest-filemenu-topright'] );
 		this.panel.refs.system.addPanel( 'topright', topright.panel );
-
-		// --------------------------------
-		// User Login/Sign-up Authentication
-		// --------------------------------
-		// Build the GUI.
-		this.login.buildBadge(); // setup login/logout badge
-		// Wire global login/logout events
-		this.login.register(
-			'login', 'setUser',
-			( user ) => {
-				// --------------------------------
-				// Send User "Logged In" Notification
-				// --------------------------------
-				// Send user a simple notification.
-				this.noticer.notify({
-					text      : `Successfully logged in as ${user.username}!`,
-					icon      : `${this.config.root}/images/icons/sm_profile.png`,
-					duration  : 4000,
-					//persistent: true,
-					buttons   :
-						[
-						{ label: 'Ok', click: () => console.log('Ok pressed') }
-						]
-					//onExpire  : () => console.log('Notification expired')
-					});
-				// Play "login" sound effect to signal action.
-				this.soundboard.playSound( 'jest_login', 'mp3', 1.05 );
-			});
-		//this.login.register( 'logout', 'tiler', () => this.clearUserUI() );
-		// Check if user is logged in.
-		await this.login.check();		// immediately check for existing session
-		if ( this.login.logged!==true )
-			this.login.show( "login" );	// show the login screen
 		loadbar.update();				// step 10
 
 		// --------------------------------
@@ -424,6 +389,245 @@ class JestCreator extends Jest {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * fileInfo	- File information [object].
 	async openFile( fileInfo ) { }
+
+	//--------------------------------
+	// Mark Level File Changed
+	//--------------------------------
+	// Take a current program state & mark level file as changed.
+	// NOTE: This lets the app know the level has unsaved change(s).
+	// * s - [object] current file status.
+	markChanged( s ) {
+		// Tell the editor the level needs saving.
+		s.file.jot( 'changed', true );
+	}
+
+	//--------------------------------
+	// Synchronize All Tool Availability
+	//--------------------------------
+	// Evaluate every registered tool's operating restrictions.
+	// RETURNS: [void].
+	// Tools remain equipped or unequipped independently of blocking.
+	// Each tool receives its own blockCheck event and stores its result.
+	//
+	// Run during regular application updates and immediately after
+	// equipment changes so tool availability stays synchronized.
+	refreshToolBlocking() {
+		//--------------------------------
+		// Check All Registered Tools
+		//--------------------------------
+		// Every tool determines its restrictions through its own
+		// registered blockCheck listeners.
+		for ( const tool of Object.values(this.toolbox.tools) ) {
+			// Ignore unavailable tool references.
+			if ( !tool ) continue;
+			// Evaluate and update this tool's blocked status.
+			this.toolBlockCheck( tool );
+		}
+	}
+
+	//--------------------------------
+	// Resolve Tool Restrictions
+	//--------------------------------
+	// Ask a tool to evaluate its current operating conditions.
+	// Each registered blockCheck listener may append rejection reasons.
+	// The client owns the final blocked state.
+	// RETURNS: [boolean] true if the tool is blocked.
+	// * tool - [JestTool] tool whose availability is being checked.
+	toolBlockCheck( tool ) {
+		//--------------------------------
+		// Validate Tool
+		//--------------------------------
+		// An unavailable tool cannot be checked.
+		if ( !tool ) return false;
+
+		//--------------------------------
+		// Prepare Tool Status
+		//--------------------------------
+		// Retrieve current application state without calling getFileStatus().
+		// This prevents recursively triggering another tool block check.
+		const state = this.getState();
+		const level = state.level;
+
+		// Construct a mutable status object for registered listeners.
+		const status = {
+			level   : level,
+			layer   : level?.getActiveLayer() ?? null,
+			reasons : []
+			};
+
+		//--------------------------------
+		// Evaluate Tool Restrictions
+		//--------------------------------
+		// Allow tool-specific plugins to inspect the application state
+		// and add reasons explaining why the tool cannot operate.
+		tool.emit( 'blockCheck', null, status );
+
+		//--------------------------------
+		// Apply Tool Availability
+		//--------------------------------
+		// The existence of one or more reasons blocks tool operation.
+		const blocked = status.reasons.length>0;
+
+		// Store the resulting state without changing tool selection.
+		tool.block( blocked, status.reasons );
+
+		//--------------------------------
+		// Synchronize Equipped Tool Appearance
+		//--------------------------------
+		// Only the equipped tool controls the main toolbar appearance.
+		// A background status check must not change the active cursor.
+		if ( tool===this.toolbox.activeTool ) {
+			//--------------------------------
+			// Reset Previous Toolbar Styling
+			//--------------------------------
+			// Clear stale blocked styling from previously equipped buttons.
+			// This does not deactivate or disable any toolbar buttons.
+			for ( const button of Object.values(this.toolbar.buttons) ) {
+				if ( button.clicker?.el )
+					button.clicker.el.classList.remove( 'tool-blocked' );
+			}
+
+			//--------------------------------
+			// Style Current Toolbar Button
+			//--------------------------------
+			// Keep the button selected while indicating restricted use.
+			const button = this.toolbar.buttons[tool.name];
+			if ( button )
+				button.clicker.el.classList.toggle( 'tool-blocked', blocked );
+
+			//--------------------------------
+			// Update Workspace Cursor
+			//--------------------------------
+			// A blocked editing tool displays the prohibited cursor.
+			const canvas = this.gameboard.display.getCanvas('workspace');
+			if ( canvas )
+				canvas.el.classList.toggle( 'tool-blocked-cursor', blocked );
+		}
+
+		// Return the evaluated blocking result.
+		return blocked;
+	}
+
+	//--------------------------------
+	// Alert When Tool Is Unavailable
+	//--------------------------------
+	// Explain why a requested tool operation cannot be performed.
+	// Reevaluate the tool's restrictions before reporting the problem.
+	//
+	// Only display a notification for an actual user action.
+	// Never call this method from the regular update/draw loop.
+	//
+	// RETURNS: [boolean] true if the action cannot proceed,
+	//                    false if the tool is available.
+	// * tool   - [JestTool] tool attempting an operation.
+	// * action - [string] description of the attempted operation.
+	//   data   - [object] extra data about the attempted action.
+	alertToolBlocked( tool, action='use this tool', data={} ) {
+		//--------------------------------
+		// Validate Tool
+		//--------------------------------
+		// Ignore missing and unequipped tools.
+		// Multiple plugins can receive global actions, so an
+		// inactive tool must not produce an unrelated notification.
+		if ( !tool || !tool.enabled() ) return true; // irrelevant
+
+		//--------------------------------
+		// Refresh Blocking Status
+		//--------------------------------
+		// Reevaluate the tool immediately before its operation.
+		// The regular update cycle may not have run since a
+		// layer was hidden, locked, removed, or changed.
+		if ( !this.toolBlockCheck(tool) ) return false; // available
+
+		//--------------------------------
+		// Retrieve Blocking Context
+		//--------------------------------
+		// The blockCheck listener records the rejection reasons.
+		const reasons = tool.skim('blockReason') ?? [];
+
+		// Resolve the active layer for a descriptive message.
+		const level   = this.getState().level;
+		const layer   = level?.getActiveLayer() ?? null;
+		const name    = layer?.name ? `"${layer.name}"` : 'the active layer';
+
+		//--------------------------------
+		// Determine Explanation
+		//--------------------------------
+		// Prioritize missing context before individual restrictions.
+		// A layer can be both hidden and locked simultaneously.
+		let icon      = 'sm_notice.png'; // default notification icon
+		let explanation;
+
+		if ( reasons.includes('noLevel') ) {
+			explanation = 'Open a level before attempting this operation.';
+		}
+		else if ( reasons.includes('noLayer') ) {
+			icon        = 'sm_x.png';
+			explanation = 'Select a layer in the Layers panel to continue.';
+		}
+		else if ( reasons.includes('layerHidden') && reasons.includes('layerLocked') ) {
+			icon        = 'sm_key.png';
+			explanation = `Layer ${name} is hidden and locked.`;
+		}
+		else if ( reasons.includes('layerHidden') ) {
+			icon        = 'sm_hide.png';
+			explanation = `Layer ${name} is hidden.`;
+		}
+		else if ( reasons.includes('layerLocked') ) {
+			icon        = 'sm_lock.png';
+			explanation = `Layer ${name} is locked.`;
+		}
+		else if ( reasons.includes('transparentTile') ) {
+			icon        = 'sm_hide.png';
+			explanation = `The coordinate (${data.x},${data.y}) does not reveal a tile.`;
+		}
+		else {
+			// Fallback for custom restrictions registered by plugins.
+			explanation =
+				'The selected tool is unavailable in the current editing context.';
+		}
+
+		//--------------------------------
+		// Compose Notification
+		//--------------------------------
+		// Include both the attempted action and the reason it failed.
+		const message  = `Cannot ${action}. ${explanation}`;
+		console.error( message );
+
+		//--------------------------------
+		// Prevent Repeated Notifications
+		//--------------------------------
+		// A held mouse button or repeated keyboard event should not
+		// flood the user with identical notifications.
+		const now      = Date.now();
+		const previous = this._lastToolBlockNotice;
+		if ( previous?.message===message && now-previous.time<1500 )
+			return true; // prevent error flooding
+
+		// Remember the most recently displayed notification.
+		this._lastToolBlockNotice = { message, time:now };
+
+		//--------------------------------
+		// Display Notification
+		//--------------------------------
+		// Use notification UI instead of blocking browser alert dialog.
+		this.noticer.notify({
+			text      : message,
+			icon      : `${this.config.root}/images/icons/${icon}`,
+			duration  : 4500,
+			//persistent: true,
+			buttons   :
+				[
+				{ label: 'Ok', click: () => {/*console.log('Ok pressed');*/} }
+				]
+			//onExpire  : () => console.log('Notification expired')
+			});
+		// Play a "complete" sound-effect for affirmation.
+		this.soundboard.playSound( 'jest_alert', 'mp3', 1.1 );
+
+		// The attempted operation must not proceed.
+		return true;
+	}
 }
 // Make JestCreator globally accessible for plugins
 window.JestCreator = JestCreator;

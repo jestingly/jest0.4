@@ -146,7 +146,7 @@ class JestFileView extends JestTool {
 		// Require file to be set.
 		if ( !this.file ) return;
 		// Obtain file canvas context & copy contents to canvas.
-		console.log( "Refresh canvas called." );
+		//console.log( "Refresh canvas called." );
 	}
 
 	// Get image canvas.

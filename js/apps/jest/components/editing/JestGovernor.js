@@ -38,9 +38,9 @@ class JestGovernor extends JestElement {
 		// Enforce that limit is an integer ≥ 1
 		const maxLimit		= Number.isInteger(limit) && limit>0 ? limit : 100;
 		this.stacks[key]	= {
-			states:		[],			// array of JSON snapshots
-			index:		-1,			// “pointer” into states; −1 means “no states yet”
-			limit:		maxLimit	// max entries to keep
+			states  : [],		// array of JSON snapshots
+			index   : -1,		// “pointer” into states; −1 means “no states yet”
+			limit   : maxLimit	// max entries to keep
 			};
 		// Emit event.
 		this.emit( `init`, null, key, limit ); // emit event
@@ -309,7 +309,7 @@ class JestGovernor extends JestElement {
 		// If we now exceed `limit`, remove oldest entries at the front
 		if ( stack.states.length>limit ) {
 			// Number of items to drop = currentLength – limit
-			const overflow = stack.states.length - stack.limit;
+			const overflow = stack.states.length - limit;
 			// Remove `overflow` items from start
 			stack.states.splice( 0, overflow );
 			// Adjust index downward by however many we removed

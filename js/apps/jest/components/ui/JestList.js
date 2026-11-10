@@ -15,9 +15,10 @@ class JestList extends JestElement {
 	items			= [];			// [array] of JestListItem
 	sortMode		= 'none';		// [string] 'none' | 'alpha' | 'chrono'
 	sortAsc			= true;			// [bool] direction of sort
-	mode			= 'default';	// [string] 'default' | 'linear'
+	mode			= 'default';	// [string] 'default' | 'linear', 'single'
 	selectedIndex	= -1;			// [int] index of selected item (for linear)
 	selectedItem	= null;			// [object|null] of selected item (for non-linear).
+	nextItemId		= 0;			// [int] Value of next item id.
 	// Add this property:
 	dragEnabled		= false;		// [bool] whether dragging items is enabled or disabled.
 	// Panel parts
@@ -29,9 +30,11 @@ class JestList extends JestElement {
 	// --------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- client [object] that this piece belongs to.
-	constructor( client ) {
-		super( client ); // call parent constructor
+	// * client  - client [object] that this piece belongs to.
+	//   mode    – [string] Value of new mode to set.
+	constructor( client, mode='default' ) {
+		super( client );      // call parent constructor
+		this.setMode( mode ); // set list mode
 	}
 
 	//--------------------------------
@@ -45,7 +48,7 @@ class JestList extends JestElement {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( "div", name, ['jest-list'].mergeUnique(classes) );
-
+		
 		// Create a header panel.
 		this.header		= new Panel( { tag: 'div', classes: ['list-header'] } );
 		this.panel.addPanel( 'header', this.header ); // add header to panel
@@ -53,6 +56,30 @@ class JestList extends JestElement {
 		// Create a container for the list items.
 		this.container	= new Panel( { tag: 'div', classes: ['list-body'] } );
 		this.panel.addPanel( 'container', this.container ); // add container to panel
+	}
+
+	//-----------------------------
+	// Set Drag Enabled Flag
+	//-----------------------------
+	// Set the list handling mode.
+	// RETURNS: [boolean] Whether requested mode was set.
+	//   mode – [string] Value of new mode to set.
+	setMode( mode='default' ) {
+		// Switch possible mode(s) & set.
+		switch ( mode ) {
+			// Allow these requested modes:
+			case 'default':
+			case 'single':
+			case 'linear':
+				this.mode = mode;
+				break;
+			// Unknown mode.
+			default:
+				this.mode = 'default';
+				return false; // unknown
+		}
+		// Return success.
+		return true; // success
 	}
 
 	//-----------------------------
@@ -119,7 +146,7 @@ class JestList extends JestElement {
 	addItem( label, data=null ) {
 		// Create list item [object].
 		const item	= new JestListItem( this.client, label, data );
-		const id	= `item-${this.items.length}`; // generate id
+		const id	= `item-${this.nextItemId++}`; // generate id
 		item.setId( id ); // set id
 		item.build( id ); // build it
 
@@ -157,8 +184,9 @@ class JestList extends JestElement {
 		// -----------------------------
 		// If index is less than 0, all items are deactivated.
 		if ( index<0 ) {
-			// Selected index defaults to -1.
+			// Reset both selection references.
 			this.selectedIndex = -1;
+			this.selectedItem  = null;
 			// Deactive & disable all.
 			this.deactivateAll();	// visually deselect
 			//this.disableAll();	// disable all if you're using linear
@@ -168,35 +196,104 @@ class JestList extends JestElement {
 		}
 
 		// -----------------------------
-		// If index is valid, activate normally
+		// Index Range Sanity Check
 		// -----------------------------
 		// Clamp index.
 		if ( index>=this.items.length ) return false;
-		// Get list item [object] @ index.
-		const item = this.items[index];
-		// Click the item.
-		this.handleClick( item );
+
+		//--------------------------------
+		// Handle Linear Selection
+		//--------------------------------
+		// Programmatic selection must not simulate a user click.
+	    if ( this.mode==='linear' ) {
+	        this.selectedIndex = index;
+	        this.updateLinearSelection();
+			// Emit the linear select event.
+	        this.emit( 'linear:select', null, index );
+	    }
+
+		//--------------------------------
+		// Handle Single Selection
+		//--------------------------------
+		// Select one item without toggling its active state.
+		else if ( this.mode==='single' ) {
+			// Retrieve the requested item.
+			const item = this.items[index];
+			// Deselect all other items.
+			for ( const row of this.items )
+				if ( row!==item ) row.deactivate();
+			// Activate the requested item.
+			item.activate();
+			// Remember the selected item and index.
+			this.selectedItem  = item;
+			this.selectedIndex = index;
+		}
+
+		//--------------------------------
+		// Handle Default Selection
+		//--------------------------------
+		// Select one item without toggling its active state.
+	    else {
+			// Get list item [object] @ index.
+	        const item = this.items[index];
+	        item.toggle();
+			// Emit the toggle event.
+	        this.emit( 'toggle', null, item );
+	    }
 		return true; // success
 	}
 
 	//--------------------------------
-	// Handle Click Event (Linear Toggle Mode)
+	// Handle Click Event
 	//--------------------------------
+	// Handle item selection according to the list's mode.
+	//--------------------------------
+	// Supported modes:
+	//   linear:  Select items according to their index.
+	//   single:  Select exactly one item at a time.
+	//   default: Toggle clicked items independently.
+	//--------------------------------
+	// * clickedItem - [JestListItem] clicked list item.
 	handleClick( clickedItem ) {
-		// Get clicked item's index.
+		//--------------------------------
+		// Resolve Clicked Item
+		//--------------------------------
+		// Get the clicked item's index in the list.
 		const clickedIndex = this.items.indexOf( clickedItem );
-		// Emit click event.
-		this.emit( 'clickedItem', null, clickedItem );
-		// Handle different for linear lists.
+		if ( clickedIndex<0 ) return false;
+
+		//--------------------------------
+		// Handle Linear Selection
+		//--------------------------------
+		// Select items according to the list's linear selection rules.
 		if ( this.mode==='linear' ) {
 			this.selectedIndex = clickedIndex;
 			this.updateLinearSelection();
 			this.emit( 'linear:select', null, clickedIndex );
 		}
-		else { // non-linear
+
+		//--------------------------------
+		// Handle Single Selection
+		//--------------------------------
+		// Reuse the list's programmatic selection behavior.
+		else if ( this.mode==='single' )
+			this.selectItemAt( clickedIndex );
+
+		//--------------------------------
+		// Handle Toggle Selection
+		//--------------------------------
+		// Preserve the original independent toggle behavior.
+		else {
 			clickedItem.toggle();
 			this.emit( 'toggle', null, clickedItem );
 		}
+
+		//--------------------------------
+		// Notify Registered Callbacks
+		//--------------------------------
+		// Pass the clicked item to any registered listeners.
+		this.emit( 'clickedItem', null, clickedItem );
+		return true; // success
 	}
 
 	//--------------------------------
@@ -294,17 +391,24 @@ class JestList extends JestElement {
 			this.container.append( item.panel );
 	}
 
-	//-----------------------------
-	// Clear All Items
-	//-----------------------------
-	// RETURNS: [void]
+	//--------------------------------
+	// Clear All List Items
+	//--------------------------------
+	// Remove every item and reset selection state.
 	clear() {
-		// Remove all items from the container.
-		for ( const item of this.items )
-			this.removeItem( item );
-		// Reset items [array] & selected index.
-		this.items.length	= 0;	// reset items array (remove all)
-		this.selectedIndex	= -1;	//
+		//--------------------------------
+		// Remove Existing Items
+		//--------------------------------
+		// Remove from the end to avoid skipping entries.
+		while ( this.items.length )
+			this.removeItem( this.items.length-1 );
+
+		//--------------------------------
+		// Reset Selection
+		//--------------------------------
+		// Clear all selection references.
+		this.selectedIndex = -1;
+		this.selectedItem  = null;
 	}
 
 	//-----------------------------
@@ -329,9 +433,31 @@ class JestList extends JestElement {
 		// Remove the item from the container.
 		this.container.removePanel( item.getId() );
 		this.items.splice( index, 1 ); // remove from this.items
+		// If mode is linear, handle selection update.
+		if ( this.mode==='linear' ) {
+			if ( index<=this.selectedIndex )
+			    this.selectedIndex--;
+			this.selectedIndex	=
+				Math.min(
+					this.selectedIndex, this.items.length-1
+					);
+			this.updateLinearSelection();
+		}
 
-		// Clear selected item value (if item was selected).
-		if ( this.selectedItem===item ) // clear selection
+		//--------------------------------
+		// Synchronize Selection
+		//--------------------------------
+		// Clear selection when removing the selected item.
+		// Otherwise, update the selected item's index.
+		if ( this.mode==='single' ) {
+			if ( this.selectedItem===item ) {
+				this.selectedItem  = null;
+				this.selectedIndex = -1;
+			}
+			else if ( this.selectedItem )
+				this.selectedIndex = this.items.indexOf( this.selectedItem );
+		}
+		else if ( this.selectedItem===item )
 			this.selectedItem = null;
 
 		return true; // success
@@ -362,6 +488,9 @@ class JestList extends JestElement {
 	// * fromIndex - [int]
 	// * toIndex   - [int]
 	moveItem( fromIndex, toIndex ) {
+		//--------------------------------
+		// Sanity Check
+		//--------------------------------
 		// Skip if source index matches destination index.
 		if ( fromIndex===toIndex ) return false;
 		// Require indices to be within bounds.
@@ -369,10 +498,27 @@ class JestList extends JestElement {
 			 fromIndex>=this.items.length || toIndex>=this.items.length )
 			return false; // out-of-bounds
 
-		const item = this.items.splice( fromIndex, 1 )[0];
+		//--------------------------------
+		// Splice List of Items
+		//--------------------------------
+		// Splice & destructure to access item.
+		const [item] = this.items.splice( fromIndex, 1 );
 		this.items.splice( toIndex, 0, item );
-		this.redraw();
-		return true;
+
+		//--------------------------------
+		// Synchronize Selected Index
+		//--------------------------------
+		// Preserve the selected item's position after reordering.
+		if ( this.mode==='single' && this.selectedItem )
+			this.selectedIndex = this.items.indexOf( this.selectedItem );
+
+		//--------------------------------
+		// Redraw & Emit Event
+		//--------------------------------
+		this.redraw(); // redraw the list
+		// Emit reordered event.
+		this.emit( 'reordered', null, fromIndex, toIndex );
+		return true; // sucess
 	}
 
 	//-----------------------------
@@ -415,19 +561,5 @@ class JestList extends JestElement {
 	//-----------------------------
 	deactivateAll() {
 		this.items.forEach( i => i.deactivate() );
-	}
-
-	//-----------------------------
-	// Enable Drag on All Items
-	//-----------------------------
-	enableDragging() {
-		this.items.forEach( i => i.enableDrag() );
-	}
-
-	//-----------------------------
-	// Disable Drag on All Items
-	//-----------------------------
-	disableDragging() {
-		this.items.forEach( i => i.disableDrag() );
 	}
 }

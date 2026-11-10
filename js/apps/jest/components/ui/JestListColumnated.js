@@ -127,18 +127,46 @@ class JestListColumnated extends JestList {
 	//--------------------------------
 	// Select a Single Item
 	//--------------------------------
-	// Selects a given item and deselects all others.
-	// RETURNS: [void]
-	// * target – [JestListColumnatedItem] Item to select
-	selectItem( target ) {
-		// Iterate each item & deselect, then select item.
-		for ( const item of this.items ) {
-			// Check if item is the requested target.
-			const isTarget = ( item === target );
-			item.panel.toggleClass( 'selected', isTarget );
-			// If item is requested target, select it.
-			if ( isTarget ) this.selectedItem = item;
-		}
+	// Select one row, or clear the selection when target is null.
+	// RETURNS: [bool] Whether the requested selection was applied.
+	// * target - [JestListColumnatedItem|null] Row to select.
+	selectItem( target=null ) {
+		// Find the target row's index, or use -1 to clear selection.
+		const index = target===null ? -1 : this.items.indexOf( target );
+
+		// Reject an item that does not belong to this list.
+		if ( target!==null && index<0 )
+			return false;
+
+		// Apply the selected class to the target and remove it from other rows.
+		for ( const item of this.items )
+			item.panel.toggleClass( 'selected', item===target );
+
+		// Keep both selection references synchronized.
+		this.selectedItem  = target;
+		this.selectedIndex = index;
+
+		// Report that selection was updated.
+		return true;
+	}
+
+	//--------------------------------
+	// Select a Single Item by Index
+	//--------------------------------
+	// Select the row at index, or clear selection for a negative index.
+	// RETURNS: [bool] Whether the requested selection was applied.
+	// * index - [int] Index of the row to select.
+	selectItemAt( index ) {
+		// Treat a negative index as a request to clear selection.
+		if ( index<0 )
+			return this.selectItem( null );
+
+		// Reject indices beyond the end of the list.
+		if ( index>=this.items.length )
+			return false;
+
+		// Select the row at the requested index.
+		return this.selectItem( this.items[index] );
 	}
 
 	// Selects a given item with a specific row column value.
@@ -182,6 +210,16 @@ class JestListColumnated extends JestList {
 		// Register event to select the row when clicked.
 		item.register( 'click', 'selectRow', e=>this.selectItem(item) );
 
+		// Apply the list's current drag setting to the new row.
+		if ( this.dragEnabled && !item.isGroup ) {
+			// Respect an explicit per-row request to disable dragging.
+			if ( data?.draggable===false )
+				item.disableDrag();
+			else item.enableDrag();
+		}
+		// Keep dragging disabled when the list or row does not allow it.
+		else item.disableDrag();
+
 		//--------------------------------
 		// Double-click → Emit custom event
 		//--------------------------------
@@ -194,19 +232,33 @@ class JestListColumnated extends JestList {
 	//--------------------------------
 	// Remove a Single Item
 	//--------------------------------
-	// Removes an item from the list and DOM.
-	// RETURNS: [void]
-	// * target – [JestListColumnatedItem] Item to remove
-	removeItem( target ) {
-		// Find index # of target in list.
-		const index = this.items.indexOf( target );
-		// Check if item was found.
-		if ( index!==-1 ) {
-			this.items.splice( index, 1 );			// remove from array
-			target.panel.remove();					// remove DOM
-			if ( this.selectedItem === target )		// clear selection
-				this.selectedItem = null;
-		}
+	// Remove an item by its object reference or its numeric index.
+	// RETURNS: [bool] Whether an item was found and removed.
+	// * itemOrIndex - [int|JestListColumnatedItem] Item index or item to remove.
+	removeItem( itemOrIndex ) {
+		// Resolve the item's index from either supported argument type.
+		const index =
+			typeof itemOrIndex==='number'
+				? itemOrIndex
+				: this.items.indexOf( itemOrIndex );
+
+		// Return false if the requested item is not in the list.
+		if ( index<0 || index>=this.items.length )
+			return false;
+
+		// Get the item before removing it from the array.
+		const item = this.items[index];
+
+		// Remove the item from the list and its DOM container.
+		this.items.splice( index, 1 );
+		item.panel.remove();
+
+		// Clear the selected item reference if it was removed.
+		if ( this.selectedItem===item )
+			this.selectedItem = null;
+
+		// Report that the item was removed.
+		return true;
 	}
 
 	//--------------------------------

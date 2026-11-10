@@ -32,6 +32,7 @@ class Jest extends Application {
 	grapher			= null;					// [object] Grapher for handling matrices & points.
 	// File Handling [objects]
 	delegator		= null;					// [object] Central delegator for chronological handling.
+	interactor		= null;					// [object] JestInteractor for handling window / input event(s).
 	inspector		= null;					// [object] JestInspector for handling custom & some built-in debugging.
 	transmitter		= null;					// Transmitter [object] for handling file transmissions (download, upload, etc.)
 	cabinet			= null;					// cabinet [object] (used to organize file [objects]).
@@ -219,14 +220,14 @@ class Jest extends Application {
 		// Attempt to Build
 		// --------------------------------
 		// Determine logic based upon requested status change
-		const currentMode	= this.skim( 'status' );
+		const currentMode   = this.skim( 'status' );
 		if ( currentMode!=='idle' )
 			return false; // no need to rebuild
 		//super.setup(); // call parent setup method
 		// App open, set building status
 		this.gearshift( 'building' );
 		// Instantiate some variables
-		this.parsers		= {}; // Being the blank parsers [object] for storing parser [objects]
+		this.parsers        = {}; // Being the blank parsers [object] for storing parser [objects]
 
 		// --------------------------------
 		// Create Application Pane [object]
@@ -236,14 +237,14 @@ class Jest extends Application {
 		// --------------------------------
 		// Configuration [object]
 		// --------------------------------
-		const config		= new JestConfiguration( this );
-		this.config			= config;
+		const config        = new JestConfiguration( this );
+		this.config         = config;
 
 		// --------------------------------
 		// Create Application Default Screen
 		// --------------------------------
 		// Register the default application loading screen.
-		const screenLoad	= new JestScreen( this );
+		const screenLoad    = new JestScreen( this );
 		screenLoad.build( 'screen', ['jest-screen-loading-default'] ); // build it
 
 		// Create loading screen brand logo.
@@ -260,8 +261,8 @@ class Jest extends Application {
 				name       : 'logo',
 				tag        : 'svg',
 				attributes : {
-					xmlns        : "http://www.w3.org/2000/svg",
-					viewBox      : "0 0 1200 325"
+					xmlns   : "http://www.w3.org/2000/svg",
+					viewBox : "0 0 1200 325"
 					},
 				classes    : [ 'jest-logo', 'jest-ani-oscillate' ],
 				elements   :
@@ -278,17 +279,17 @@ class Jest extends Application {
 		this.spline.registerScreen( 'loading', screenLoad );
 
 		// Add a loading bar to the status bar.
-		const loadbar		= new JestLoadbar( this );
-		screenLoad.loadbar	= loadbar;							// keep ref to loadbar in screen
+		const loadbar      = new JestLoadbar( this );
+		screenLoad.loadbar = loadbar;							// keep ref to loadbar in screen
 		loadbar.build( 'jest-loadbar', ['jest-ani-stripes'] );	// build loadbar
 		screenLoad.panel.addPanel( 'loadbar', loadbar.panel );	// add to statusbar DOM
 
 		// Create loading screen copyright.
 		screenLoad.panel.createPanel({
-			name       : 'copyright',
-			tag        : 'div',
-			text       : `Copyright <b>©</b> 2025 <strong>JEST</strong>. All rights reserved.`,
-			classes    : [ 'jest-copyright', 'jest-ani-fade-oscillate' ]
+			name    : 'copyright',
+			tag     : 'div',
+			text    : `Copyright <b>©</b> 2025 <strong>JEST</strong>. All rights reserved.`,
+			classes : [ 'jest-copyright', 'jest-ani-fade-oscillate' ]
 			});
 
 		// Default application to show the loading screen.
@@ -297,76 +298,79 @@ class Jest extends Application {
 		// --------------------------------
 		// Algorithmic [object]
 		// --------------------------------
-		const grapher		= new Grapher();
-		this.grapher		= grapher;
+		const grapher       = new Grapher();
+		this.grapher        = grapher;
 		// Setup the graph matrix.
 		grapher.graticulate( config.tileGrid );			// set graph grid
-		const length		= config.levelGrid;			// get default level W x H
+		const length        = config.levelGrid;			// get default level W x H
 		grapher.resize( length, length );				// set graph W x H
 
 		// --------------------------------
-		// Create Core Delegator [object]
+		// Core Interraction [object]
 		// --------------------------------
 		// Mouse-event delegation.
-		this.delegator		= new Delegator();
+		this.delegator      = new Delegator();
+		// Create context listener (for window / lost context).
+		this.interactor     = new JestInteractor( this );
+		this.interactor.enable(); // enable it
 
 		// --------------------------------
 		// Inspector / Debugging [object]
 		// --------------------------------
-		const inspector		= new JestInspector( this );
-		this.inspector		= inspector;
+		const inspector     = new JestInspector( this );
+		this.inspector      = inspector;
 
 		// --------------------------------
 		// Create Internal Timer [object]
 		// --------------------------------
 		// Central game timeout loop
-		this.timers['ani']	= new Timeout( 'raf' );		// Intervals are 16.67ms delay for ~60 FPS (1000ms / 60 ≈ 16.67ms).
+		this.timers['ani']  = new Timeout( 'raf' );		// Intervals are 16.67ms delay for ~60 FPS (1000ms / 60 ≈ 16.67ms).
 		this.timers['ani'].start();						// start ticking
 		//timers['ani'].register( 'tick', 'game', this.update.bind(this,...args) );
 
 		// --------------------------------
 		// Create Input-Output Handler [object]
 		// --------------------------------
-		const io			= new JestInputOutput();	// input-output handling
-		this.io				= io;						// set cross-reference to [object] property
+		const io            = new JestInputOutput();	// input-output handling
+		this.io             = io;						// set cross-reference to [object] property
 		this.timers['ani'].register( 'tick', 'input-output', e=>io.update(e) );
 
 		// --------------------------------
 		// File Handling [objects]
 		// --------------------------------
-		this.transmitter	= new JestTransmitter( this );
+		this.transmitter    = new JestTransmitter( this );
 
 		// --------------------------------
 		// File Handling [objects]
 		// --------------------------------
 		// Create the cabinet [object] for file [object] organization.
-		this.cabinet		= new JestCabinet( this );
+		this.cabinet        = new JestCabinet( this );
 		// Create the secretary [object] for file handling
-		this.secretary		= new JestSecretary( this, `${this.config.webfiles}` );
+		this.secretary      = new JestSecretary( this, `${this.config.webfiles}` );
 
 		// --------------------------------
 		// Create Main Screen [object]
 		// --------------------------------
 		// Register the main application screen.
-		const screenMain	= new JestScreen( this );
+		const screenMain    = new JestScreen( this );
 		screenMain.build(); // build it
 		// Build the panel
-		this.panel			= screenMain.panel;			// assign main screen as the main panel
+		this.panel          = screenMain.panel;			// assign main screen as the main panel
 		this.spline.registerScreen( 'application', screenMain );
 
 		// --------------------------------
 		// Login Handler [object]
 		// --------------------------------
 		// Create the login handler [object] for account interfacing.
-		const login			= new JestLogin( this );
-		this.login			= login; // keep ref
+		const login         = new JestLogin( this );
+		this.login          = login; // keep ref
 
 		// --------------------------------
 		// Cloud Handler [object]
 		// --------------------------------
 		// Create the cloud handler [object] for backing up data.
-		const cloud			= new JestCloud( this );
-		this.cloud			= cloud; // keep ref
+		const cloud         = new JestCloud( this );
+		this.cloud          = cloud; // keep ref
 
 		/*console.log('TEST: plugin types attached per class');
 		console.log('OSConfigurable.plugins:', Object.keys(OSConfigurable.plugins));
@@ -515,7 +519,8 @@ class Jest extends Application {
 		// Preload default sounds.
 		const preloadMP3	=
 			[
-			'jest_complete.mp3', 'jest_success.mp3', 'jest_alert.mp3',
+			'jest_complete.mp3', 'jest_success.mp3',
+			'jest_alert.mp3', 'jest_error.mp3',
 			'jest_close0.mp3', 'jest_close1.mp3', 'jest_close2.mp3',
 			'jest_open0.mp3', 'jest_open1.mp3',
 			'jest_prompt.mp3', 'jest_pour.mp3', 'jest_poke.mp3', 'jest_draw.mp3',
@@ -538,6 +543,7 @@ class Jest extends Application {
 		// --------------------------------
 		// Initialize loader plugins.
 		this.tooltip		= new JestTooltip( this );
+		this.tooltip.build(); // build the element
 		this.tooltip.enableLiveMode();
 
 		// --------------------------------

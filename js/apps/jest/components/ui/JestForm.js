@@ -193,17 +193,17 @@ class JestForm extends JestMenu {
 			this.setDisabled( name, active );
 	}
 
-	//==================================================
-	// checkFieldMismatches()
-	//==================================================
+	//--------------------------------
+	// Handle Input
+	//--------------------------------
 	// Compares field values in the form against the given data.
 	// Highlights mismatched fields with a CSS class and toggles apply button.
 	// RETURNS: [bool] True if any mismatches were found.
 	// * dataValues			- [object] Source of expected data values.
 	// * fieldMapCompare	- [object] { formFieldKey: dataKey }
-	checkFieldMismatches( dataValues, fieldMapCompare ) {
+	checkFieldInput( dataValues, fieldMapCompare ) {
 		// Track if any mismatches found
-		let foundMismatch	= false;
+		let foundMismatch = false;
 
 		// Iterate over comparison map
 		Object.entries(fieldMapCompare).forEach(
@@ -212,14 +212,14 @@ class JestForm extends JestMenu {
 				// Grab field and data values
 				//--------------------------------
 				// Compare field(s).
-				const fieldVal	= this.fields[f]?.getValue?.()?.toString() ?? '';
-				const dataVal	= dataValues[d]?.toString();
+				const fieldVal = this.fields[f]?.getValue?.()?.toString() ?? '';
+				const dataVal  = dataValues[d]?.toString();
 
 				//--------------------------------
 				// Compare values
 				//--------------------------------
 				// Log mismatch if fields don't match.
-				const mismatch	= fieldVal !== dataVal;
+				const mismatch = fieldVal !== dataVal;
 
 				// Apply unsaved highlight
 				this.fields[f]?.panel?.toggleClass?.( 'unsaved', mismatch );

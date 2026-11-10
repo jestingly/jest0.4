@@ -10,22 +10,23 @@
 //-------------------------------------------------
 // CMS-compatible login endpoint
 //-------------------------------------------------
-require_once __DIR__ . '/../json.header.php';	// Load JSON header definition
-require_once __DIR__ . '/../jest.client.php';	// Load CMS root client
-//header('Content-Type: application/json');		// Force JSON return
+require_once __DIR__ . '/../json.header.php';   // Load JSON header definition
+require_once __DIR__ . '/../jest.client.php';   // Load CMS root client
+//header('Content-Type: application/json');     // Force JSON return
 
 //-----------------------------------------
 // Decode JSON input from fetch() body
 //-----------------------------------------
 // Capture raw POST body and parse JSON
-$data		= client()->input();
+$data    = client()->input();
 
 //-------------------------------------------------
 // Validate credentials
 //-------------------------------------------------
 // Validate required credentials.
-$fields		= [ 'username', 'password' ];
-$creds		= client()->parser->parseCredentials( $data, $fields );
+$fields  = [ 'username', 'password' ];
+$options = [ 'purpose' => 'login' ];
+$creds   = client()->parser->parseCredentials( $data, $fields, $options );
 dbtlog( $creds );
 
 // Check if credentials validated.
@@ -35,7 +36,7 @@ if ( $creds===null ) {
 }
 
 // Iterate each field & check status.
-$failed		= false;
+$failed  = false;
 foreach ( $creds as $key=>$val ) {
 	if ( $val['status']==='error' ) { // fail
 		$failed = true; // flag for exit
@@ -43,9 +44,9 @@ foreach ( $creds as $key=>$val ) {
 }
 
 // Check if the form failed, exit with error.
-if ( $failed === true ) {
+if ( $failed===true ) {
 	// Return parse info.
-	client()->respond( 400, 'error', $creds, 'Missing or invalid fields.' );
+	client()->respond( 400, 'error', $creds, 'User not found or invalid credentials.' );
 	exit;
 }
 
@@ -53,7 +54,7 @@ if ( $failed === true ) {
 // Run login logic using CMS login module
 //-------------------------------------------------
 // Try to login.
-$result		=
+$result  =
 	client()->auth->login(
 		$creds['username']['value'],
 		$creds['password']['value']
@@ -62,6 +63,9 @@ $result		=
 //-------------------------------------------------
 // Respond
 //-------------------------------------------------
-client()->respond( 200, 'success', $result );	// Return success or failure
+// Return success or failure.
+if ( $result['success'] )
+	client()->respond( 200, 'success', $result );
+else client()->respond( 400, 'error', $creds, $result['error'] );
 
-?>
+exit;

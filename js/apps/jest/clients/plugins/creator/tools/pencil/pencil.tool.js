@@ -13,28 +13,29 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 // The event includes both pixel x/y & tile x/y units.
 class JestToolPencil extends JestTool {
 	// Object propert(ies)
-	target				= null;				// [ElementCanvas] Target canvas element to draw on.
+	target            = null;              // [ElementCanvas] Target canvas element to draw on.
+	layerId           = null;              // [int] Z value of layer index / id.
 	// Movement tracking
-	_mouseButton		= null;				// [int] value of mouse button (0=left, 2=right).
-	_shiftLineStart		= null;				// [object] First point if user is shift clicking 2 points.
-	_undoMap			= new Map(); 		// [Map<string, {old, neu}>] Unified undo/redo tracking
-	_skipTiles			= new Set();		// [Set<string>] Tiles to skip drawing.
-	_lastSwishX			= null;				// [float] X value of last draw movement.
-	_lastSwishY			= null;				// [float] Y value of last draw movement.
-	_accumulatedDist	= 0;				// [number] Value of active distance drawn.
-	_idleThreshold		= 300;				// [ms] how long between draws before idling
-	_swishThreshold		= 10;				// [float] attune this to distance motion (in tiles)
-	_lastSwishTime		= 0;				// [number] last movement trigger timestamp
-	_motionsTracked		= 0;				// [int] total how many motions tracked (during draw).
-	_motionTrackLapse	= null;				// [ms] last motion track update (external update).
+	_mouseButton      = null;              // [int] value of mouse button (0=left, 2=right).
+	_shiftLineStart   = null;              // [object] First point if user is shift clicking 2 points.
+	_undoMap          = new Map();         // [Map<string, {old, neu}>] Unified undo/redo tracking
+	_skipTiles        = new Set();         // [Set<string>] Tiles to skip drawing.
+	_lastSwishX       = null;              // [float] X value of last draw movement.
+	_lastSwishY       = null;              // [float] Y value of last draw movement.
+	_accumulatedDist  = 0;                 // [number] Value of active distance drawn.
+	_idleThreshold    = 300;               // [ms] how long between draws before idling
+	_swishThreshold   = 10;                // [float] attune this to distance motion (in tiles)
+	_lastSwishTime    = 0;                 // [number] last movement trigger timestamp
+	_motionsTracked   = 0;                 // [int] total how many motions tracked (during draw).
+	_motionTrackLapse = null;              // [ms] last motion track update (external update).
 
 	// --------------------------------
 	// Constructor
 	// --------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
-	// * name		- [string] Value of tool name.
+	// * client  - [object] Application client that this piece belongs to.
+	// * name    - [string] Value of tool name.
 	constructor( client, name ) {
 		super( client, name ); // call parent constructor
 	}
@@ -44,8 +45,8 @@ class JestToolPencil extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='tool-draw', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -208,8 +209,8 @@ class JestToolPencil extends JestTool {
 	// * e	- [object] I/O key-release custom payload "event" data.
 	releaseShift( e ) {
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='shiftlining' ) return;
 		//--------------------------------
 		// Only respond to Shift release
@@ -237,14 +238,29 @@ class JestToolPencil extends JestTool {
 	// RETURNS: [void].
 	// * e	- [object] MouseEvent event listener data.
 	start( e ) {
+		//--------------------------------
+		// Validate Tool Availability
+		//--------------------------------
+		// Explain why the start operation is blocked (if it is).
+		if ( this.client.alertToolBlocked(this,'begin stroke') )
+			return; // abort action
+
+		//--------------------------------
+		// Check Delegated Suppression
+		//--------------------------------
 		// Check if delegator forbids the pencil.
 		if ( !this.client.delegator.allowed(this.name,'click') )     return;
 		if ( !this.client.delegator.allowed(this.name,'mouseup') )   return;
 		if ( !this.client.delegator.allowed(this.name,'mousedown') ) return;
+
+		//--------------------------------
+		// Validate Mode & Enablement
+		//--------------------------------
 		// Mode gate keep.
 		const enabled	= this.skim( 'enabled' );
 		const mode		= this.skim( 'mode' );
 		if ( !enabled || (mode!=='idle' && mode!=='shiftlining') ) return;
+
 		//-------------------------
 		// Get Click Position
 		//-------------------------
@@ -256,6 +272,7 @@ class JestToolPencil extends JestTool {
 		const units	= this.anchor.units;
 		const x		= Math.floor( e.offsetX / units );
 		const y		= Math.floor( e.offsetY / units );
+
 		//--------------------------------
 		// SHIFT+CLICK INTERCEPT → LINE DRAW MODE
 		//--------------------------------
@@ -294,16 +311,18 @@ class JestToolPencil extends JestTool {
 			this._shiftLineStart = to;
 			return; // escape
 		}
+
 		//-------------------------
 		// Log Event Data
 		//-------------------------
 		// Remember click origin.
 		this._shiftLineStart = { x, y };
+
 		//-------------------------
 		// Add Event Listener(s)
 		//-------------------------
 		this.jot( 'mode', 'drawing' ); // change mode
-		this.target.register( 'mousemove', 'drawing', e=>this.draw(e), 'dom' );
+		this.target.register( 'mousemove', 'drawing', e=>this.draw(e), 'window' );
 		this.target.register( jsos.mouseUps, 'drawingEnd', e=>this.stop(e), 'window' );
 		// Emit start event.
 		this.emit( 'start', null, e );
@@ -315,43 +334,49 @@ class JestToolPencil extends JestTool {
 	// RETURNS: [void].
 	// * e	- [object] MouseEvent event listener data.
 	draw( e ) {
+		//--------------------------------
+		// Validate Mode & Enablement
+		//--------------------------------
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled  = this.skim( 'enabled' );
+		const mode     = this.skim( 'mode' );
 		if ( !enabled || mode!=='drawing' ) return;
 
-		// Tile position.
-		const click		= this.target.mousePos(e);
-		const units		= this.anchor.units; // grid units
-		const lx		= Math.floor( click.x / units );
-		const ly		= Math.floor( click.y / units );;
-		const now		= performance.now(); // current timestamp
+		//--------------------------------
+		// Get Click / Grid Coordinates
+		//--------------------------------
+		// Grid / "tile" position.
+		const click    = this.target.mousePos(e);
+		const units    = this.anchor.units; // grid units
+		const lx       = Math.floor( click.x / units );
+		const ly       = Math.floor( click.y / units );;
+		const now      = performance.now(); // current timestamp
 
 		// Create location data [object].
-		const location	= { x: click.x, y: click.y, lx, ly };
+		const location = { x: click.x, y: click.y, lx, ly };
 
 		//-------------------------
 		// Motion Tracking
 		//-------------------------
 		// Determine current draw x & y.
-		const cx	= lx, cy = ly
+		const cx = lx, cy = ly;
 		if ( this._lastSwishX===null || this._lastSwishY===null ) {
-			this._lastSwishX		= cx;		// track last draw X coordinate
-			this._lastSwishY		= cy;		// track last draw Y coordinate
-			this._accumulatedDist	= 0;		// reset accumulated distance
-			this._lastSwishTime		= now;		// initialize threshold movement time
-			this._motionTracked		= 0;		// reset motion tracked count to 0
-			this._motionTrackLapse	= now;		// reset motion track to now time
+			this._lastSwishX       = cx;   // track last draw X coordinate
+			this._lastSwishY       = cy;   // track last draw Y coordinate
+			this._accumulatedDist  = 0;    // reset accumulated distance
+			this._lastSwishTime    = now;  // initialize threshold movement time
+			this._motionTracked    = 0;    // reset motion tracked count to 0
+			this._motionTrackLapse = now;  // reset motion track to now time
 		}
 
 		// Track distance of last draw movement.
-		const dx			= cx - this._lastSwishX;	// distance X moved
-		const dy			= cy - this._lastSwishY;	// distance Y moved
-		const dist			= Math.sqrt( dx*dx + dy*dy );
+		const dx       = cx - this._lastSwishX;  // distance X moved
+		const dy       = cy - this._lastSwishY;  // distance Y moved
+		const dist     = Math.sqrt( dx*dx + dy*dy );
 
 		// Calculate movement distance from last time + time.
-		this._accumulatedDist += dist;		// determine distance moved
-		const swishLapse	= now - this._lastSwishTime; // time difference
+		this._accumulatedDist += dist;     // determine distance moved
+		const swishLapse     = now - this._lastSwishTime; // time difference
 
 		// Remember click origin.
 		this._shiftLineStart = { x: lx, y: ly };
@@ -361,9 +386,9 @@ class JestToolPencil extends JestTool {
 		// Check for idling.
 		if ( swishLapse>=this._idleThreshold ) {
 			// Reset movement(s).
-			this._lastSwishX		= cx;		// track last draw X coordinate
-			this._lastSwishY		= cy;		// track last draw Y coordinate
-			this._lastSwishTime	= now;		// reset movement time
+			this._lastSwishX    = cx;     // track last draw X coordinate
+			this._lastSwishY    = cy;     // track last draw Y coordinate
+			this._lastSwishTime = now;    // reset movement time
 			// Emit draw event.
 			this.emit( 'idle', null, e, location, this._accumulatedDist, swishLapse );
 		}
@@ -371,23 +396,24 @@ class JestToolPencil extends JestTool {
 		// If distance threshold reached within time threshold, release event.
 		if ( this._accumulatedDist>=this._swishThreshold ) {
 			// Update swish coordinates.
-			this._lastSwishX		= cx;		// update last motion X track
-			this._lastSwishY		= cy;		// update last motion Y track
+			this._lastSwishX    = cx;     // update last motion X track
+			this._lastSwishY    = cy;     // update last motion Y track
 
 			// Calculate swish time lapse & reset timer.
-			this._lastSwishTime	= now;		// update threshold movement time
+			this._lastSwishTime = now;    // update threshold movement time
 
 			// Calculate [ms] time between motion-tracks.
-			const motionLapse	= now - this._motionTrackLapse;
+			const motionLapse   = now - this._motionTrackLapse;
 
 			// Emit motion tracking event.
 			this.emit(
 				'swish', null,
 				e, motionLapse, this._motionTracked,
-				location, this._accumulatedDist, swishLapse );
+				location, this._accumulatedDist, swishLapse
+				);
 
 			// Reset distance tracking.
-			this._accumulatedDist	= 0;	// reset tracked distance
+			this._accumulatedDist = 0;    // reset tracked distance
 		}
 	}
 
@@ -397,8 +423,8 @@ class JestToolPencil extends JestTool {
 		// Increase motion track count.
 		this._motionTracked	++;
 		// Capture now time.
-		const now	= performance.now();	// current timestamp
-		this._motionTrackLapse	= now;		// set motion track time to now
+		const now = performance.now(); // current timestamp
+		this._motionTrackLapse = now;  // set motion track time to now
 		// Emit stop event.
 		this.emit( 'motionTracked', null, this._motionTrackLapse, this._motionTracked );
 	}

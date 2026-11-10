@@ -13,13 +13,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 	//--------------------------------
 	// Plugin Metadata
 	//--------------------------------
-	const type		= 'tools';
-	const subtype	= 'eyedropper';
+	const type    = 'tools';
+	const subtype = 'eyedropper';
 
 	//--------------------------------
 	// Plugin Definition
 	//--------------------------------
-	const plugin = {
+	const plugin  = {
 		//--------------------------------
 		// Initialize Plugin
 		//--------------------------------
@@ -29,35 +29,133 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 			//-------------------------
 			// Create Tool
 			//-------------------------
-			const tool		= new JestToolEyedropper( client, subtype );
+			const tool   = new JestToolEyedropper( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the eyedropper tool
-			// Wire into the grid.\
+			// Wire into the grid.
 			tool.anchor.graticulate( client.config.tileGrid );
 
 			// Simultaneous tools allowed:
-			tool.coopt( ['tiledrop','levelMarquee'] );
+			tool.coopt( ['tiledrop'] );
 
 			// Set canvas as target
-			const canvas	= client.gameboard.display.getCanvas( 'workspace' );
+			const canvas = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas );
 
-			// Register Alt/Option key to temporarily wield eyedropper.
-			/*client.toolbox.registerHoldTrigger(
-				'Alt', subtype,
-				{
-					validTools:
-						[
-						'pencil',
-						'floodfill',
-						'levelMarquee'
-						]
-				});*/
+			//--------------------------------
+			// Create Eyedropper Options Panel
+			//--------------------------------
+			// Give Eyedropper a dedicated collapsible sidebar section,
+			// consistent with the existing Pencil tool options.
+			const optsPanel = new JestForm( client );
+			optsPanel.build( 'options', ['eyedropper-options'] );
+
+			//--------------------------------
+			// Create Composite Sampling Option
+			//--------------------------------
+			// Composite is disabled by default to preserve the
+			// existing active-layer-only sampling behavior.
+			const inputComposite =
+				new JestInputCheckbox(
+					client, 'composite', null,
+					tool.composite, 'Composite' );
+			inputComposite.build( 'input-composite' );
+			inputComposite.showLabel();
+			// Explain the sampling mode without crowding the panel.
+			inputComposite.panel.addAttribute(
+				'data-tooltip', 'Sample all visible layers.' );
+
+			// Store the checkbox in the options form.
+			optsPanel.addField( 'composite', inputComposite );
+
+			//--------------------------------
+			// Handle Sampling Mode Changes
+			//--------------------------------
+			// Update the tool's sampling behavior immediately.
+			// Refresh the preview so a lower tile becomes accessible
+			// without requiring another click.
+			inputComposite.register(
+				'change', 'compositeSampling',
+				checked => {
+					// Store the selected sampling mode.
+					tool.composite = Boolean( checked );
+					// Reevaluate the tile beneath the current pointer.
+					tool.refreshPreview();
+					// Reevaluate blocked status and cursor styling.
+					client.toolBlockCheck( tool );
+				});
+			// Composite sampling is turn on, by default.
+			inputComposite.setChecked( true );
+
+			//--------------------------------
+			// Register Eyedropper Sidebar
+			//--------------------------------
+			// Add the entities panel to the sidebar.
+			client.sidebar.addSection( subtype, 'Eyedropper', null );
+			client.sidebar.refit( subtype ); // resize to fit contents
+			const eyedropperMenu = client.sidebar.getSection( subtype );
+
+			//-------------------------
+			// Add Eyedropper Options Form
+			//-------------------------
+			// Add options panel to the eyedropper sidebar menu.
+			eyedropperMenu.addItem( 'options', optsPanel.panel );
+			client.sidebar.refit( subtype );
+
+			//--------------------------------
+			// Handle Tool Block Check
+			//--------------------------------
+			// Determine whether the tool can be used.
+			tool.register(
+				'blockCheck', 'eyedropperBlocking',
+				status => {
+					//--------------------------------
+					// Validate Level Availability
+					//--------------------------------
+					// A level must exist before its layers can be edited.
+					if ( !status.level ) {
+						status.reasons.push( 'noLevel' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Active Layer
+					//--------------------------------
+					// Standard sampling requires an active, visible layer.
+					if ( !tool.composite ) {
+						// Editing requires an active layer.
+						const layer = status.layer;
+						if ( !layer ) {
+							status.reasons.push( 'noLayer' );
+							return; // blocked
+						}
+
+						// Hidden layers are not eligible for tile sampling.
+						if ( tool.hovering && !layer.visible )
+							status.reasons.push( 'layerHidden' );
+					}
+					else {
+						// Composite sampling needs a nonempty layer stack,
+						// but does not require the active layer to be visible.
+						if ( status.level.getLayers().length===0 ) {
+							status.reasons.push( 'noLayer' );
+							return; // blocked
+						}
+					}
+
+					//--------------------------------
+					// Validate Hovered Tile
+					//--------------------------------
+					// An empty location remains blocked when the pointer
+					// is over the workspace, even in Composite mode.
+					if ( tool.hovering && !tool.hoverTile )
+						status.reasons.push( 'transparentTile' );
+				});
 
 			//--------------------------------
 			// Toolbar Button & Shortcut
 			//--------------------------------
-			const button	= client.toolbar.createButton( { name: subtype, text: null } );
+			const button = client.toolbar.createButton( { name: subtype, text: null } );
 			button.clicker.addAttribute( 'data-tooltip', 'Eyedropper' );
 			button.clicker.addAttribute( 'data-tooltip-keys', 'I' );
 			// Register toolbar button action.
@@ -68,7 +166,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 					if ( client.busy() ) return; // app busy‐gate
 					// Check current button action.
 					if ( name===subtype ) {
+						// Switch the active tool to the eyedropper.
 						client.toolbox.setTool( tool ); // enable new tool
+						// Display the Eyedropper's collapsible options panel.
+						client.sidebar.enableSection( subtype );
 						// Activate the menu button
 						client.toolbar.buttons[name].activate(); // toggle button on
 					}
@@ -163,9 +264,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 					//--------------------------------
 					// Block input shortcuts while user is typing.
 					if ( client.io.isTypingInInput() ) return;
-					// Affirm shortcut command is for "draw" tool.
-					if ( command===subtype )
-						client.toolbox.setTool( subtype );
+					// Select the tool and expose its sampling options.
+					if ( command===subtype ) {
+						// Switch the active tool to the eyedropper.
+						client.toolbox.setTool( tool ); // enable new tool
+						// Display the Eyedropper's collapsible options panel.
+						client.sidebar.enableSection( subtype );
+					}
 				});
 
 			// Define keyboard shortcut.
@@ -199,21 +304,34 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 					//-------------------------
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
+					//--------------------------------
+					// Synchronize Clicked Tile
+					//--------------------------------
+					// Refresh the hover sample at the exact click location.
+					// The clicked cell, not an earlier preview, determines
+					// whether this sampling attempt is available.
+					tool.updatePreview( e );
 					//-------------------------
 					// Capture Coordinates
 					//-------------------------
 					// Obtain the mouse click position.
-					const pos	= canvas.mousePos( e );
+					const pos   = canvas.mousePos( e );
 					// Use the units (e.g. tile units).
-					const units	= tool.anchor.units;
+					const units = tool.anchor.units;
 					// Convert mousecick to tile x,y coordinates.
-					const x		= Math.floor( pos.x / units );
-					const y		= Math.floor( pos.y / units );
+					const x     = Math.floor( pos.x / units );
+					const y     = Math.floor( pos.y / units );
+					//--------------------------------
+					// Validate Marquee Availability
+					//--------------------------------
+					// Explain why the paste operation is blocked (if it is).
+					if ( client.alertToolBlocked(tool,'sample the board tile',{x,y}) )
+						return; // abort action
 					//-------------------------
 					// Determine Action & Sample
 					//-------------------------
 					// Proeed to grab tile swatch.
-					const key	= !e.shiftKey ? 'foreground' : 'background';
+					const key   = !e.shiftKey ? 'foreground' : 'background';
 					client.toolEyedropLevelTile( x, y, key );
 				});
 		},
@@ -236,35 +354,60 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 				this.soundboard.playSound( 'jest_flip', 'wav', 1.1 );
 			}
 
-			// Attempts to perform a flood fill action.
-			// RETURNS: [void].
-			// * e	- [object] MouseEvent event listener data.
+			//--------------------------------
+			// Sample Level Tile
+			//--------------------------------
+			// Resolve and sample a tile using Eyedropper's current mode.
+			//
+			// Standard: read the selected layer.
+			// Composite: search the visible hierarchy from top to bottom.
+			//
+			// RETURNS: [boolean] true if a tile was sampled.
+			// * x,y - [int] level tile coordinates.
+			// * key - [string] swatch to update: foreground/background.
 			proto.toolEyedropLevelTile = function( x, y, key ) {
 				//--------------------------------
-				// Validate State & Get Editor [objects]
+				// Validate Level Context
 				//--------------------------------
-				// Check for open view & tool.
-				const state		= this.getState(); // get program state
-				if ( !state?.levelView ) return;
-				// Require level view & level [object].
-				const view		= state.levelView;
-				const level		= view.file.context;
-				const canvas	= this.gameboard.display.getCanvas( 'workspace' );
-				const tool		= this.toolbox.tools.eyedropper;
+				// A level must be open for sampling.
+				const state  = this.getState();
+				const level  = state?.levelView?.file?.context;
+				if ( !level ) return false;
+
 				//--------------------------------
-				// Access Tile Data @ Coordinate
+				// Resolve Eyedropper Tool
 				//--------------------------------
-				// Get tile data @ click location.
-				const tile		= level.getTile( x, y );
-				// If tile sampled, proceed to set the background swatch.
-				if ( tile ) {
-					// Set background swatch.
-					this.toolSetTileSwatch( { tx: tile.tx, ty: tile.ty }, key );
-					// Play sound-effect to signal.
-					this.soundboard.playSound( 'jest_eyedrop', 'wav', 1.3 );
-					// Emit eyedropper sampled event.
-					this.emit( 'tileSampled', null, { x, y, tile, key } );
-				}
+				// Use the same resolver as the hover preview.
+				const tool   = this.toolbox.tools.eyedropper;
+				if ( !tool ) return false;
+
+				//--------------------------------
+				// Resolve Tile and Source Layer
+				//--------------------------------
+				// Retrieve the first eligible occupied tile.
+				const sample = tool.resolveTile( level, x, y );
+				// An empty result cannot be sampled.
+				if ( !sample ) return false;
+				const { tile, layer } = sample;
+
+				//--------------------------------
+				// Update Sampled Swatch
+				//--------------------------------
+				// Preserve the tile's original tileset coordinates.
+				this.toolSetTileSwatch(
+					{ tx: tile.tx, ty: tile.ty }, key );
+
+				// Play the existing Eyedropper confirmation sound.
+				this.soundboard.playSound( 'jest_eyedrop', 'wav', 1.3 );
+
+				//--------------------------------
+				// Emit Successful Sampling Event
+				//--------------------------------
+				// Include the actual source layer for consumers that
+				// may need to identify where the tile originated.
+				this.emit( 'tileSampled', null,
+					{ x, y, tile, key, layerId:layer.id } );
+				return true; // success
 			}
 		}
 	};

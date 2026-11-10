@@ -85,11 +85,22 @@ class OSElement extends OSEventTarget {
 		else this.el.prepend( child );
 	}
 
-	// Remove this element from the DOM
-	// RETURNS: [void]
-	remove( ) {
-		// Attempt to remove the element from the DOM.
-		this.el.remove(); // remove DOM element
+	//--------------------------------
+	// Remove Element From DOM
+	//--------------------------------
+	// Detach an existing element from its parent.
+	// Calling remove again is safe.
+	//--------------------------------
+	// This is not necessarily permanent destruction.
+	// Do not unregister listeners here because elements
+	// may be detached temporarily and subsequently reused.
+	// RETURNS: [boolean] true if an element existed.
+	remove() {
+		// Ignore elements that have already been destroyed.
+		if ( !this.el ) return false;
+		// Detach the existing element from the DOM.
+		this.el.remove(); // remove element
+		return true;      // success
 	}
 
 	// Remove all child elements

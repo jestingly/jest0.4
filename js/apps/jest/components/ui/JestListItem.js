@@ -18,8 +18,6 @@ class JestListItem extends JestElement {
 	data			= null;			// [any] optional payload
 	draggable		= false;		// [bool] wheter item is draggable
 	children		= null;			// [array] list of all children
-	// Item selection & interaction
-	selectedItem	= null;			// [object] selected item
 	// Other list properties
 	folded			= false;		// [bool]
 	isGroup			= false;		// [bool]
@@ -165,13 +163,16 @@ class JestListItem extends JestElement {
 	//-----------------------------
 	// Set Label Text
 	//-----------------------------
+	// Update the dedicated label without modifying
+	// the list item's other child elements.
 	// RETURNS: [void]
 	// * text - [string] new label text
 	setLabel( text ) {
-		// Set the label to the new text.
-		this.label = text; // set label
-		// Set the panel DOM text.
-		this.panel.setText( text );
+		// Store the current label value.
+		this.label = text;
+		// Update only the label panel.
+		// Preserve any other elements belonging to the list item.
+		this.panel.refs.label.setText( text );
 	}
 
 	//-----------------------------

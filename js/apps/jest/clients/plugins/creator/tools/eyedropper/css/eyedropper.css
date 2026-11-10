@@ -1,0 +1,22 @@
+@layer eyedropper {
+	/*==============================================
+	  Eyedropper Plugin Styling
+	==============================================*/
+	.eyedropper-preview {
+		position        : absolute;
+		z-index         : 10000;
+		pointer-events  : none;
+	}
+
+	.eyedropper-preview .contents {
+		border          : 2px solid #ffd84a;
+		border-radius   : 3px;
+		box-shadow      : 0 3px 10px rgba( 0, 0, 0, .65 );
+		overflow        : hidden;
+	}
+
+	.eyedropper-preview canvas {
+		display         : block;
+		image-rendering : pixelated;
+	}
+}

@@ -26,7 +26,9 @@
 <link rel="stylesheet" href="js/apps/jest/clients/css/JestTiler.css">
 <link rel="stylesheet" href="js/apps/jest/clients/css/JestAnimator.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/online/cloud/css/cloud.css">
+<link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/navigation/css/layers.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/swatches/css/swatches.css">
+<link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/eyedropper/css/eyedropper.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/floodfill/css/floodfill.css">
-<link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/flipbook/css/flipbook.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/entities/css/entities.css">
+<link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/flipbook/css/flipbook.css">

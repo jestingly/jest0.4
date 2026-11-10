@@ -81,19 +81,30 @@ class JestToolbox extends JestElement {
 	// * from     – [string|null] active tool to match (null means "any")
 	// * to       – [string|null] tool to switch to (null = don't switch)
 	registerHoldkey( key, from, to ) {
+		//--------------------------------
+		// Validate Argument(s) & Propert(ies)
+		//--------------------------------
 		// Validate argument(s).
 		if ( typeof key!=='string' ) return;
-
 		// Initialize array for key if needed.
 		if ( !Array.isArray(this.holdkeys[key]) )
 			this.holdkeys[key] = [];
 
+		//--------------------------------
+		// Prevent Duplicate / Prepare Override
+		//--------------------------------
 		// Remove existing mapping for this (key, from) pair.
 		this.holdkeys[key] = this.holdkeys[key].filter( entry => entry.from!==from );
 
+		//--------------------------------
+		// Set Holdkey for Tool
+		//--------------------------------
 		// Add updated mapping entry.
 		this.holdkeys[key].push( { from, to } );
 
+		//--------------------------------
+		// Auto-Evaluate if Key Is Held
+		//--------------------------------
 		// If this key is currently held, force re-eval immediately
 		if ( this.heldkey===key ) {
 			const activeName	= this.activeTool?.name;
@@ -191,7 +202,6 @@ class JestToolbox extends JestElement {
 		const keepAlive	= [ ...(tool?._cooptedTools ?? []) ];
 		if ( toolName && !keepAlive.includes(toolName) )
 			keepAlive.push( toolName ); // never auto-disable self
-
 
 		// Iterate all tools and disable those not co-opted
 		for ( const [name,tool] of Object.entries(this.tools) )

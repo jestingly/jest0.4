@@ -11,345 +11,53 @@ console.log( 'jestAlert: js/apps/jest/components/online/auth/JestLogin.js loaded
 // Handles login, registration, logout, and session check.
 // Uses Inquiry + Transmission for server communication.
 // Uses JestModal for UI login form.
-// Emits: 'login', 'logout', 'fail'
+// Emits: 'loggedIn', 'loggedOut', 'fail'
 //-----------------------------
 class JestLogin extends JestElement {
 	// Object properties
-	logged			= false;		// [bool] whether user is logged in or not.
-	user			= null;			// [object|null] Logged-in user (or null)
-	modals			= {};			// [object] JestModal instance
-	parts			= {};			// [object] Login parts.
+	logged    = false;      // [bool] whether user is logged in or not.
+	username  = null;       // [object|null] Logged-in user (or null)
+	modals    = {};         // [object] JestModal instance
+	parts     = {};         // [object] Login parts.
 
 	//-------------------------
 	// Constructor
 	//-------------------------
 	// Create a login manager.
-	// * client		- [object] reference to main CMS controller
-	// * name		- [string] Value of level name (e.g. 'level1').
+	// * client  - [object] reference to main CMS controller
+	// * name    - [string] Value of level name (e.g. 'level1').
 	constructor( client ) {
 		// Call the parent object constructor
-		super( client );			// construct the parent
+		super( client );           // construct the parent
 		// Setup the user account modals.
-		this.initModalLogin();		// create login modal
-		this.initModalSignup();		// create signup modal
-		this.initModalLogout();		// create logout modal
+		this.initModalLogin();     // create login modal
+		this.initModalSignup();    // create signup modal
+		this.initModalLogout();    // create logout modal
 		// Register UI change events.
-		this.register( 'login', null, ()=>this.loggedIn() );
-		this.register( ['unrecognized','logout'], null, ()=>this.loggedOut() );
-	}
-
-	//-------------------------
-	// Initialize Login Modal
-	//-------------------------
-	// Builds the login modal using JestModal to log into an existing account.
-	// RETURNS: [void]
-	initModalLogin() {
-		// Create Modal instance [object].
-		const modal		= new JestModal( this.client );
-		this.modals.login = modal;		// kep ref
-		modal.build( 'modal-login' );	// build the modal
-
-		// Set the title & message of the modal.
-		modal.setTitle( 'Account Login' );
-		modal.setText( 'Enter your username & password.' );
-
-		// Create username field.
-		const username	= modal.addTextfield( 'username', null, '', 'Username', 'Username' );
-		//username.setCaption( '' );
-		username.showCaption();
-		username.panel.reorderChild( username.caption, -1 );
-
-		// Create password field.
-		const password	= modal.addTextfield( 'password', null, '', 'Password', 'Password', 'password' );
-
-		// Create modal button(s).
-		modal.addButton( 'login', 'Log In',
-			() => {
-				// Get username & password from login modal.
-				const username	= this.modals.login.getInputValue( 'username' );
-				const password	= this.modals.login.getInputValue( 'password' );
-				// Attempt to login using username & password.
-				this.login( username, password );
-			});
-		modal.addButton( 'cancel', 'Close', () => modal.close() );
-
-		// Add modal to the DOM & close it.
-		document.body.appendChild( modal.panel.el ); // attach to DOM
-		modal.close(); // close by default
-	}
-
-	// Builds the login modal using JestModal to signup for a new account.
-	// RETURNS: [void]
-	initModalSignup() {
-		// Create Modal instance [object].
-		const modal		= new JestModal( this.client );
-		this.modals.signup = modal;		// kep ref
-		modal.build( 'modal-signup' );	// build the modal
-
-		// Set the title & message of the modal.
-		modal.setTitle( 'Register Account' );
-		modal.setText( 'Fill out each required field.' );
-
-		// Create username field.
-		const username	= modal.addTextfield( 'username', null, '', 'Username', 'Username' );
-		username.setCaption( '<b>3-20 characters</b> • at least <b>1 letter</b> & <b>1 number</b>' );
-		username.showCaption();
-		username.panel.reorderChild( username.caption, -1 );
-
-		// Create email field.
-		const email		= modal.addTextfield( 'email', null, '', 'Email', 'Email' );
-		// Create password field.
-		const password	= modal.addTextfield( 'password', null, '', 'Password', 'Password', 'password' );
-
-		// Create modal button(s).
-		modal.addButton( 'signup', 'Signup', () => this.signup() );
-		modal.addButton( 'cancel', 'Close', () => modal.close() );
-
-		// Add modal to the DOM & close it.
-		document.body.appendChild( modal.panel.el ); // attach to DOM
-		modal.close(); // close by default
-	}
-
-	// Builds the logout modal using JestModal to logout your account session.
-	// RETURNS: [void]
-	initModalLogout() {
-		// Create Modal instance [object].
-		const modal		= new JestModal( this.client );
-		this.modals.logout = modal;		// kep ref
-		modal.build( 'modal-logout' );	// build the modal
-
-		// Set the title & message of the modal.
-		modal.setTitle( 'Logout Account' );
-		modal.setText( `Proceed to logout of your account?` );
-
-		// Create modal button(s).
-		modal.addButton( 'confirm', 'Confirm', () => this.logout() );
-		modal.addButton( 'cancel', 'Cancel', () => modal.close() );
-
-		// Add modal to the DOM & close it.
-		document.body.appendChild( modal.panel.el ); // attach to DOM
-		modal.close(); // close by default
-	}
-
-	//-------------------------
-	// Show Login Modal
-	//-------------------------
-	// Displays the login/signup modal dialog.
-	// RETURNS: [bool] true on success else false.
-	// * name	- [string] Value of modal to show.
-	show( name ) {
-		// Check if modal exists.
-		if ( !this.modals?.[name] ) {
-			console.error( `[JestLogin]: Cannot find modal named ${name}.` );
-			return false; // fail
-		}
-		// Reset all inputs.
-		this.modals[name].resetInputs();
-		// Open the modal.
-		this.modals[name].open();
-		return true; // success
-	}
-
-	//-------------------------
-	// Check Session Modal Action
-	//-------------------------
-	// Verifies if a user is already logged in.
-	// RETURNS: [void]
-	async check() {
-		const url		= `${this.client.config.root}php/includes/auth/check.php`;
-		const inquiry	= new Inquiry( url, 'FETCH', 'POST', 'auth', 'form', null, 'json' );
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
-
-		console.log( result );
-		// Check if the user is already logged in.
-		if ( result?.parsed?.code===200 ) {
-			// Check the user in.
-			this.checkin( result.parsed.data.user.username );
-			// Emit login event.
-			this.emit( 'login', null, this.user );
-		}
-		else {
-			// Set user as not logged.
-			this.checkout();
-			// Emit failed check event.
-			this.emit( 'unrecognized' );
-		}
-	}
-
-	// Check a user in (log them in).
-	checkin( username ) {
-		this.logged	= true;		// logged in
-		this.user	= username;
-	}
-
-	// Check a user out (log them out).
-	checkout() {
-		this.logged	= false;	// logged out
-		this.user	= null;
-	}
-
-	//-------------------------
-	// Log-In Modal Action
-	//-------------------------
-	// Sends a login request using the modal input.
-	// RETURNS: [void]
-	// * username	- [string] Value of username to login with.
-	// * password	- [string] Value of password to login with.
-	async login( username, password ) {
-		console.log( 'loggin');
-		if ( !username || !password ) {
-			console.error( `[JestLogin] Can't login with missing credentials.` );
-			return;
-		}
-		// Build url to call & send a query via transmitter.
-		const url		= `${this.client.config.root}php/includes/auth/login.php`;
-		const inquiry	=
-			new Inquiry(
-				url, 'login', 'POST', 'auth', 'form',
-				{ username, password }, 'json'
-				);
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
-
-		console.log( result );
-		// Check if the user successfully logged in.
-		if ( result?.parsed?.code===200 ) {
-			// Check the user in.
-			this.checkin( result.parsed.data.user.username );
-			// Close the modal.
-			this.modals.login.close();
-			// Emit login event.
-			this.emit( 'login', null, this.user );
-		}
-		else {
-			// Set user as not logged.
-			this.checkout();
-			// Alert the user.
-			alert( result?.parsed?.message || 'Login failed.' );
-			// Emit login fail event.
-			this.emit( 'fail', null, result?.parsed?.error );
-		}
-	}
-
-	//-------------------------
-	// Create Account Modal Action
-	//-------------------------
-	// Sends a registration request using modal inputs.
-	// RETURNS: [void]
-	async signup() {
-		console.log( 'signup');
-		const username	= this.modals.signup.getInputValue( 'username' );
-		const email		= this.modals.signup.getInputValue( 'email' );
-		const password	= this.modals.signup.getInputValue( 'password' );
-		const url		= `${this.client.config.root}php/includes/auth/signup.php`;
-		const inquiry	=
-			new Inquiry(
-				url, 'signup', 'POST', 'auth', 'form',
-				{ username, email, password }, 'json'
-				);
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
-
-		console.log( result );
-		// Check if the user successfully registered account.
-		if ( result?.parsed?.code===200 ) {
-			// Close signup modal.
-			this.modals.signup.close();
-			// Get username & password from signup modal.
-			const username	= this.modals.signup.getInputValue( 'username' );
-			const password	= this.modals.signup.getInputValue( 'password' );
-			// Attempt to login using username & password.
-			this.login( username, password ); // auto-login after registration
-		}
-		else {
-			// Set user as not logged.
-			this.checkout();
-			// Alert the user.
-			alert( result?.parsed?.message || 'Registration failed.' );
-			// Emit failed signup event.
-			this.emit( 'fail', null, result?.parsed?.error );
-		}
-	}
-
-	//-------------------------
-	// Logout Modal Action
-	//-------------------------
-	// Sends logout request to server.
-	// RETURNS: [void]
-	async logout() {
-		const url		= `${this.client.config.root}php/includes/auth/logout.php`;
-		const inquiry	=
-			new Inquiry(
-				url, 'logout', 'POST', 'auth', 'form', null, 'json'
-				);
-		const result = await this.client.transmitter.sendInquiry( inquiry );
-
-		console.log( result );
-		// Check if the user successfully logged out.
-		if ( result?.parsed?.code===200 ) {
-			// Set user as not logged.
-			this.checkout();
-			// Close the logout modal.
-			this.modals.logout.close();
-			// Emit logged out event.
-			this.emit( 'logout' );	// emit event
-		}
-	}
-
-	//-------------------------
-	// Login/Logout UI Change
-	//-------------------------
-	// When a user is logged in, this helper method is called to change UI.
-	// RETURNS: [void]
-	loggedIn() {
-		// Show logged in display.
-		this.badge.refs.username.setText( this.user ); // display username
-		this.badge.refs["ico_profile"].show();	// show profile icon
-		this.badge.refs["username"].show();		// show username
-		this.badge.refs["separator1"].show();	// show separator
-		this.badge.refs["ico_lock"].show();		// show lock icon
-		this.badge.refs["logout"].show();		// show logout button
-		this.badge.refs["ico_key"].hide();		// hide lock icon
-		this.badge.refs["separator2"].hide();	// hide separator
-		this.badge.refs["login"].hide();		// hide login button
-		this.badge.refs["separator2"].hide();	// hide separator
-		this.badge.refs["signup"].hide();		// hide signup button
-		// Emit UI change event.
-		this.emit( 'ui:login' ); // emit event
-	}
-
-	// When a user is logged out, this helper method is called to change UI.
-	// RETURNS: [void]
-	loggedOut() {
-		// Show logged in display.
-		this.badge.refs.username.setText( this.user ); // display username
-		this.badge.refs["ico_profile"].hide();	// hide profile icon
-		this.badge.refs["username"].hide();		// hide username
-		this.badge.refs["separator1"].hide();	// hide separator
-		this.badge.refs["ico_lock"].hide();		// hide lock icon
-		this.badge.refs["logout"].hide();		// hide logout button
-		this.badge.refs["ico_key"].show();		// show lock icon
-		this.badge.refs["login"].show();		// show login button
-		this.badge.refs["separator2"].show();	// show separator
-		this.badge.refs["signup"].show();		// show signup button
-		// Emit UI change event.
-		this.emit( 'ui:logout' ); // emit event
+		this.register( 'loggedIn', null, ()=>this.loggedIn() );
+		this.register(
+			['unrecognized','loggedOut'], null,
+			() => this.loggedOut()
+			);
 	}
 
 	//-------------------------
 	// Create Login Part(s)
 	//-------------------------
 	// Generate the top right login-badge.
-	// RETURNS: [void]
-	buildBadge() {
+	// RETURNS: [void].
+	build() {
 		// --------------------------------
 		// Create User Login UI
 		// --------------------------------
 		// Create a brand logo inside the system bar.
-		const badge		= this.client.panel.refs.system.refs.topright.createPanel({
-			name       : 'jestUser',
-			tag        : 'div',
-			classes    : ['jest-username-badge']
-			});
-		this.badge		= badge; // keep ref
+		const badge =
+			new Panel({
+				name    : 'login',
+				tag     : 'div',
+				classes : ['jest-username-badge']
+				});
+		this.badge  = badge; // keep ref
 		badge.addElements([
 			{
 				name       : 'ico_profile',
@@ -505,5 +213,421 @@ class JestLogin extends JestElement {
 			]);
 		// Hide user badge by default.
 		//badge.hide(); // hide badge
+	}
+
+	//-------------------------
+	// Initialize Login Modal
+	//-------------------------
+	// Builds the login modal using JestModal to log into an existing account.
+	// RETURNS: [void]
+	initModalLogin() {
+		// Create Modal instance [object].
+		const modal    = new JestModal( this.client );
+		this.modals.login = modal;     // kep ref
+		modal.build( 'modal-login' );  // build the modal
+
+		// Set the title & message of the modal.
+		modal.setTitle( 'Account Login' );
+		modal.setText( 'Enter your username & password.' );
+
+		// Create username field.
+		const username = modal.addTextfield( 'username', null, '', 'Username', 'Username' );
+		//username.setCaption( '' );
+		username.showCaption();
+		username.panel.reorderChild( username.caption, -1 );
+
+		// Create password field.
+		const password = modal.addTextfield( 'password', null, '', 'Password', 'Password', 'password' );
+		//password.setCaption( '' );
+		password.showCaption();
+		password.panel.reorderChild( password.caption, -1 );
+
+		// Create modal button(s).
+		modal.addButton( 'login', 'Log In',
+			() => {
+				// Get username & password from login modal.
+				const username = this.modals.login.getInputValue( 'username' );
+				const password = this.modals.login.getInputValue( 'password' );
+				// Attempt to login using username & password.
+				this.login( username, password );
+			});
+		modal.addButton( 'cancel', 'Close', () => modal.close() );
+
+		// Add modal to the DOM & close it.
+		document.body.appendChild( modal.panel.el ); // attach to DOM
+		modal.close(); // close by default
+	}
+
+	// Builds the login modal using JestModal to signup for a new account.
+	// RETURNS: [void]
+	initModalSignup() {
+		// Create Modal instance [object].
+		const modal    = new JestModal( this.client );
+		this.modals.signup = modal;		// kep ref
+		modal.build( 'modal-signup' );	// build the modal
+
+		// Set the title & message of the modal.
+		modal.setTitle( 'Register Account' );
+		modal.setText( 'Fill out each required field.' );
+		modal.setNotice( '' );
+
+		// Create username field.
+		const username = modal.addTextfield( 'username', null, '', 'Username', 'Username' );
+		username.setCaption( '<b>3-20 characters</b> • at least <b>1 letter</b> & <b>1 number</b>' );
+		username.showCaption();
+		username.panel.reorderChild( username.caption, -1 );
+
+		// Create email field.
+		const email    = modal.addTextfield( 'email', null, '', 'Email', 'Email' );
+		email.setCaption( '<b>valid e-mail address</b>' );
+		email.showCaption();
+		email.panel.reorderChild( email.caption, -1 );
+
+		// Create password field.
+		const password = modal.addTextfield( 'password', null, '', 'Password', 'Password', 'password' );
+		password.setCaption( '<b>6 characters</b> • at least <b>1 letter</b> & <b>1 number</b>' );
+		password.showCaption();
+		password.panel.reorderChild( password.caption, -1 );
+
+		// Create modal button(s).
+		modal.addButton( 'signup', 'Signup', () => this.signup() );
+		modal.addButton( 'cancel', 'Close', () => modal.close() );
+
+		// Add modal to the DOM & close it.
+		document.body.appendChild( modal.panel.el ); // attach to DOM
+		modal.close(); // close by default
+	}
+
+	// Builds the logout modal using JestModal to logout your account session.
+	// RETURNS: [void]
+	initModalLogout() {
+		// Create Modal instance [object].
+		const modal   = new JestModal( this.client );
+		this.modals.logout = modal;    // kep ref
+		modal.build( 'modal-logout' ); // build the modal
+
+		// Set the title & message of the modal.
+		modal.setTitle( 'Logout Account' );
+		modal.setText( `Proceed to logout of your account?` );
+
+		// Create modal button(s).
+		modal.addButton( 'confirm', 'Confirm', () => this.logout() );
+		modal.addButton( 'cancel', 'Cancel', () => modal.close() );
+
+		// Add modal to the DOM & close it.
+		document.body.appendChild( modal.panel.el ); // attach to DOM
+		modal.close(); // close by default
+	}
+
+	//-------------------------
+	// Show Login Modal
+	//-------------------------
+	// Displays the login/signup modal dialog.
+	// RETURNS: [bool] true on success else false.
+	// * name	- [string] Value of modal to show.
+	show( name ) {
+		// Check if modal exists.
+		if ( !this.modals?.[name] ) {
+			console.error( `[JestLogin]: Cannot find modal named ${name}.` );
+			return false; // fail
+		}
+		// Reset all inputs.
+		this.modals[name].resetInputs();
+		// Open the modal.
+		this.modals[name].open();
+		return true; // success
+	}
+
+	//-------------------------
+	// Check Session Modal Action
+	//-------------------------
+	// Verify whether a user has a live login session on the server.
+	// RETURNS: [void]
+	async checkLoginSession() {
+		// Request the server for existing login session.
+		const url     = `${this.client.config.root}php/includes/auth/check.php`;
+		const inquiry = new Inquiry( url, 'FETCH', 'POST', 'auth', 'form', null, 'json' );
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
+		console.log( result );
+
+		// Check if the user is already logged in.
+		if ( result?.parsed?.code===200 ) {
+			// Check the user in.
+			this.checkin( result.parsed.data.user.username );
+			// Emit login event.
+			this.emit( 'loggedIn', null, this.username );
+		}
+		else {
+			// Set user as not logged.
+			this.checkout();
+			// Emit failed check event.
+			this.emit( 'unrecognized' );
+		}
+	}
+
+	// Determine if a user is already verified as logged in.
+	// RETURNS: [void]
+	isLoggedIn() { return this.logged; }
+
+	// Check a user in (log them in).
+	checkin( username ) {
+		// Log the user in.
+		this.logged   = true;     // logged in
+		this.username = username; // store username
+	}
+
+	// Check a user out (log them out).
+	checkout() {
+		this.logged   = false;    // logged out
+		this.username = null;     // clear username
+	}
+
+	//-------------------------
+	// Log-In Modal Action
+	//-------------------------
+	// Sends a login request using the modal input.
+	// RETURNS: [void]
+	// * username  - [string] Value of username to login with.
+	// * password  - [string] Value of password to login with.
+	async login( username, password ) {
+		console.log( 'logging in...' );
+		if ( !username || !password ) {
+			alert( `Please enter a valid username & password.` );
+			console.error( `[JestLogin] Can't login with missing credentials.` );
+			return;
+		}
+		// Build url to call & send a query via transmitter.
+		const url     = `${this.client.config.root}php/includes/auth/login.php`;
+		const inquiry =
+			new Inquiry(
+				url, 'login', 'POST', 'auth', 'form',
+				{ username, password }, 'json'
+				);
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
+		console.log( result );
+
+		// Check if the user successfully logged in.
+		if ( result?.parsed?.code===200 ) {
+			// Check the user in.
+			this.checkin( result.parsed.data.user.username );
+			// Emit login event.
+			this.emit( 'loggedIn', null, this.username );
+			// Close the modal.
+			this.modals.login.close();
+		}
+		else {
+			// Set user as not logged.
+			this.checkout();
+			// Alert the user.
+			this.modals.login.setNotice( result?.parsed?.message );
+			const fieldNames     = [ 'username', 'password' ];
+			const hasFieldNotice =
+				this.applyFieldNotices(
+					this.modals.login, fieldNames,
+					result?.parsed?.data );
+			// Use an alert only for a failure that did
+			// not include field-specific feedback.
+			if ( !hasFieldNotice )
+				alert( result?.parsed?.message || 'Login failed.' );
+			// Emit login fail event.
+			this.emit( 'loginFail', null, result?.parsed?.message );
+		}
+	}
+
+	//-------------------------
+	// Apply Field Notices
+	//-------------------------
+	// Apply server-side errors to their matching field captions.
+	// Clear captions when a field has no error in the current response.
+	// RETURNS: [bool] True if at least one field error was displayed.
+	// * modal      - [object] JestModal containing the fields to update.
+	// * fieldNames - [array] Names of fields to check in the modal and response.
+	// * data       - [object] Parsed response data, keyed by field name.
+	applyFieldNotices( modal, fieldNames, data ) {
+		// Track whether any field error was displayed.
+		let hasFieldError   = false;
+
+		// Update each field so old errors do not remain after a new response.
+		for ( const fieldName of fieldNames ) {
+			// Get the field from the modal.
+			const field     = modal.getField( fieldName );
+
+			// Skip this name when the modal does not contain the field.
+			if ( !field ) continue;
+
+			// Get the server response for this field.
+			const fieldData = data?.[fieldName];
+
+			// Only use the notice when the server marked this field as an error.
+			const isError   = fieldData?.status==='error';
+			const notice    =
+				isError && typeof fieldData.notice==='string'
+					? fieldData.notice : '';
+
+			// Set the current error notice or clear a previous caption.
+			field.setCaption( notice );
+
+			// Record whether this field displayed an error.
+			if ( notice )
+				hasFieldError = true;
+		}
+
+		// Return whether any field displayed an error notice.
+		return hasFieldError;
+	}
+
+	// --------------------------------
+	// Reusable Login Requirement
+	// --------------------------------
+	// Check the current login state and explain why authentication is needed.
+	// RETURNS: [boolean] True when the requested action may continue.
+	// * options.action		- [string] Short action name shown in the notice.
+	// * options.description	- [string] Optional explanation for the user.
+	// * options.prompt		- [boolean] Whether to open the login prompt immediately.
+	requireLogin( {
+		action      = 'continue',
+		description = '',
+		prompt      = false
+		} = {} ) {
+		// Allow the action when the current login state is authenticated.
+		if ( this.logged===true ) return true; // logged in
+
+		// Build a useful message for the action the user attempted.
+		const text =
+			description
+				? `Log in to ${action}. ${description}`
+				: `Log in to ${action}.`;
+
+		// Keep a reference to the login controller for the notification button.
+		const login = this;
+		// Explain the blocked action and offer a direct route to login.
+		this.client.noticer.notify({
+			text     : text,
+			icon     : `${this.client.config.root}/images/icons/sm_profile.png`,
+			duration : 8000,
+			buttons  :
+				[{
+				label : 'Log In',
+				click : () => login.show( 'login' )
+				}]
+			});
+
+		// Open the login prompt immediately when the caller requests it.
+		if ( prompt ) this.show( 'login' );
+		// Tell the caller to stop; it can be retried after login.
+		return false; // logged out
+	};
+
+	//-------------------------
+	// Create Account Modal Action
+	//-------------------------
+	// Sends a registration request using modal inputs.
+	// RETURNS: [void]
+	async signup() {
+		console.log( 'signup');
+		const username = this.modals.signup.getInputValue( 'username' );
+		const email    = this.modals.signup.getInputValue( 'email' );
+		const password = this.modals.signup.getInputValue( 'password' );
+		const url      = `${this.client.config.root}php/includes/auth/signup.php`;
+		const inquiry  =
+			new Inquiry(
+				url, 'signup', 'POST', 'auth', 'form',
+				{ username, email, password }, 'json'
+				);
+		const result   = await this.client.transmitter.sendInquiry( inquiry );
+		console.log( result );
+
+		// Check if the user successfully registered account.
+		if ( result?.parsed?.code===200 ) {
+			// Close signup modal.
+			this.modals.signup.close();
+			// Get username & password from signup modal.
+			const username = this.modals.signup.getInputValue( 'username' );
+			const password = this.modals.signup.getInputValue( 'password' );
+			// Automatically attempt to login using username & password.
+			this.login( username, password ); // auto-login after registration
+		}
+		else {
+			// Set user as not logged.
+			this.checkout();
+			// Alert the user.
+			this.modals.signup.setNotice( result?.parsed?.message );
+			const fieldNames     = [ 'username', 'email', 'password' ];
+			const hasFieldNotice =
+				this.applyFieldNotices(
+					this.modals.signup, fieldNames,
+					result?.parsed?.data );
+			// Use an alert only for a failure that did
+			// not include field-specific feedback.
+			if ( !hasFieldNotice )
+				alert( result?.parsed?.message || 'Registration failed.' );
+			// Emit failed signup event.
+			this.emit( 'signupFail', null, result?.parsed?.message );
+		}
+	}
+
+	//-------------------------
+	// Logout Modal Action
+	//-------------------------
+	// Sends logout request to server.
+	// RETURNS: [void]
+	async logout() {
+		const url     = `${this.client.config.root}php/includes/auth/logout.php`;
+		const inquiry =
+			new Inquiry(
+				url, 'loggedOut', 'POST', 'auth', 'form', null, 'json'
+				);
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
+		console.log( result );
+
+		// Check if the user successfully logged out.
+		if ( result?.parsed?.code===200 ) {
+			// Set user as not logged.
+			this.checkout();
+			// Close the logout modal.
+			this.modals.logout.close();
+			// Emit logged out event.
+			this.emit( 'loggedOut' );	// emit event
+		}
+	}
+
+	//-------------------------
+	// Login/Logout UI Change
+	//-------------------------
+	// When a user is logged in, this helper method is called to change UI.
+	// RETURNS: [void]
+	loggedIn() {
+		// Show logged in display.
+		this.badge.refs.username.setText( this.username ); // display username
+		this.badge.refs["ico_profile"].show(); // show profile icon
+		this.badge.refs["username"].show();    // show username
+		this.badge.refs["separator1"].show();  // show separator
+		this.badge.refs["ico_lock"].show();    // show lock icon
+		this.badge.refs["logout"].show();      // show logout button
+		this.badge.refs["ico_key"].hide();     // hide lock icon
+		this.badge.refs["separator2"].hide();  // hide separator
+		this.badge.refs["login"].hide();       // hide login button
+		this.badge.refs["separator2"].hide();  // hide separator
+		this.badge.refs["signup"].hide();      // hide signup button
+		// Emit UI change event.
+		this.emit( 'ui:login' ); // emit event
+	}
+
+	// When a user is logged out, this helper method is called to change UI.
+	// RETURNS: [void]
+	loggedOut() {
+		// Show logged in display.
+		this.badge.refs.username.setText( this.username ); // display username
+		this.badge.refs["ico_profile"].hide(); // hide profile icon
+		this.badge.refs["username"].hide();    // hide username
+		this.badge.refs["separator1"].hide();  // hide separator
+		this.badge.refs["ico_lock"].hide();    // hide lock icon
+		this.badge.refs["logout"].hide();      // hide logout button
+		this.badge.refs["ico_key"].show();     // show lock icon
+		this.badge.refs["login"].show();       // show login button
+		this.badge.refs["separator2"].show();  // show separator
+		this.badge.refs["signup"].show();      // show signup button
+		// Emit UI change event.
+		this.emit( 'ui:logout' ); // emit event
 	}
 }

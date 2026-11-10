@@ -71,6 +71,14 @@
 		text-align      : center;
 	}
 
+	.modal-notice {
+		font-size       : 12px;
+		font-weight     : bold;
+		color           : #555;
+	    margin          : 0;
+		text-align      : center;
+	}
+
 	.modal-input {
 		margin-top      : 6px;
 	}

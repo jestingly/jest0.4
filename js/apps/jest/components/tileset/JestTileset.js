@@ -176,17 +176,17 @@ class JestTileset extends JestSavable {
 		// Determine if image is loaded.
 		if ( !this.image?.file?.el ) return null;
 		// Determine the size of one tile in pixels
-		const units		= this.client.config.tileGrid;
+		const units	= this.client.config.tileGrid;
 		// Create a brand‐new ElementCanvas for this single tile
-		const canvas	= new ElementCanvas();
+		const canvas = new ElementCanvas();
 		canvas.resize( units, units ); // Canvas dims = units×units
 		// Grab the 2D drawing context from the new canvas
-		const ctx		= canvas.el.getContext( '2d' );
+		const ctx	= canvas.el.getContext( '2d' );
 		// Compute source coordinates in the tileset image:
 		//   sx = tile column × tile‐pixel‐size
 		//   sy = tile row    × tile‐pixel‐size
-		const sx		= x * units;
-		const sy		= y * units;
+		const sx	= x * units;
+		const sy	= y * units;
 		// Draw requested tile from tileset.image at (0,0) of canvas.
 		ctx.drawImage(
 			this.image.file.el,		// source image element
@@ -240,21 +240,21 @@ class JestTileset extends JestSavable {
 		// Determine if image is loaded.
 		if ( !this.image?.file?.el ) return null;
 		// Get tile units.
-		let units		= this.client.config.tileGrid;
+		let units	= this.client.config.tileGrid;
 		// Determine width & height of the matrix
-		let width		= matrix[0].length * units;
-		let height		= matrix.length * units;
-		const ctx		= canvas.el.getContext('2d');
+		let width	= matrix[0].length * units;
+		let height	= matrix.length * units;
+		const ctx	= canvas.el.getContext('2d');
 		// Iterate tile(s) in matrix & generate stamp
 		matrix.forEach(
 			( row, ly ) => {
 				row.forEach(
 					( tile, lx ) => {
 						// Define sprite x,y of tile & destination + width/hegith
-						let sx		= tile.tx * units;		// Source X in tileset
-						let sy		= tile.ty * units;		// Source Y in tileset
-						let dx		= lx * units;			// Destination X in pixels
-						let dy		= ly * units;			// Destination Y in pixels
+						let sx	= tile.tx * units;		// Source X in tileset
+						let sy	= tile.ty * units;		// Source Y in tileset
+						let dx	= lx * units;			// Destination X in pixels
+						let dy	= ly * units;			// Destination Y in pixels
 						// Draw the tile on the map
 						ctx.drawImage( this.image.file.el, sx, sy, units, units, dx, dy, units, units );
 					});
@@ -267,10 +267,10 @@ class JestTileset extends JestSavable {
 	// * matrix		- 2d [array] matrix to convert into a stamp.
 	createStamp( matrix ) {
 		// Create a new temporary ElementCanvas for the region
-		const stamp		= new ElementCanvas();
-		const units		= this.client.config.tileGrid;
-		const w	= matrix[0].length,	// width
-			  h	= matrix.length;	// height
+		const stamp = new ElementCanvas();
+		const units = this.client.config.tileGrid;
+		const w     = matrix[0].length,   // width
+			  h     = matrix.length;      // height
 		stamp.resize( w*units, h*units ); // resize canvas to matrix dimensions
 		// Draw the matrix bitmap on the stamp.
 		this.deboss( stamp, matrix );
@@ -288,11 +288,11 @@ class JestTileset extends JestSavable {
 		// Determine if image is loaded.
 		if ( !this.image?.file?.el ) return null;
 		// Get tile units.
-		let units		= this.client.config.tileGrid;
+		let units   = this.client.config.tileGrid;
 		// Determine width & height of the matrix
-		let width		= matrix[0].length * units;
-		let height		= matrix.length * units;
-		const ctx		= canvas.el.getContext('2d');
+		let width   = matrix[0].length * units;
+		let height  = matrix.length * units;
+		const ctx   = canvas.el.getContext('2d');
 		// Iterate tile(s) in matrix & generate stamp
 		matrix.forEach(
 			( row, ly ) => {
@@ -301,12 +301,18 @@ class JestTileset extends JestSavable {
 						// Skip empty tile(s).
 						if ( tile===null ) return;
 						// Define sprite x,y of tile & destination + width/hegith
-						let sx		= tile.tx * units;		// Source X in tileset
-						let sy		= tile.ty * units;		// Source Y in tileset
-						let dx		= lx * units;			// Destination X in pixels
-						let dy		= ly * units;			// Destination Y in pixels
+						let sx = tile.tx * units;   // Source X in tileset
+						let sy = tile.ty * units;   // Source Y in tileset
+						let dx = lx * units;        // Destination X in pixels
+						let dy = ly * units;        // Destination Y in pixels
 						// Draw the tile on the map
-						ctx.drawImage( this.image.file.el, sx, sy, units, units, dx, dy, units, units );
+						ctx.drawImage(
+							this.image.file.el,
+							sx, sy,
+							units, units,
+							dx, dy,
+							units, units
+							);
 					});
 			});
 		return true; // success
@@ -339,7 +345,7 @@ class JestTileset extends JestSavable {
 		//-------------------------
 		const matrix	= [];
 		for ( let y=0; y<height; y++ ) {
-			const row = [];
+			const row	= [];
 			for ( let x=0; x<width; x++ ) {
 				const tile = this.cloneTile( tx+x, ty+y );
 				row.push( tile );

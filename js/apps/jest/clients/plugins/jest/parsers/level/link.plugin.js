@@ -47,14 +47,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 						return i + 1;
 					}
 
-					const link = {
-						level	: tokens[1],
-						x		: parseFloat( tokens[2] ),
-						y		: parseFloat( tokens[3] ),
-						w		: parseFloat( tokens[4] ),
-						h		: parseFloat( tokens[5] ),
-						dx		: tokens[6]==='playerx' ? 'playerx' : parseFloat( tokens[6] ),
-						dy		: tokens[7]==='playery' ? 'playery' : parseFloat( tokens[7] )
+					//--------------------------------
+					// Decode LINK Properties
+					//--------------------------------
+					// Decode the destination level name.
+					// Convert coordinates and dimensions into numeric values.
+					// Preserve special player-position keywords.
+					const link =
+						{
+						level : ctx.client.decodeWhitespace( tokens[1] ),
+						x     : Number( tokens[2] ),
+						y     : Number( tokens[3] ),
+						w     : Number( tokens[4] ),
+						h     : Number( tokens[5] ),
+						dx    : tokens[6]==='playerx' ? 'playerx' : Number(tokens[6]),
+						dy    : tokens[7]==='playery' ? 'playery' : Number(tokens[7])
 						};
 
 					// Decode whitespace (for file parsing integrity)
@@ -76,15 +83,28 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 				subtype,
 				function( ctx, links=[] ) {
 					const lines = [];
-					// Iterate each link object & parse its data.
+					//--------------------------------
+					// Encode LINK Properties
+					//--------------------------------
+					// Encode only the destination level name.
+					// Normalize coordinates and dimensions as numbers.
 					for ( const item of links ) {
-						// Encode whitespace (for file parsing integrity)
-						const encode = [ 'level', 'x', 'y', 'w', 'h', 'dx', 'dy' ];
-						let out = { ...item.data };
-						for ( const key of encode )
-							out[key] = ctx.client.encodeWhitespace( out[key] );
-						// Required fields: target, x, y, w, h
-						lines.push( `LINK ${out.level} ${out.x} ${out.y} ${out.w} ${out.h} ${out.dx} ${out.dy}` );
+						// Retrieve the link data.
+						const link  = item.data ?? item;
+
+						// Encode text and normalize numeric properties.
+						const level = ctx.client.encodeWhitespace( link.level );
+						const x     = Number( link.x );
+						const y     = Number( link.y );
+						const w     = Number( link.w );
+						const h     = Number( link.h );
+
+						// Preserve special player-position keywords.
+						const dx    = link.dx==='playerx' ? 'playerx' : Number( link.dx );
+						const dy    = link.dy==='playery' ? 'playery' : Number( link.dy );
+
+						// Append the LINK record.
+						lines.push( `LINK ${level} ${x} ${y} ${w} ${h} ${dx} ${dy}` );
 					}
 					// Add LINK line.
 					return lines;

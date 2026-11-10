@@ -110,7 +110,7 @@ class OSCallback extends OSConfigurable {
 			this.handlers[command] = [];
 		// Prevent duplicate ID registration under same command.
 		if ( this.handlers[command].some(handler=>handler.id===id) ) {
-			console.warn( `Callback with ID "${id}" is already registered for event "${command}".` );
+			console.error( `Callback with ID "${id}" is already registered for event "${command}".` );
 			return false; // failed
 		}
 		// Bind & store the handler.
@@ -133,19 +133,26 @@ class OSCallback extends OSConfigurable {
 	// • Useful for resetting state or cleanup before teardown.
 	// RETURNS: [int] Number of unregistered callbacks.
 	unregisterAll() {
-		// Ensure handlers exist
-		if ( !this.handlers || typeof this.handlers !== 'object' ) return 0;
+		//--------------------------------
+		// Validate Registered Handlers
+		//--------------------------------
+		// No callbacks means no cleanup is necessary.
+		if ( !this.handlers ) return 0;
 		let count = 0; // track number of removed handlers
 
-		// Iterate every command in handler set
-		for ( const command in this.handlers ) {
-			if ( Array.isArray(this.handlers[command]) ) {
-				count += this.handlers[command].length;
+		//--------------------------------
+		// Detach Each Registered Listener
+		//--------------------------------
+		// Iterate over snapshots because unregister() modifies
+		// the underlying handler collections.
+		for ( const [command, handlers] of Object.entries(this.handlers) ) {
+			for ( const handler of [...handlers] ) {
+				// Let OSEventTarget.unregister() remove the
+				// native listener before clearing its callback.
+				this.unregister( command, handler.id );
+				count++;
 			}
 		}
-
-		// Completely clear the object
-		this.handlers = {};
 
 		// Return total number of handlers removed
 		return count;

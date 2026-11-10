@@ -30,11 +30,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					client.tabbarFile.panel.reorderChild( button.panel, -1 )
 					// Handle active level change.
 					client.tabbarFileChange( nextView, prevView, action );
-					// Select file browser list item by cloud id.
-					if ( nextView!==null ) {
-						const id	= Number( nextView.file.context?.meta?.cloud_id );
-						client.cloud.fileViewer.listView.selectItemByValue( 'id', id );
-					}
 				});
 
 			// Listener when a tab is closed.

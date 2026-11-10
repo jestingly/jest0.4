@@ -53,12 +53,12 @@
 		overflow       : auto;
 	}
 
-	.jest-creator-interface .toolbar.interactor {
+	.jest-creator-interface .toolbar.actionbar {
 		flex-direction : row !important;
 	}
 
-	.jest-creator-interface .toolbar.interactor button.disabled,
-	.jest-creator-interface .toolbar.interactor button:hover.disabled {
+	.jest-creator-interface .toolbar.actionbar button.disabled,
+	.jest-creator-interface .toolbar.actionbar button:hover.disabled {
 		background     : #333;
 		color          : #888;
 	}
@@ -326,7 +326,7 @@
 		flex-wrap      : wrap;
 	}
 
-	.jest-viewport-creator .menu.interactor {
+	.jest-viewport-creator .menu.actionbar {
 		background     : var(--brand-black);
 	}
 

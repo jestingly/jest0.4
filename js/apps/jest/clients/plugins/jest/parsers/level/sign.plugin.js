@@ -35,6 +35,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 
 		// Extend the client class.
 		extend: function( Klass, proto ) {
+			//-------------------------
+			// Decode NPC Block
+			//-------------------------
 			// Method to decode CLOUD block data regions from a level file.
 			Klass.registerKeywordParser(
 				subtype,
@@ -46,11 +49,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 						return i+1;
 					}
 
-					const x		= parseFloat( tokens[1] );
-					const y		= parseFloat( tokens[2] );
-					const w		= tokens.length>3 ? parseFloat(tokens[3]) : 2;
-					const h		= tokens.length>4 ? parseFloat(tokens[4]) : 1;
-					const name	= tokens.length>5 ? tokens[5] : 'sign';
+					//--------------------------------
+					// Decode SIGN Properties
+					//--------------------------------
+					// Parse numeric properties explicitly.
+					// Decode the name as a single whitespace-safe token.
+					const x    = Number( tokens[1] );
+					const y    = Number( tokens[2] );
+					const w    = tokens.length>3 ? Number(tokens[3]) : 2;
+					const h    = tokens.length>4 ? Number(tokens[4]) : 1;
+					const name = tokens.length>5 ? ctx.client.decodeWhitespace(tokens[5]) : 'sign';
 
 					// Read multiline dialog until SIGNEND
 					let dialogLines = [];
@@ -62,15 +70,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 					if ( i<lines.length && lines[i].trim()===`${subtype}END` ) i++; // skip SIGNEND
 
 					// Generate sign data & push into "signs" stack.
-					const sign	= {
+					const sign	=
+						{
 						x, y, w, h, name,
 						dialog: dialogLines.join('\n')
 						};
-
-					// Decode whitespace for compatibility
-					const decode = [ 'x', 'y', 'w', 'h', 'name' ];
-					for ( const key of decode )
-						sign[key] = ctx.client.decodeWhitespace( sign[key] );
 
 					// Push into result
 					const key = subtype.toLowerCase(); // "sign"
@@ -79,26 +83,41 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 					return i;
 				});
 
+			//-------------------------
+			// Encode NPC Block
+			//-------------------------
 			// Register SIGN encoder
 			Klass.registerKeywordEncoder(
 				subtype,
 				function( ctx, signs=[] ) {
 					const lines = [];
-					// Iterate each sign object & parse its data.
+					//--------------------------------
+					// Encode SIGN Properties
+					//--------------------------------
+					// Normalize numeric fields and encode the name.
 					for ( const item of signs ) {
-						// Encode whitespace (for file parsing integrity)
-						const encode	= [ 'x', 'y', 'w', 'h', 'name' ];
-						let sign		= { ...item.data };
-						for ( const key of encode )
-							sign[key]	= ctx.client.encodeWhitespace( sign[key] );
-						// Header (coordinates, dimensions, name)
-						lines.push( `${subtype} ${sign.x} ${sign.y} ${sign.w} ${sign.h} ${sign.name}` );
-						// Dialog
+						// Retrieve the sign data.
+						const sign = item.data ?? item;
+
+						// Normalize coordinate and dimension values.
+						const x    = Number( sign.x );
+						const y    = Number( sign.y );
+						const w    = Number( sign.w );
+						const h    = Number( sign.h );
+
+						// Encode the name as one whitespace-safe token.
+						const name = ctx.client.encodeWhitespace( sign.name ?? 'sign' );
+
+						// Append the SIGN header.
+						lines.push( `${subtype} ${x} ${y} ${w} ${h} ${name}` );
+
+						// Preserve multiline dialog text.
 						if ( sign.dialog ) {
 							const dialogLines = sign.dialog.split( /\r?\n/ );
 							lines.push( ...dialogLines );
 						}
-						// Terminator
+
+						// Close the SIGN block.
 						lines.push( `${subtype}END` );
 					}
 					// Return encoded line(s).

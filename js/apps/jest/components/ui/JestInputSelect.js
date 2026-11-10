@@ -203,7 +203,7 @@ class JestInputSelect extends JestInput {
 		//--------------------------------
 		// Move DOM element inside select box.
 		return this._moveOptionTo( opt, newIndex );
-		return true; // success
+		//return true; // success
 	}
 
 	//--------------------------------

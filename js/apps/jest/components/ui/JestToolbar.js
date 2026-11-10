@@ -46,15 +46,24 @@ class JestToolbar extends JestMenu {
 	// RETURNS: [object] JestButton or [null] on fail.
 	// * action		- [object] Value of action to create a button for.
 	createButton( action ) {
+		//-----------------------------
+		// Sanity Check
+		//-----------------------------
 		// Determine if action has been previously processed.
 		if ( action.name in this.buttons ) {
 			console.warn( `Button with action key "${action.name}" already exists.` );
 			return null; // fail
 		}
+
+		//-----------------------------
+		// Create, Build & Add Button
+		//-----------------------------
 		// Create a new button for the action
 		const button	= new JestButtonToolbar( this.client );
-		button.build( action.name, null, action.text );
+		button.build( action.name, null, action.text ); // build element
 		this.addButton( action, button ); // add button to panel
+		
+		// Return success.
 		return button; // success
 	}
 

@@ -53,9 +53,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 						return i + 1;
 					}
 
-					const path	= tokens[1]==='-' ? null : tokens[1];
-					const x		= parseFloat( tokens[2] );
-					const y		= parseFloat( tokens[3] );
+					// Decode the NPC path as a single token.
+					// Parse coordinates explicitly as numbers.
+					const path = tokens[1]==='-' ? null : ctx.client.decodeWhitespace( tokens[1] );
+					const x    = Number( tokens[2] );
+					const y    = Number( tokens[3] );
 					i++;
 
 					const codeLines = [];
@@ -89,11 +91,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/level
 					// Iterate each NPC and encode it.
 					for ( const item of npcs ) {
 						// Access curator object data.
-						const npc	= item.data ?? item;
-						// Get image filename or placeholder.
-						const path	= npc.path || '-';
-						// Generate NPC header.
-						lines.push( `NPC ${path} ${npc.x} ${npc.y}` );
+						const npc  = item.data ?? item;
+						// Encode the NPC path to prevent spaces from splitting tokens.
+						// Preserve '-' as the placeholder for missing paths.
+						const path = npc.path ? ctx.client.encodeWhitespace( npc.path ) : '-';
+						// Normalize the NPC coordinates into numeric values.
+						const x    = Number( npc.x );
+						const y    = Number( npc.y );
+
+						// Serialize the NPC header using fixed token positions.
+						lines.push( `NPC ${path} ${x} ${y}` );
 
 						//--------------------------------
 						// Serialize NPC Script

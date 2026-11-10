@@ -309,9 +309,7 @@ Jest.prototype.isCustomNumber = function( n ) {
 // * str    – [string] input string
 // * token – [string] replacement token (default = '␣')
 Jest.prototype.encodeWhitespace = function( str, token='%20' ) {
-	return ( typeof str==='string' )
-		? str.replace( /\s/g, token )
-		: str;
+	return ( typeof str==='string' ) ? str.replace( /\s/g, token ) : str;
 }
 
 //--------------------------------

@@ -16,7 +16,7 @@
 	/*-----------------------------------
 	  Tooltip Inner Box
 	-----------------------------------*/
-	.tooltip-box {
+	.jest-tooltip > .tooltip-box {
 		background      : rgba(10, 10, 10, 0.92);
 		color           : #fff;
 		font-size       : 13px;
@@ -30,7 +30,7 @@
 	/*-----------------------------------
 	  Tooltip Attribute(s) With HTML
 	-----------------------------------*/
-	.tooltip-box kbd {
+	.jest-tooltip > .tooltip-box kbd {
 		display         : inline-block;
 		background      : #222;
 		color           : #fff;

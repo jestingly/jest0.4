@@ -98,13 +98,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Create Marquee Tool [object]
 			// --------------------------------
 			// Add a marquee tool to the level canvas board.
-			const tool		= new JestToolMarquee( client, subtype );
+			const tool   = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
 			// Wire into the grid.
 			tool.anchor.graticulate( client.config.tileGrid );
-			const canvas	= client.gameboard.display.getCanvas( 'workspace' );
+			const canvas = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas ); // set target
 
 			// Simultaneous tools allowed:
@@ -112,6 +112,65 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 
 			// Hold-key mapping.
 			tool.holdkey( 'Alt', 'eyedropper' );
+
+			//--------------------------------
+			// Handle Tool Block Check
+			//--------------------------------
+			// Determine whether the tool can edit the active layer.
+			tool.register(
+				'blockCheck', 'marqueeBlocking',
+				status => {
+					//--------------------------------
+					// Validate Level Availability
+					//--------------------------------
+					// A level must exist before its layers can be edited.
+					if ( !status.level ) {
+						status.reasons.push( 'noLevel' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Active Layer
+					//--------------------------------
+					// Editing requires an active layer.
+					const layer = status.layer;
+					if ( !layer ) {
+						status.reasons.push( 'noLayer' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Layer Properties
+					//--------------------------------
+					// Hidden layers are not eligible for direct editing.
+					if ( !layer.visible )
+						status.reasons.push( 'layerHidden' );
+
+					// Locked layers prohibit modifying their contents.
+					if ( layer.locked )
+						status.reasons.push( 'layerLocked' );
+				});
+
+			//--------------------------------
+			// Record Pre-Layer Changes
+			//--------------------------------
+			// Handle pending event changes to a layer.
+			// Layer is about to change visibility.
+			client.register(
+				'levelLayerPrevisibilityChange', 'layerChanging',
+				( changedLayer, pendingCheckedState ) => {
+					// Auto-drop the marquee selection.
+					if ( pendingCheckedState===false  ) // hide layer
+						tool.reset(); // cancel marquee
+				});
+			// Layer is about to change lock state.
+			client.register(
+				'levelLayerPrelockChange', 'layerChanging',
+				( changedLayer, pendingCheckedState ) => {
+					// Auto-drop the marquee selection.
+					if ( pendingCheckedState===true  ) // lock layer
+						tool.reset(); // cancel marquee
+				});
 
 			//--------------------------------
 			// Object Selector Panel
@@ -153,7 +212,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Create event for when tab is changed, to switch file.
 			client.tabbarFile.register(
 				'tabChange', 'levelMarqueeRefresh',
-				( view ) => {
+				view => {
 					// --------------------------------
 					// Get Current File State
 					// --------------------------------
@@ -198,8 +257,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			curator.toolbar.buttons.remove.register( 'click', 'remove-object',
 				() => {
 					// Get selected ID and corresponding object
-					const id		= curator.selectBox.getValue();
-					const object	= curator.objects[id];
+					const id     = curator.selectBox.getValue();
+					const object = curator.objects[id];
 					if ( confirm(`Are you sure you want to remove item "${object.data.name}"?`) )
 						curator.removeObject( id );
 				});
@@ -208,7 +267,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Toolbar Functionality
 			//-------------------------
 			// Add "selector" tool (levelMarquee) button to toolbar.
-			const button	= client.toolbar.createButton( { name: subtype, text:  null /*'Marquee'*/ } );
+			const button = client.toolbar.createButton( { name: subtype, text:  null /*'Marquee'*/ } );
 			button.clicker.addAttribute( 'data-tooltip', 'Marquee' );
 			button.clicker.addAttribute( 'data-tooltip-keys', 'M' );
 			button.clicker.addElements([
@@ -216,21 +275,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Icon Marquee
 				//-----------------------------
 				{
-					name	   : 'icon',
-					tag		: 'svg',
-					attributes : {
-						xmlns		: "http://www.w3.org/2000/svg",
-						viewBox	  : "0 0 1200 1200",
-						width		: "24",
-						height	   : "24",
-						"aria-hidden": "true"
+					name       : 'icon',
+					tag        : 'svg',
+					attributes :
+						{
+							xmlns   : "http://www.w3.org/2000/svg",
+							viewBox : "0 0 1200 1200",
+							width   : "24",
+							height  : "24",
+							"aria-hidden": "true"
 						},
-					classes	: [ 'ico-marquee' ],
+					classes    : [ 'ico-marquee' ],
 					elements   :
 						[
 							{
-								name	   : 'path',
-								tag		: 'path',
+								name       : 'path',
+								tag        : 'path',
 								attributes :
 									{
 										'd': 'm225 374.11c-42.422-6.0469-75-42.516-75-86.625v-49.969c0-48.328 39.188-87.516 87.516-87.516h49.969c44.109 0 80.578 32.578 86.625 75h451.78c6.0469-42.422 42.516-75 86.625-75h49.969c48.328 0 87.516 39.188 87.516 87.516v49.969c0 44.109-32.578 80.578-75 86.625v451.78c42.422 6.0469 75 42.516 75 86.625v49.969c0 48.328-39.188 87.516-87.516 87.516h-49.969c-44.109 0-80.578-32.578-86.625-75h-451.78c-6.0469 42.422-42.516 75-86.625 75h-49.969c-48.328 0-87.516-39.188-87.516-87.516v-49.969c0-44.109 32.578-80.578 75-86.625zm149.11-74.109c-5.4844 38.344-35.766 68.625-74.109 74.109v451.78c38.344 5.4844 68.625 35.766 74.109 74.109h451.78c5.4844-38.344 35.766-68.625 74.109-74.109v-451.78c-38.344-5.4844-68.625-35.766-74.109-74.109z',
@@ -690,7 +750,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 											};
 									// Compare live fields to saved data.
 									// Toggle "apply" button if fields changed.
-									if ( form && form.checkFieldMismatches(data,compare) )
+									if ( form && form.checkFieldInput(data,compare) )
 										toolbar.toggle( 'apply', true );
 								}
 								// Require an item to be selected for remove to be valid.
@@ -715,8 +775,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// Block unavailable application states.
 					if ( client.busy() ) return;
 					if ( client.skim('mode')!=='running' ) return;
-					// Only copy when the marquee tool is active.
-					if ( !tool.enabled() ) return;
 					//--------------------------------
 					// Attempt to Copy
 					//--------------------------------
@@ -737,6 +795,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					if ( client.busy() ) return;
 					if ( client.skim('mode')!=='running' ) return;
 					//--------------------------------
+					// Validate Marquee Availability
+					//--------------------------------
+					// Explain why the paste operation is blocked.
+					if ( client.alertToolBlocked(tool,'paste the marquee selection') )
+						return; // block action
+					//--------------------------------
 					// Attempt to Paste
 					//--------------------------------
 					// Attempt to paste a marquee.
@@ -753,8 +817,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// Block unavailable application states.
 					if ( client.busy() ) return;
 					if ( client.skim('mode')!=='running' ) return;
-					// Only copy when the marquee tool is active.
-					if ( !tool.enabled() ) return;
+					//--------------------------------
+					// Validate Marquee Availability
+					//--------------------------------
+					// Explain why the delete operation is blocked.
+					if ( client.alertToolBlocked(tool,'delete the marquee selection') )
+						return; // block action
 					//--------------------------------
 					// Attempt to Delete
 					//--------------------------------
@@ -781,16 +849,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// Capture before & after marquee state.
 					const before = tool.lastState;
 					const after  = tool.getSelectionState();
-					// Queue a microtask for async compatibility.
-					queueMicrotask(
-						() => {
-							// Record new marquee selection history.
-							client.recordMarqueeHistory(
-								'marqueeSelect',
-								before, after,
-								'Select marquee.'
-								);
-							});
+					// Record new marquee selection history.
+					client.recordMarqueeHistory(
+						'marqueeSelect',
+						before, after,
+						'Select marquee.'
+						);
 				});
 
 			// Register marquee move callback for undo/redo.
@@ -809,6 +873,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			tool.register(
 				'selectionCleared', 'marqueeHistoryDeselect',
 				before => {
+					// Attempt to get current selection state.
 					const after = tool.getSelectionState();
 					client.recordMarqueeHistory(
 						'marqueeDeselect',
@@ -817,12 +882,75 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						);
 				});
 
+			//--------------------------------
+			// Subtract Empty Level Tiles
+			//--------------------------------
+			// Refine a completed manual marquee selection into tiles.
+			// The finalized mask will be captured by the history event.
+			tool.register(
+				'maskFinalized', 'subtractEmptyTiles',
+				( marquee ) => {
+					//--------------------------------
+					// Resolve Original Selection Layer
+					//--------------------------------
+					// Use the layer the selection belongs to.
+					// Never sample the composite or underlying layers.
+					const level = client.getState().levelView?.file?.context;
+					const layer = level?.getLayer( marquee.layerId );
+
+					// Require a valid level layer, selection mask and origin.
+					if ( !layer || !Array.isArray(marquee.mask) || !marquee.bounds )
+						return;
+
+					//--------------------------------
+					// Subtract Empty Cells
+					//--------------------------------
+					// Each mask cell corresponds to one tile on the source layer.
+					// Keep already-subtracted cells unchanged.
+					const mask = marquee.mask;
+					const { x, y } = marquee.bounds;
+
+					for ( let my=0; my<mask.length; my++ ) {
+						for ( let mx=0; mx<mask[my].length; mx++ ) {
+							// A manually excluded cell must stay excluded.
+							if ( !mask[my][mx] ) continue;
+
+							// Determine the tile's absolute level coordinates.
+							const lx = x + mx;
+							const ly = y + my;
+
+							// Null means this level layer has no tile here.
+							// Subtract that cell from the marquee.
+							if ( layer.getTile(lx,ly)==null )
+								mask[my][mx] = false;
+						}
+					}
+				});
+
+			//-------------------------
+			// Begin Marquee Selection
+			//-------------------------
+			// Register marquee pen-down selection start.
+			tool.register(
+				'pendown', 'levelMarqueeSelectionStart',
+				( status ) => {
+					//--------------------------------
+					// Set Tool Target Layer
+					//--------------------------------
+					// Access the current level.
+					const level = client.getState().levelView?.file?.context;
+					// Check if the selection is empty. If so, begin.
+					if ( tool.layerId===null )
+						tool.layerId = level?.getActiveLayer()?.id ?? null;
+				});
+
 			// Revert hold-key to eyedropper.
 			tool.register(
 				['deselected','reset','canceled'], 'revertHoldkey',
 				// Revert hold-key mapping.
 				() => {
-					//console.log('reverting');
+					// Allow Opt+Click Eyedropper if no marquee drawn.
+					// NOTE: If marquee is drawn, Opt+Click = subtract.
 					tool.holdkey( 'Alt', 'eyedropper' );
 				});
 
@@ -1121,19 +1249,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// Require File to Be Open
 					//--------------------------------
 					// Check for open view & tool.
-					const state		= client.getState(); // get program state
-					const view		= state.levelView;
-					const key		= state.levelViewKey;
+					const state   = client.getState(); // get program state
+					const view    = state.levelView;
+					const key     = state.levelViewKey;
 
 					//--------------------------------
 					// Check If Update Possible
 					//--------------------------------
 					// Get propert(ies).
-					const object	= curator.getSelectedObject();
-					if ( !object) return; // no object
-					const display	= object.display;
-					const data		= object.data;
-					const type		= data.type;
+					const object  = curator.getSelectedObject();
+					if ( !object ) return; // no object
+					const display = object.display;
+					const data    = object.data;
+					const type    = data.type;
 
 					// Perform action based upon object type.
 					switch ( type ) {
@@ -1143,36 +1271,35 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							// Update warp data to reflect input data.
 							const prev	=
 								{
-								level  : data.level,
-								dx	 : data.dx,
-								dy	 : data.dy
+								level : data.level,
+								dx	  : data.dx,
+								dy	  : data.dy
 								};
 							const next	=
 								{
-								level  : form.getValue('level').toString(),
-								dx	 : form.getValue('dx').toString(),
-								dy	 : form.getValue('dy').toString()
+								level : form.getValue('level').toString(),
+								dx	  : form.getValue('dx').toString(),
+								dy	  : form.getValue('dy').toString()
 								};
 							// Only log if something changed.
-							if (
-								prev.level !== next.level ||
-								prev.dx !== next.dx ||
-								prev.dy !== next.dy ) {
+							if ( prev.level !== next.level ||
+								 prev.dx !== next.dx ||
+								 prev.dy !== next.dy ) {
 								// Update data
-								data.level	= next.level;
-								data.dx		= next.dx;
-								data.dy		= next.dy;
+								data.level = next.level;
+								data.dx    = next.dx;
+								data.dy    = next.dy;
 								// Update visual display of the name.
 								curator.updateOptionLabel( data.id, data.level );
 								// Play sound-effect to signal.
 								client.soundboard.playSound( 'jest_success', 'mp3', 1.1 );
 								// Log snapshot
-								const log	= {
-									action  : 'warpEdit',
-									type	: 'warp',
-									id	  : data.id,
-									old	 : prev,
-									neu	 : { ...next }
+								const log  = {
+									action : 'warpEdit',
+									type   : 'warp',
+									id     : data.id,
+									old    : prev,
+									neu	   : { ...next }
 									};
 								// Label the action for history panel.
 								view.governor.enqueue(
@@ -1254,8 +1381,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					 const tracer	= tool.tracer;
 					 const trace	= tracer?.getBounds?.() ?? null;
 
-					 let masked	= false;
-					 let traced	= false;
+					 let masked	    = false;
+					 let traced	    = false;
 
 					 // Validate mask area
 					 if ( bounds && bounds.w>0 && bounds.h>0
@@ -1327,8 +1454,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							client.drawCompositeRect(
 								editorCtx, {units,cols,rows},
 								trace.x, trace.y, mask2,
-								null, //"rgba( 50, 0, 0, 0.2 )",	// fill
-								stroke, null, null			// stroke
+								null, //"rgba( 50, 0, 0, 0.2 )", // fill
+								stroke, null, null // stroke
 								);
 							// Unset the "difference" marquee color mode.
 							editorCtx.restore(); // restore drawing mode
@@ -1362,17 +1489,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 								}
 							];
 
-						// Shadow configuration
-						const shadow =
-							{
-								color   : 'rgba( 0, 0, 0, 0.75 )',
-								blur	: 6,
-								offsetX : 3,
-								offsetY : 3,
-								fill	: 'rgba( 50, 0, 0, 1 )'
-							};
-
-						// Contents config (if available)
+						//--------------------------
+						// Configure Floating Stamp
+						//--------------------------
+						// Retrieve the actual floating tile stamp.
+						// Null tiles remain transparent in the stamp canvas.
 						const contents =
 							( tool.contents!==null && tool.contents.stamp ) ?
 								{
@@ -1383,7 +1504,42 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 									h   :	tool.contents.h * units
 								} : null;
 
-						// Invoke shared draw method
+							//--------------------------
+							// Draw Floating Stamp With Shadow
+							//--------------------------
+							// Draw the stamp with a drop shadow derived from its actual
+							// nontransparent pixels, rather than filling the marquee area.
+							// This preserves transparent gaps and null tiles.
+							if ( contents ) {
+								// Preserve the current canvas rendering state.
+								editorCtx.save();
+
+								// Configure a soft, slightly offset drop shadow.
+								editorCtx.shadowColor   = 'rgba( 0, 0, 0, 0.75 )';
+								editorCtx.shadowBlur    = 6;
+								editorCtx.shadowOffsetX = 3;
+								editorCtx.shadowOffsetY = 3;
+
+								// Draw the floating stamp and its shadow together.
+								// Canvas uses the image's alpha channel to shape the shadow.
+								editorCtx.drawImage(
+									contents.img,
+									contents.x,
+									contents.y,
+									contents.w,
+									contents.h
+									);
+
+								// Restore the original state so the shadow doesn't
+								// accidentally affect the marquee outline.
+								editorCtx.restore();
+							}
+
+						//--------------------------
+						// Draw Floating Marquee Outline
+						//--------------------------
+						// Preserve the animated red/white selection boundary.
+						// Do not redraw the stamp or add a filled shadow.
 						client.drawCompositeRect(
 							editorCtx,
 							{
@@ -1392,8 +1548,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 								rows  : tool.target.height / units
 							},
 							bounds.x, bounds.y, mask,
-							null, // fill handled via shadow.fill
-							stroke, shadow, contents
+							null,               // no background fill
+							stroke, null, null  // outline only; stamp already drawn
 							);
 					}
 				});
@@ -1521,6 +1677,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							break;
 						case 'signEdit':
 						case 'warpEdit':
+							// Get the curator item.
 							const item		= curator.objects[ snapshot.id ];
 							const form		= item.display.target;
 							const data		= snapshot[ dir==='undo' ? 'old' : 'neu' ];
@@ -1560,7 +1717,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						case 'marqueeFloat':
 						case 'marqueeDrop':
 							tool.restoreSelectionState(
-								dir==='undo' ? snapshot.before : snapshot.after );
+								dir==='undo' ? snapshot.before : snapshot.after
+								);
 							break;
 						default: break;
 					}
@@ -1648,41 +1806,48 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.getLevelMarqueeRegion = function( x, y, mask ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
+
 				//--------------------------------
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState(); // get current program state
+				const state       = this.getState();                // get current program state
+				const tool        = this.toolbox.tools.levelMarquee;
 				// Convert the region to a stamp.
-				const levelView		= state.levelView;
-				const tilesetView	= state.tilesetView;
-				if ( !levelView || !tilesetView ) return false; // no active level or tileset
-				const level			= levelView.file.context;
-				const tileset		= tilesetView.file.context;
+				const levelView   = state.levelView;
+				const tilesetView = state.tilesetView;
+				if ( !levelView || !tilesetView ) return false;     // no active level or tileset
+				const level       = levelView.file.context;         // access current level
+				const layer       = level.getLayer( tool.layerId ); // get active level layer
+				if ( !layer ) return false;                         // can't find layer
+				const tileset     = tilesetView.file.context;
+
 				//--------------------------------
 				// Copy Level Tiles-Matrix From Mask
 				//--------------------------------
 				// Build new matrix from mask.
-				const matrix	= [];
+				const matrix      = [];
 				const h = mask.length, w = mask[0].length;
 				for ( let my=0; my<h; my++ ) {
-					const row	= [];
+					const row     = [];
 					for ( let mx=0; mx<w; mx++ ) {
 						if ( mask[my][mx] ) {
 							// Calculate level coordinates to access tile on level.
 							const lx = x + mx;
 							const ly = y + my;
-							row.push( level.getTile(lx,ly) ); // store x,y tile data
+							row.push( layer.cloneTile(lx,ly) ); // store x,y tile data
 						}
 						else row.push( null ); // preserve shape with blank
 					}
 					matrix.push( row ); // push row into matrix
 				}
+
 				//--------------------------------
 				// Generate Stamp Using Matrix
 				//--------------------------------
 				// Build stamp canvas.
 				const stamp		= tileset.createStamp( matrix );
+
 				//--------------------------------
 				// Return Data
 				//--------------------------------
@@ -1699,36 +1864,48 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.toolLevelMarqueeFloat = function( tool ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
+
 				//--------------------------------
 				// Access the Active Level
 				//--------------------------------
 				// Validate an active view is open.
-				const state		= this.getState(); // get current program state
+				const state		= this.getState();			// get current program state
 				// Convert the region to a stamp.
 				const levelView	= state.levelView;
-				if ( !levelView ) return false; // no active level
-				const level		= levelView.file.context;
+				if ( !levelView ) return false;				// no active level
+				const level		= levelView.file.context;	// access current level
+				const layer		= level.getLayer( tool.layerId ); // get active level layer
+				if ( !layer || layer.locked ) return false;	// can't find / edit layer
+
 				//--------------------------------
 				// Get Mask-Matrix From Level
 				//--------------------------------
 				// Get origin x,y from marquee anchor.
-				const { x, y }	= tool.anchor.getBounds(); // extract properties from region
+				const { x, y }	= tool.anchor.getBounds();	// extract properties from region
 				// Validate marquee tool and active view.
-				const region	= level.cloneMaskRegion( x, y, tool.mask );
+				const region	= layer.cloneMaskRegion( x, y, tool.mask );
 				if ( !region ) return false;
 				// Set marquee contents.
 				tool.contents	= region; // store region in tool contents
+				tool.contents.layerId = layer.id; // add layer id to contents
+
 				//--------------------------------
 				// Delete Tiles Under Mask
 				//--------------------------------
 				// One history item owns both the tile change and marquee state.
-				const tiles = this.toolLevelFillMask( x, y, tool.mask, false );
+				const tiles = this.toolLevelFillMask( x, y, tool.mask, false, layer.id );
 				if ( !tiles ) return false;
 				levelView.governor.enqueue( 'edit', { history: 'Float marquee.' } );
-				levelView.governor.log( 'edit', {
-					action: 'marqueeFloat', old: tiles.old, neu: tiles.neu,
-					before: tool.lastState, after: tool.getSelectionState()
-				});
+				levelView.governor.log(
+					'edit',
+					{
+					action  : 'marqueeFloat',
+					layerId : layer.id,
+					old     : tiles.old,
+					neu     : tiles.neu,
+					before  : tool.lastState,
+					after   : tool.getSelectionState()
+					});
 				levelView.governor.dequeue( 'edit' );
 				return true; // success
 			}
@@ -1740,31 +1917,53 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
 				//--------------------------------
-				// Check If Paste Possible
+				// Access the Active Level
 				//--------------------------------
 				// Validate an active view is open.
-				const state		= this.getState(); // get current program state
+				const state		= this.getState();			// get current program state
 				// Convert the region to a stamp.
 				const view		= state.levelView;
-				if ( !view ) return false; // no active level view
+				if ( !view ) return false;					// no active level view
+				const level		= view.file.context;		// access current level
+
 				//--------------------------------
 				// Get Mask Level-Region Inside Tool Contents
 				//--------------------------------
 				// Validate marquee tool and activeView.
 				const region	= tool.contents;
 				if ( !region ) return false;
+
+				//--------------------------------
+				// Get Region Localized Data
+				//--------------------------------
+				// Resolve level layer.
+				const layer		= level.getLayer( region.layerId );
+				if ( !layer || layer.locked ) return false;	// can't find / edit layer
 				const { x, y }	= tool.bounds; // extract coordinates
+
 				//--------------------------------
 				// Replace Level Region With Mask Level-Region
 				//--------------------------------
-				const tiles = this.toolLevelReplaceRegion(
-					x, y, region.matrix, region.stamp, false );
+				// Replace the tiles in the region.
+				const tiles		=
+					this.toolLevelReplaceRegion(
+						x, y, region.matrix, region.stamp, false, layer.id );
 				if ( !tiles ) return false;
+
+				//--------------------------------
+				// Log for Undo/Redo
+				//--------------------------------
 				view.governor.enqueue( 'edit', { history: 'Drop marquee.' } );
-				view.governor.log( 'edit', {
-					action: 'marqueeDrop', old: tiles.old, neu: tiles.neu,
-					before: tool.getSelectionState(), after: null
-				});
+				view.governor.log(
+					'edit',
+					{
+					action  : 'marqueeDrop',
+					layerId : layer.id,
+					old     : tiles.old,
+					neu     : tiles.neu,
+					before  : tool.getSelectionState(),
+					after   : null
+					});
 				view.governor.dequeue( 'edit' );
 				return true; // success
 			}
@@ -1775,16 +1974,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.copyLevelMarquee = function( tool ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
+
 				//--------------------------------
-				// Check If Paste Possible
+				// Check If Copy Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState(); // get current program state
+				const state			= this.getState();			// get current program state
 				// Convert the region to a stamp.
 				const levelView		= state.levelView;
 				const tilesetView	= state.tilesetView;
 				if ( !levelView || !tilesetView ) return false; // no active level or tileset view
 				const level			= levelView.file.context;
+				const layer			= level.getLayer( tool.layerId ); // get active level layer
+				if ( !layer ) return false;						// can't find layer
+
 				//--------------------------------
 				// Get Marquee Region(s)
 				//--------------------------------
@@ -1805,8 +2008,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Get Mask-Matrix From Level
 				//--------------------------------
 				// Validate marquee tool and active view.
-				const region	= tool.contents ?? level.cloneMaskRegion( x, y, tool.mask );
+				const region	= tool.contents ?? layer.cloneMaskRegion( x, y, tool.mask );
 				if ( !region ) return false;
+
 				//--------------------------------
 				// Create Snapshot For Copy/Paste
 				//--------------------------------
@@ -1826,6 +2030,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				if ( this.busy() ) return; // app busy‐gate
 				// Only if this is running.
 				if ( this.skim('mode')!=='running' ) return;
+
 				//--------------------------------
 				// Check If Paste Possible
 				//--------------------------------
@@ -1834,6 +2039,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				if ( !state.levelView ) return false; // no active level
 				// Snapshot must be of type "marquee".
 				if ( snapshot?.action!=="levelMarquee" ) return;
+
 				//--------------------------------
 				// Determine Drop Location
 				//--------------------------------
@@ -1845,6 +2051,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const center	= this.getVisibleLevelCenter( units );
 				center.x -= Math.floor( w / 2 );
 				center.y -= Math.floor( h / 2 );
+
 				//--------------------------------
 				// Insert Marquee Selection
 				//--------------------------------
@@ -1855,26 +2062,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				//--------------------------------
 				// Realign mask & bounds
 				//--------------------------------
-				// Ensure click‐inside detection matches the pasted region exactly
-				const { x: ax, y: ay } = tool.anchor.getBounds(); // anchor origin in tile units
-
-				// Build a boolean mask from the actual region.matrix
-				const mask		= snapshot.region.matrix.map( row => row.map(cell=>cell!=null) );
-
-				// Overwrite the tool’s mask & absolute bounds
-				tool.mask		= mask; // [bool[][]]
-				tool.bounds		=
-					{ // align to anchor
-					x   : ax,
-					y   : ay,
-					w   : mask[0].length,
-					h   : mask.length
-					};
 				// Emit pasted event(s).
 				this.emit( 'pasted' ); // send signal
 			}
 
-			// Paste contents of a matrix into a marquee.
+			// Insert contents of a matrix into a marquee.
 			// * x,y	- [int] Values of origin (in tile units) to insert selection @.
 			// * matrix	- 2d [array] of matrix tile data.
 			// rects	- [array] of rect data for selection boundaries.
@@ -1883,17 +2075,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				if ( this.busy() ) return; // app busy‐gate
 				// Only if this is running.
 				if ( this.skim('mode')!=='running' ) return;
+
 				//--------------------------------
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState(); // get current program state
+				const state			= this.getState();			// get current program state
 				// Convert the region to a stamp.
 				const levelView		= state.levelView;
 				const tilesetView	= state.tilesetView;
 				if ( !levelView || !tilesetView ) return false; // no active level or tileset
 				const level			= levelView.file.context;
+				const layer			= level.getActiveLayer();	// get active level layer
+				if ( !layer || layer.locked ) return false;		// can't find / edit layer
 				const tileset		= tilesetView.file.context;
+
 				//--------------------------------
 				// Validate Matrix Dimensions
 				//--------------------------------
@@ -1902,6 +2098,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const w			= matrix[0].length;	// width
 				const h			= matrix.length;	// height
 				if ( w<1 || h<1 ) return; // no selection
+
 				//--------------------------------
 				// Check For Tool Selection If Floating
 				//--------------------------------
@@ -1912,6 +2109,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const mode		= tool.skim( 'mode' );
 				if ( mode==='floating' ) tool.reset(); // drop marquee
 				else tool.reset( false ); // no need to drop
+
+				//--------------------------------
+				// Capture Empty State Before Insertion
+				//--------------------------------
+				// A pasted selection starts a new history transition.
+				// Do not reuse the previous marquee's lastState.
+				tool.lastState  = tool.getSelectionState();
+
 				//--------------------------------
 				// Grab Stamp & Insert Region (as floating selection)
 				//--------------------------------
@@ -1921,22 +2126,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const shiftedRects =
 					usedRects.map(
 						r => ({
-							x	: lx + r.x,
-							y	: ly + r.y,
-							w	: r.w,
-							h	: r.h,
+							x    : lx + r.x,
+							y    : ly + r.y,
+							w    : r.w,
+							h    : r.h,
 							type : r.type
 						}));
+
 				//--------------------------------
 				// Generate Stamp Using Matrix
 				//--------------------------------
 				// Build stamp canvas.
 				const stamp		= tileset.createStamp( matrix );
+
 				//--------------------------------
 				// Insert Region (as floating selection)
 				//--------------------------------
-				// Fill marquee with the copied region.
-				tool.select( lx, ly, w, h, matrix, stamp, shiftedRects );
+				// Create the floating selection with its owning layer.
+				tool.select( lx, ly, w, h, matrix, stamp, shiftedRects, layer.id );
+				if ( tool.contents ) tool.contents.layerId = layer.id;
 				// Emit pasted event(s).
 				this.emit( 'levelMarqueeInserted' ); // send signal
 			}
@@ -1946,6 +2154,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.deleteLevelMarquee = function( tool ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return false; // app busy‐gate
+
 				//--------------------------------
 				// Check If Delete Possible
 				//--------------------------------
@@ -1954,6 +2163,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				if ( !state.levelView ) return false;
 				const view		= state.levelView;
 				const key		= state.levelViewKey;
+				const level		= view.file.context;
+				const layer		= level.getLayer( tool.layerId );
+				if ( !layer || layer.locked ) return false;
+
 				//--------------------------------
 				// Check to Snapshot Marquee
 				//--------------------------------
@@ -1963,15 +2176,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Check selection bounds.
 				const { x, y, w, h } = tool.anchor.getBounds();
 				if ( w<=0 || h<=0 ) return false; // empty selection
+
 				//--------------------------------
 				// Clear the Selected Region & Marquee
 				//--------------------------------
 				// Label the action for history panel.
-				view.governor.enqueue(
-					'edit', { history: `Delete marquee tiles.` } );
+				view.governor.enqueue( 'edit', { history: `Delete marquee tiles.` } );
 				// Clear the area that is selected.
-				if ( mode==='selected' )
-					this.toolLevelFillMask( x, y, tool.mask ); // clear region underneath
+				if ( mode==='selected' ) { // clear region underneath
+					if ( !this.toolLevelFillMask(x, y, tool.mask, true, layer.id) ) {
+						view.governor.dequeue( 'edit' );
+						return false; // fail
+					}
+				}
 				// Deselect the marquee.
 				tool.reset( false );				// reset marquee tool
 				view.governor.dequeue( 'edit' );	// fallback if fail
@@ -1984,23 +2201,28 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.defineLevelMarqueeRegion = function( type ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
+
 				//--------------------------------
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState(); // get current program state
+				const state			= this.getState();			// get current program state
 				// Convert the region to a stamp.
 				const levelView		= state.levelView;
-				if ( !levelView ) return false; // no active level
+				const tool			= this.toolbox.tools.levelMarquee; // level marquee tool
+				if ( !levelView ) return false;					// no active level
 				const level			= levelView.file.context;
+				const layer			= level.getLayer( tool.layerId ); // get active level layer
+				if ( !layer || layer.locked ) return false;		// can't find / edit layer
+
 				//--------------------------------
 				// Check If Selection is Made
 				//--------------------------------
 				// Require tool mode to be either "selected" or "floating".
-				const tool		= this.toolbox.tools.levelMarquee; // level marquee tool
-				toolMode		= tool.skim( 'mode' );
+				const toolMode		= tool.skim( 'mode' );
 				if ( toolMode!=='selected' && toolMode!=='floating' )
 					return; // nothing to add
+
 				//--------------------------------
 				// Begin Data [object]
 				//--------------------------------
@@ -2014,7 +2236,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					return; // escape
 				}
 				// Get the marquee selected content(s) (from level).
-				const region	= level.cloneMaskRegion( x, y, tool.mask );
+				const region	= layer.cloneMaskRegion( x, y, tool.mask );
 				data.action		= subtype;			// object is type marquee
 				data.w			= region.w;			// assign width
 				data.h			= region.h;			// assign height
@@ -2030,6 +2252,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			proto.recordMarqueeHistory = function( action, before, after, label ) {
 				// Block action if app is busy.
 				if ( this.busy() ) return; // app busy‐gate
+
 				//--------------------------------
 				// Check If Paste Possible
 				//--------------------------------
@@ -2042,16 +2265,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				if ( !levelView || levelView.governor.skim('reverting') ) return;
 
 				//--------------------------------
-				// Compare Marquee State (for changes)
+				// Compare Meaningful Marquee State
 				//--------------------------------
-				// Log the state for comparing.
+				// Include the exact effective mask in the comparison.
+				// A mask can change even when the outer bounds stay the same.
+				// The governor still records the complete before/after snapshots.
 				const comparable =
 					state =>
 						state ? {
-							mode   : state.mode,
-							rects  : state.rects,
-							bounds : state.bounds,
-							anchor : state.anchor
+							mode    : state.mode,
+							rects   : state.rects,
+							bounds  : state.bounds,
+							layerId : state.layerId,
+							mask    : state.mask,
+							anchor  : state.anchor
 							} : null;
 				// If the marquee hasn't changed, don't log for undo/redo.
 				if ( JSON.stringify(comparable(before))===JSON.stringify(comparable(after)) )
@@ -2062,7 +2289,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				//--------------------------------
 				// Enqueue the edit, log & return.
 				levelView.governor.enqueue( 'edit', { history: label } );
-				levelView.governor.log( 'edit', { action, before, after } );
+				levelView.governor.log(
+					'edit',
+					{
+						action,
+						layerId : after?.layerId ?? before?.layerId ?? null,
+						before,
+						after
+					});
 				levelView.governor.dequeue( 'edit' );
 			}
 		}

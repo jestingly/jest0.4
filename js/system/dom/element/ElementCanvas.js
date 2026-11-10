@@ -9,9 +9,9 @@ console.log( 'jestAlert: js/dom/element/ElementCanvas.js loaded' );
 class ElementCanvas extends OSElement {
 	// Attribute properties
 	// Movement propert(ies)
-	anchor			= null;			// [object] Anchor for matrix handling.
-	width			= 100;			// [int] value of canvas width
-	height			= 100;			// [int] value of canvas height
+	anchor     = null;     // [object] Anchor for matrix handling.
+	width      = 100;      // [int] value of canvas width
+	height     = 100;      // [int] value of canvas height
 
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
@@ -20,14 +20,14 @@ class ElementCanvas extends OSElement {
 		// --------------------------------
 		// Configure DOM "Canvas" Data
 		// --------------------------------
-		options.tag		= 'canvas';
-		super( options );	// call OSObject parent constructor
+		options.tag  = 'canvas';
+		super( options ); // call OSObject parent constructor
 		// Handle default canvas size
-		this.width		= options.width ? options.width : this.width;
-		this.height		= options.height ? options.height : this.height;
+		this.width   = options.width ? options.width : this.width;
+		this.height  = options.height ? options.height : this.height;
 		// Setup the [object] before creating the element
-		this.setup();		// setup the [object]
-		this.render();		// render the [object]
+		this.setup();     // setup the [object]
+		this.render();    // render the [object]
 	}
 
 	// Setup the [object].
@@ -36,17 +36,17 @@ class ElementCanvas extends OSElement {
 		// --------------------------------
 		// Setup Canvas [object]
 		// --------------------------------
-		super.setup();		// call parent setup method
+		super.setup(); // call parent setup method
 		// Ensure class(es) include element base class(es)
 		this.classes.push( 'jest-canvas' );
 		// --------------------------------
 		// Create Anchor [object]
 		// --------------------------------
 		// Create an anchor [object] for moving & size specifications
-		const anchor	= new Anchor();		// create central anchor
-		anchor.move( 0, 0 );				// move anchor to default position
-		this.anchor		= anchor;			// store anchor as property
-		return true;		// success
+		const anchor = new Anchor();    // create central anchor
+		anchor.move( 0, 0 );            // move anchor to default position
+		this.anchor  = anchor;          // store anchor as property
+		return true; // success
 	}
 
 	// Render the [object].
@@ -60,12 +60,12 @@ class ElementCanvas extends OSElement {
 		// --------------------------------
 		// Render Canvas
 		// --------------------------------
-		super.render();		// call parent render method
+		super.render(); // call parent render method
 		// --------------------------------
 		// Default Orientation(s)
 		// --------------------------------
 		this.resize ( this.width, this.height );
-		return true;		// success
+		return true;    // success
 	}
 
 	// --------------------------------
@@ -79,22 +79,22 @@ class ElementCanvas extends OSElement {
 		// Validate argument(s)
 		if ( !Number.isInteger(width) ) {
 			console.error( `Argument "width" must be an integer.` );
-			width	= 100;
+			width  = 100;
 		}
 		if ( !Number.isInteger(height) ) {
 			console.error( `Argument "width" must be an integer.` );
-			height	= 100;
+			height = 100;
 		}
 		// Set width & height
-		this.width		= Math.max( 0, width );		// save new width
-		this.height		= Math.max( 0, height );	// save new height
-		this.el.width	= width;					// update element width
-		this.el.height	= height;					// update element height
+		this.width     = Math.max( 0, width );  // save new width
+		this.height    = Math.max( 0, height ); // save new height
+		this.el.width  = width;                 // update element width
+		this.el.height = height;                // update element height
 		// Call parent resize() method.
 		super.resize( width, height );
 		// Ensure anchor dimensions match (fallback)
-		this.anchor.width	= width;
-		this.anchor.height	= height;
+		this.anchor.width  = width;
+		this.anchor.height = height;
 		return true; // success
 	}
 
@@ -111,10 +111,10 @@ class ElementCanvas extends OSElement {
 	// sw,sh	- [number] Width and height dimensions of source canvas to clip.
 	draw( canvas, clear=false, resize=false, dx=0, dy=0, sx=0, sy=0, sw=null, sh=null ) {
 		// Set auto dimension(s) if not supplied.
-		const w	= sw ?? canvas.el.width;
-		const h	= sh ?? canvas.el.height;
+		const w   = sw ?? canvas.el.width;
+		const h   = sh ?? canvas.el.height;
 		// Get tooldrop canvas context & clear it.
-		const ctx	= this.el.getContext( '2d' );
+		const ctx = this.el.getContext( '2d' );
 		// Clear area if requested.
 		if ( clear )
 			ctx.clearRect( 0, 0, w, h );

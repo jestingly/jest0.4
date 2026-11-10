@@ -240,7 +240,7 @@ class JestSecretary extends JestGamepiece {
 		// Begin Downloading
 		// --------------------------------
 		// Use transmitter to load files queue in batches of 3
-		await this.client.transmitter.loadFiles( queue, 3 );
+		await this.client.transmitter.loadFiles( queue, 3, this.defaultCacheTime, false, false );
 
 		// --------------------------------
 		// Process Each Result

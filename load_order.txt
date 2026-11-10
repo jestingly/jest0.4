@@ -95,6 +95,8 @@ js/apps/jest/clients/plugins/jest/parsers/jani/attr.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/jani/opts.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/jani/sprite.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/level/cloud.plugin.js
+js/apps/jest/clients/plugins/jest/parsers/level/board.plugin.js
+js/apps/jest/clients/plugins/jest/parsers/level/layer.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/level/npc.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/level/link.plugin.js
 js/apps/jest/clients/plugins/jest/parsers/level/sign.plugin.js
@@ -127,6 +129,8 @@ js/apps/jest/components/ui/JestDisplay.js
 js/apps/jest/components/ui/JestMenu.js
 js/apps/jest/components/ui/JestSection.js
 js/apps/jest/components/ui/JestCollapsibleMenu.js
+js/apps/jest/components/ui/JestInteractor.js
+js/apps/jest/components/ui/JestMouseFollower.js
 
 js/apps/jest/components/ui/JestFileMenu.js
 js/apps/jest/components/ui/JestToolbar.js
@@ -214,6 +218,7 @@ js/apps/jest/components/JestGameboard.js
 js/apps/jest/components/level/JestOverworld.js
 js/apps/jest/components/image/JestGraphic.js
 js/apps/jest/components/sound/JestSound.js
+js/apps/jest/components/level/JestLevelLayer.js
 js/apps/jest/components/level/JestLevel.js
 js/apps/jest/components/world/JestWorld.js
 js/apps/jest/components/JestCamera.js
@@ -264,17 +269,29 @@ js/apps/jest/clients/plugins/creator/ui/sidebar.plugin.js
 js/apps/jest/clients/plugins/creator/ui/tabbarFile.plugin.js
 js/apps/jest/clients/plugins/creator/ui/statusbar.plugin.js
 js/apps/jest/clients/plugins/creator/ui/editor.plugin.js
-js/apps/jest/clients/plugins/creator/ui/interactor.plugin.js
+js/apps/jest/clients/plugins/creator/ui/actionbar.plugin.js
 
 js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFile.plugin.js
 js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTileset.plugin.js
 
+# Account & cloud synchronization plugin(s).
+js/apps/jest/clients/plugins/creator/online/login/login.plugin.js
 js/apps/jest/clients/plugins/creator/online/cloud/cloud.plugin.js
 js/apps/jest/clients/plugins/creator/online/cloud/css/cloud.css
 
+# Layer handling plugin(s) & tool(s).
+js/apps/jest/clients/plugins/creator/tools/navigation/css/layers.css
+js/apps/jest/clients/plugins/creator/tools/navigation/JestListLayerItem.js
+js/apps/jest/clients/plugins/creator/tools/navigation/JestListLayers.js
+js/apps/jest/clients/plugins/creator/tools/navigation/layers.tool.js
+js/apps/jest/clients/plugins/creator/tools/navigation/layers.plugin.js
+
+js/apps/jest/clients/plugins/creator/tools/hand/hand.tool.js
+js/apps/jest/clients/plugins/creator/tools/hand/hand.plugin.js
 js/apps/jest/clients/plugins/creator/tools/swatches/css/swatches.css
 js/apps/jest/clients/plugins/creator/tools/swatches/swatches.tool.js
 js/apps/jest/clients/plugins/creator/tools/swatches/swatches.plugin.js
+js/apps/jest/clients/plugins/creator/tools/eyedropper/css/eyedropper.css
 js/apps/jest/clients/plugins/creator/tools/eyedropper/eyedropper.tool.js
 js/apps/jest/clients/plugins/creator/tools/eyedropper/eyedropper.plugin.js
 js/apps/jest/clients/plugins/creator/tools/marquee/marquee.tool.js
@@ -282,12 +299,16 @@ js/apps/jest/clients/plugins/creator/tools/marquee/tilesetMarquee.plugin.js
 js/apps/jest/clients/plugins/creator/tools/marquee/levelMarquee.plugin.js
 js/apps/jest/clients/plugins/creator/tools/pencil/pencil.tool.js
 js/apps/jest/clients/plugins/creator/tools/pencil/pencil.plugin.js
+js/apps/jest/clients/plugins/creator/tools/pencil/eraser.plugin.js
 js/apps/jest/clients/plugins/creator/tools/pencil/paintbrush.plugin.js
 js/apps/jest/clients/plugins/creator/tools/dragdrop/dragdrop.tool.js
 js/apps/jest/clients/plugins/creator/tools/dragdrop/tiledrop.plugin.js
 js/apps/jest/clients/plugins/creator/tools/floodfill/css/floodfill.css
 js/apps/jest/clients/plugins/creator/tools/floodfill/floodfill.tool.js
 js/apps/jest/clients/plugins/creator/tools/floodfill/floodfill.plugin.js
+js/apps/jest/clients/plugins/creator/tools/entities/css/entities.css
+js/apps/jest/clients/plugins/creator/tools/entities/entities.tool.js
+js/apps/jest/clients/plugins/creator/tools/entities/entities.plugin.js
 js/apps/jest/clients/plugins/creator/tools/snapshot/snapshot.plugin.js
 js/apps/jest/clients/plugins/creator/tools/animation/animation.plugin.js
 js/apps/jest/clients/plugins/creator/tools/scrapbook/scrapbook.tool.js
@@ -295,9 +316,6 @@ js/apps/jest/clients/plugins/creator/tools/scrapbook/scrapbook.plugin.js
 js/apps/jest/clients/plugins/creator/tools/flipbook/css/flipbook.css
 js/apps/jest/clients/plugins/creator/tools/flipbook/flipbook.tool.js
 js/apps/jest/clients/plugins/creator/tools/flipbook/flipbook.plugin.js
-js/apps/jest/clients/plugins/creator/tools/entities/css/entities.css
-js/apps/jest/clients/plugins/creator/tools/entities/entities.tool.js
-js/apps/jest/clients/plugins/creator/tools/entities/entities.plugin.js
 
 # Primary embed file
 js/embed/embed.js

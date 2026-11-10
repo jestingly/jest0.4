@@ -14,6 +14,7 @@ class JestModal extends JestElement {
 	// Object properties
 	titleText		= '';				// [string] title of modal
 	bodyText		= '';				// [string] body content
+	noticeText		= '';				// [string] modal notice message
 	inputs			= {};				// [object] map of name -> JestInputText
 	box				= null;				// DOM [object] of the inner box
 	payload			= null;				// [any] contextual data passed to modal when opened.
@@ -48,24 +49,25 @@ class JestModal extends JestElement {
 		super.build( 'div', name, ['jest-modal'].mergeUnique(classes) );
 		this.panel.addElements([
 			{
-				name:		'overlay',
-				tag:		'div',
-				classes:	[ 'modal-overlay' ]
+				name     : 'overlay',
+				tag      : 'div',
+				classes  : [ 'modal-overlay' ]
 			},
 			{
-				name:		'box',
-				tag:		'div',
-				classes:	[ 'modal-box' ],
-				elements:	[
-					{ name: 'title',	tag: 'div', classes: [ 'modal-title' ] },
-					{ name: 'text',		tag: 'div', classes: [ 'modal-text' ] },
-					{ name: 'inputwrap',tag: 'div', classes: [ 'modal-input' ] },
-					{ name: 'buttons',	tag: 'div', classes: [ 'modal-buttons' ] }
+				name     : 'box',
+				tag      : 'div',
+				classes  : [ 'modal-box' ],
+				elements : [
+					{ name: 'title',     tag: 'div', classes: [ 'modal-title' ] },
+					{ name: 'text',      tag: 'div', classes: [ 'modal-text' ] },
+					{ name: 'notice',    tag: 'div', classes: [ 'modal-notice' ] },
+					{ name: 'inputwrap', tag: 'div', classes: [ 'modal-input' ] },
+					{ name: 'buttons',   tag: 'div', classes: [ 'modal-buttons' ] }
 					]
 			}
 		]);
 		// Keep inner box reference.
-		this.box	= this.panel.refs.box;
+		this.box = this.panel.refs.box;
 		// Close on overlay click
 		this.panel.refs.overlay.register( 'click', 'close', ()=>this.close(), 'dom' );
 	}
@@ -90,6 +92,17 @@ class JestModal extends JestElement {
 		// Prompt message.
 		this.bodyText	= value;
 		this.box.refs.text.setHTML( value );
+	}
+
+	//--------------------------------
+	// Set Modal Message Notice
+	//--------------------------------
+	// RETURNS: [void]
+	// * value	- [string] notice message
+	setNotice( value ) {
+		// Prompt message.
+		this.noticeText	= value;
+		this.box.refs.notice.setHTML( value );
 	}
 
 	//--------------------------------
@@ -319,6 +332,17 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Get Input Value by Name
 	//--------------------------------
+	// Get an input field by its field name.
+	// RETURNS: [string|null]
+	// * name - [string] field name
+	getField( name ) {
+		return this.inputs?.[name] ?? null;
+	}
+
+	//--------------------------------
+	// Get Input Value by Name
+	//--------------------------------
+	// Get an input field input value by its field name.
 	// RETURNS: [string|null]
 	// * name - [string] field name
 	getInputValue( name ) {

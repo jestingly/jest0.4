@@ -3,29 +3,29 @@
 // Antago (God of Gravity), author of Graal2001 & Destiny
 // Copyright ® 1999-2026
 //-------------------------------------------------------
-console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/interactor.plugin.js loaded' );
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/actionbar.plugin.js loaded' );
 
-// Interactor handling plugin (collapsible menu).
+// Actionbar handling plugin (collapsible menu).
 (function( window ) {
 	// Define the plugin [object]
 	var type	= 'ui';
-	var subtype	= 'interactor';
+	var subtype	= 'actionbar';
 	var plugin	= {
 		//--------------------------------
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
 			// --------------------------------
-			// Create Interactor Toolbar [object]
+			// Create Actionbar Toolbar [object]
 			// --------------------------------
-			// Create the interactor toolbar.
-			const interactor	= new JestToolbar( client );
-			client.interactor	= interactor; // set interactor
-			interactor.build( 'interactor', ['interactor'] );
-			// Add interactor toolbar to client interface.
-			client.panel.refs.interface.refs.center.addPanel( 'interactor', interactor.panel );
+			// Create the actionbar toolbar.
+			const actionbar  = new JestToolbar( client );
+			client.actionbar = actionbar; // set actionbar
+			actionbar.build( 'actionbar', ['actionbar'] );
+			// Add actionbar toolbar to client interface.
+			client.panel.refs.interface.refs.center.addPanel( 'actionbar', actionbar.panel );
 			// Add event listener callback(s).
-			interactor.register(
+			actionbar.register(
 				'btnClick', 'interact',
 				( e, action, button ) => {
 					// Switch tools.
@@ -36,5 +36,5 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/interactor.plug
 	// register with JestCreator
 	if ( window.JestCreator && typeof window.JestCreator.use==='function' )
 		window.JestCreator.use( type, plugin );
-	else console.error( 'ui/interactor.plugin.js load error: JestCreator.use() not found' );
+	else console.error( 'ui/actionbar.plugin.js load error: JestCreator.use() not found' );
 })( window );

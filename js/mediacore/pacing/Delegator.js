@@ -17,9 +17,9 @@ console.log( 'jestAlert: js/mediacore/pacing/Delegator.js loaded' );
 //
 class Delegator extends OSCallback {
 	// Object Properties
-	suppressions		= {};		// [object] Map of { actor: { action: timestamp } }
+	suppressions      = {};     // [object] Map of { actor: { action: timestamp } }
 	// Permanent suppressions (manual toggle)
-	permaSuppressions	= {};		// [object] { actor: Set<action> }
+	permaSuppressions = {};     // [object] { actor: Set<action> }
 
 	//--------------------------------
 	// Constructor

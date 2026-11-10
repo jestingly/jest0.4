@@ -116,6 +116,44 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				});
 
 			//--------------------------------
+			// Handle Tool Block Check
+			//--------------------------------
+			// Determine whether the tool can edit the active layer.
+			tool.register(
+				'blockCheck', 'floodfillBlocking',
+				( status ) => {
+					//--------------------------------
+					// Validate Level Availability
+					//--------------------------------
+					// A level must exist before its layers can be edited.
+					if ( !status.level ) {
+						status.reasons.push( 'noLevel' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Active Layer
+					//--------------------------------
+					// Editing requires an active layer.
+					const layer = status.layer;
+					if ( !layer ) {
+						status.reasons.push( 'noLayer' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Layer Properties
+					//--------------------------------
+					// Hidden layers are not eligible for direct editing.
+					if ( !layer.visible )
+						status.reasons.push( 'layerHidden' );
+
+					// Locked layers prohibit modifying their contents.
+					if ( layer.locked )
+						status.reasons.push( 'layerLocked' );
+				});
+
+			//--------------------------------
 			// Paintbrush Options State
 			//--------------------------------
 			let useSwatch		= null;
@@ -313,7 +351,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 			// Grab level marquee tool.
 			const marqueeTool	= client.toolbox.getTool( 'levelMarquee' );
 			// Insert button.
-			const floodify		= client.interactor.createButton( { name: 'floodify', text: 'Create Pattern' } );
+			const floodify		= client.actionbar.createButton( { name: 'floodify', text: 'Create Pattern' } );
 			// Register floodify button click event.
 			floodify.register(
 				'click', 'insert-object',
@@ -446,22 +484,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					// Check If File Open
 					//--------------------------------
 					// Check for open view & tool.
-					const view		= state.levelView;
-					const key		= state.levelViewKey;
+					const view  = state.levelView;
+					const key   = state.levelViewKey;
 					//--------------------------------
 					// Check If Update Possible
 					//--------------------------------
 					// Attempt to enable button(s).
-					const levelMarquee		= client.toolbox.tools.levelMarquee;
-					const levelMarqueeMode	= levelMarquee.skim( 'mode' );
-					const floodfillMode		= tool.skim( 'mode' );
-					const floodfillEnabled	= tool.skim( 'enabled' );
-					const interactor		= client.interactor;
-					let toggle				= false; // reusable toggle [bool]
+					const levelMarquee      = client.toolbox.tools.levelMarquee;
+					const levelMarqueeMode  = levelMarquee.skim( 'mode' );
+					const floodfillMode     = tool.skim( 'mode' );
+					const floodfillEnabled  = tool.skim( 'enabled' );
+					const actionbar         = client.actionbar;
+					let toggle              = false; // reusable toggle [bool]
 					if ( levelMarquee.skim('enabled')===true ) {
 						if ( levelMarqueeMode==='selected' || levelMarqueeMode==='floating' )
 							if ( levelMarquee.rects.length===1 ) // perfect rectangle
-								interactor.toggle( 'floodify', true ); // create allowed
+								actionbar.toggle( 'floodify', true ); // create allowed
 					}
 				});
 
@@ -478,24 +516,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
-					const mode		= client.skim( 'mode' );
+					const mode     = client.skim( 'mode' );
 					if ( mode!=='running' ) return;
 					//--------------------------------
 					// Check If File Open
 					//--------------------------------
 					// Check for open view & tool.
-					const state		= client.getState(); // get program state
-					const view		= state.levelView;
-					const key		= state.levelViewKey;
+					const state    = client.getState(); // get program state
+					const view     = state.levelView;
+					const key      = state.levelViewKey;
 					//--------------------------------
 					// Check If Update Possible
 					//--------------------------------x
 					// Attempt to enable button(s).
-					const toolMode	= tool.skim( 'mode' );
-					const enabled	= tool.skim( 'enabled' );
-					const toolbar	= curator.toolbar;
-					const visible	= curator.getVisibleOptions(); // get visible items
-					let toggle		= false; // reusable toggle [bool]
+					const toolMode = tool.skim( 'mode' );
+					const enabled  = tool.skim( 'enabled' );
+					const toolbar  = curator.toolbar;
+					const visible  = curator.getVisibleOptions(); // get visible items
+					let toggle     = false; // reusable toggle [bool]
 					switch ( type ) {
 						case 'pattern':
 							// Buttons available.
@@ -518,6 +556,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 			tool.register(
 				'start', 'floodfillClick',
 				( e ) => {
+					//-------------------------
+					// Reset Floodfill Propert(ies)
+					//-------------------------
+					// Reset target layer id.
+					tool.layerId = null; // clear layer id
+					//-------------------------
+					// Begin Floodfill
+					//-------------------------
 					// Call flood-fill method for level.
 					client.toolFloodfillLevel( e );
 				});
@@ -527,11 +573,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				'checkReplace', 'tileCompare',
 				( tile ) => {
 					// Compare tile data to see if it is the same tile.
-					const target	= tool._targetTile;
-					let should		=
-						tile.ts===target.ts &&
-						tile.tx===target.tx &&
-						tile.ty===target.ty;
+					const target = tool._targetTile;
+					let should   =
+						Boolean(
+							// Both tiles are transparent.
+							( target===null && tile===null )
+							||
+							// Both tiles are same tile.
+							(
+							  target!==null && tile!==null &&
+							  tile.ts===target.ts &&
+							  tile.tx===target.tx &&
+							  tile.ty===target.ty
+						 	));
 					// Update replace-mode signal.
 					tool.jot( 'replacing', should ); // signal to replace
 				});
@@ -548,16 +602,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					// Check for open view & tool.
 					const state		= this.getState(); // get program state
 					if ( !state?.levelView ) return;
+
+					//--------------------------------
+					// Resolve Target Level Layer
+					//--------------------------------
 					// Require level view & level [object].
 					const view		= state.levelView;
-					const level		= view.file.context;
+					const level     = view.file.context;
+					const layer     = level.getLayer( tool.layerId, true ); // get layer
+					if ( !layer || layer.locked ) return false;        // can't find / edit layer
 
 					//--------------------------------
 					// Attempt to Replace Tile
 					//--------------------------------
 					// Grab x,y coordinates from tile checking data.
 					const { x, y }	= tile;
-					const oldTile	= level.getTile( x, y );
+					const oldTile	= layer.getTile( x, y );
 
 					// Relative deltas from origin
 					const dx	= x - tool._floodOriginX;
@@ -580,15 +640,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 						const dy = y - tool._floodOriginY;
 
 						// Apply brick-style stagger based on *relative* flood position
-						const staggerX = ( dy % 2 ) * tool._offsetX;
-						const staggerY = ( dx % 2 ) * tool._offsetY;
+						const staggerX = (dy%2) * tool._offsetX;
+						const staggerY = (dx%2) * tool._offsetY;
 
 						const relX = dx - staggerX;
 						const relY = dy - staggerY;
 
 						// Apply spacing logic on RELATIVE coords
-						if ( tool._spacingX > 0 && relX % (1 + tool._spacingX) !== 0 ) return;
-						if ( tool._spacingY > 0 && relY % (1 + tool._spacingY) !== 0 ) return;
+						if ( tool._spacingX>0 && relX%(1+tool._spacingX)!==0 ) return;
+						if ( tool._spacingY>0 && relY%(1+tool._spacingY)!==0 ) return;
 
 						// Passed spacing rules → draw tile
 						newTile = tool._newTile;
@@ -605,16 +665,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 						const blockH	= pRows + tool._spacingY;
 
 						// Determine which row of pattern block we’re in
-						const blockRow	= Math.floor( dy / blockH );
-						const blockCol	= Math.floor( dx / blockW );
+						const blockRow	= Math.floor( dy/blockH );
+						const blockCol	= Math.floor( dx/blockW );
 
 						//----------------------------------------
 						// Brick / Checkered Offset Application
 						//----------------------------------------
 						// Apply horizontal offset to every other row (brick-style)
-						const staggerX = (blockRow % 2) * tool._offsetX;
+						const staggerX = (blockRow%2) * tool._offsetX;
 						// Apply vertical offset if needed (comment out if not used)
-						const staggerY = (blockCol % 2) * tool._offsetY;
+						const staggerY = (blockCol%2) * tool._offsetY;
 
 						// Subtract staggered offset
 						const relX = dx - staggerX;
@@ -627,7 +687,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 						const modY = ((relY % blockH) + blockH) % blockH;
 
 						// Skip if in spacing zone
-						if ( modX >= pCols || modY >= pRows ) return;
+						if ( modX>=pCols || modY>=pRows ) return;
 
 						// Pick tile from pattern
 						newTile = pattern[modY][modX];
@@ -641,11 +701,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					//----------------------------------------
 					// Scatter Chance Check
 					//----------------------------------------
-					if ( tool.scatter > 0 ) {
-						const chance = 1 - (tool.scatter / 100);
-						if ( Math.random() > chance ) newTile = { ...oldTile };
+					if ( tool.scatter>0 ) {
+						const chance = 1 - (tool.scatter/100);
+						if ( Math.random()>chance ) newTile = { ...oldTile };
 					}
-						//console.log( 'applyReplace8' );
+					//console.log( 'applyReplace8' );
 
 					//----------------------------------------
 					// Apply Tile & Log Change
@@ -656,8 +716,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 						newTile : { ...newTile }
 						});
 
-							//console.log( 'applyReplace9' );
-					level.fillRegion( x, y, 1, 1, newTile );
+					//console.log( 'applyReplace9' );
+					layer.fillRegion( x, y, 1, 1, newTile );
 					client.soundboard.playSound( 'jest_pour', 'mp3', 1.05 );
 				});
 
@@ -680,7 +740,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 		//--------------------------------
 		extend: function( Klass, proto ) {
 			// Attempts to perform a flood fill action.
-			// RETURNS: [void].
+			// RETURNS: [boolean].
 			// * e	- [object] MouseEvent event listener data.
 			proto.toolFloodfillLevel = function( e ) {
 				//--------------------------------
@@ -688,13 +748,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				//--------------------------------
 				// Check for open view & tool.
 				const state		= this.getState(); // get program state
-				if ( !state?.levelView ) return;
+				if ( !state?.levelView ) return false;
 				// Require level view & level [object].
 				const view		= state.levelView;
-				const level		= view.file.context;
-				const key		= view.skey;
-				const tilemap	= level.tilemap;
+				const key		= view.skey
 				const tool		= this.toolbox.tools.floodfill;
+
+				//--------------------------------
+				// Resolve Target Level Layer
+				//--------------------------------
+				// Acesss active tab level.
+				const level     = state.levelView.file.context;
+				const layer     = level.getLayer( tool.layerId, true ); // get layer
+				if ( !layer || layer.locked ) return false;        // can't find / edit layer
+				if ( tool.layerId==null ) tool.layerId = layer.id; // change tool target layer
+				const tilemap	= layer.tilemap;
 
 				//--------------------------------
 				// Get Click Location
@@ -702,7 +770,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				// Get the click position on the level.
 				const canvas	= this.gameboard.display.getCanvas( 'workspace' ); // get rendering canvas
 				const pos		= canvas.mousePos( e );
-				const units		= tool.anchor.units;	// tile units
+				const units		= tool.anchor.units; // tile units
 				const x			= Math.floor( pos.x / units );
 				const y			= Math.floor( pos.y / units );
 
@@ -710,7 +778,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				// Capture Flood Parameters
 				//--------------------------------
 				// Capture tile type data at click location.
-				const target	= level.getTile( x, y );
+				const target	= layer.getTile( x, y );
 				const newTile	= { ...this.swatches.foreground.contents }; // clone background tile
 				// Whether or not the floodfill is contiguous or global.
 				const optsPanel	= this.sidebar.getSection( subtype );
@@ -770,16 +838,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 							);
 					// Generate change log inside view's governor.
 					const log = {
-						action:		'sparseRegion',
-						old:		undo,
-						neu:		redo
+						action  : 'sparseRegion',
+						layerId : layer.id,
+						old     : undo,
+						neu     : redo
 						};
 					// Label the action for history panel.
-					view.governor.enqueue(
-						'edit', { history: `Floodfill region.` } );
+					view.governor.enqueue( 'edit', { history: `Floodfill region.` } );
 					// Log changes in governor.
 					view.governor.log( 'edit', log );
 				}
+
+				//--------------------------------
+				// Reset Tool Propert(ies)
+				//--------------------------------
+				// Clear the target layer id.
+				tool.layerId = null; // clear layer id
+				return true; // success
 			}
 		}
 	};

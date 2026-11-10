@@ -443,11 +443,12 @@ select:hover {
 	color             : #eee;
 	/*border-radius     : 8px;*/
 	box-shadow        : 0 4px 10px rgba( 0, 0, 0, 0.5 );
-	z-index           : 9999;
+	/*z-index           : 9999;*/
 	display           : flex;
 	flex-direction    : column;
 	overflow          : hidden;
 	transition        : none;
+	cursor            : pointer;
 
 	/* Jest Harlequin Background */
 	box-sizing            : border-box;
@@ -507,10 +508,10 @@ select:hover {
 	transform: translate( 0, 0 ) scale( 1 );
 	pointer-events: all;
 	top: 0; left: 0;*/
-	top: 0 !important;
-	left: 0 !important;
-	width: 100vw !important;
-	height: 100vh !important;
+	top           : 0 !important;
+	left          : 0 !important;
+	width         : 100vw !important;
+	height        : 100vh !important;
 }
 
 
@@ -519,24 +520,23 @@ select:hover {
 /* ------------------------- */
 /* Window Controls */
 .jest-window-controls {
-    display: flex;
-    gap: 5px;
-    margin-left: auto;
+    display       : flex;
+    gap           : 5px;
+    margin-left   : auto;
 }
 
 .jest-window-controls button {
-    background: #444;
-    color: #eee;
-    border: none;
-    border-radius: 4px;
-    padding: 5px;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.2s;
+    background    : #444;
+    color         : #eee;
+    border        : none;
+    border-radius : 4px;
+    padding       : 5px;
+    transition    : transform 0.2s, background 0.2s;
 }
 
 .jest-window-controls button:hover {
-    transform: scale(1.1);
-    background: #f55;
+    transform     : scale(1.1);
+    background    : #f55;
 }
 
 
@@ -545,8 +545,8 @@ select:hover {
 /* ------------------------- */
 /* Dragging styles */
 .jest-window {
-    position: fixed; /* Ensure draggable positioning */
-    cursor: default;
+    position      : fixed; /* Ensure draggable positioning */
+    cursor        : default;
 }
 /* Resize handles */
 .resize-handle {
@@ -865,20 +865,21 @@ button.jest-button.jest-style-harlequin:active {
 /* Status container */
 .jest-dock {
 	/* Alignment */
-	display: flex;
-    align-items: center;
+	display     : flex;
+    align-items : center;
 	/* Positioning */
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: auto;
-    text-align: center;
-    z-index: 9999;
-    /*background: rgba( 33, 33, 33, 0.4 );*/
-    background: rgba( 33, 11, 11, 0.5 );
-    padding: 1px;
-    border-top: 1px solid #777;
+    position    : fixed;
+    bottom      : 0;
+    left        : 0;
+    width       : 100%;
+	height      : 0px; /*auto;*/
+    text-align  : center;
+	z-index     : 9999;
+    /*background  : rgba( 33, 33, 33, 0.4 );*/
+    background  : rgba( 33, 11, 11, 0.5 );
+    padding     : 1px;
+    border-top  : 1px solid #777;
+	overflow    : hidden;
 }
 /*.jest-dock {
   display: flex;
@@ -1137,6 +1138,21 @@ button.jest-button.jest-style-harlequin:active {
 		font-weight      : bold;
 		cursor           : default;
 		transition       : none;
+	}
+	/* Preserve selection while visually indicating that
+	   the equipped tool cannot currently operate. */
+	.jest-window-viewport .toolbar button.active.tool-blocked,
+	.jest-window-viewport .toolbar button.active.tool-blocked:hover {
+		background       : #555;
+		color            : #bbb;
+		filter           : grayscale(1);
+		opacity          : 0.75;
+		transform        : none;
+	}
+	/* Display the prohibited cursor without intercepting
+	   pointer events or changing the selected tool. */
+	canvas.tool-blocked-cursor {
+		cursor           : not-allowed !important;
 	}
 	.jest-window-viewport .toolbar button:hover.active,
 	.jest-window-viewport .toolbar button:hover.disabled {
@@ -1834,6 +1850,14 @@ button.jest-button.jest-style-harlequin:active {
 		text-align      : center;
 	}
 
+	.modal-notice {
+		font-size       : 12px;
+		font-weight     : bold;
+		color           : #555;
+	    margin          : 0;
+		text-align      : center;
+	}
+
 	.modal-input {
 		margin-top      : 6px;
 	}
@@ -2344,7 +2368,7 @@ button.jest-button.jest-style-harlequin:active {
 	/*-----------------------------------
 	  Tooltip Inner Box
 	-----------------------------------*/
-	.tooltip-box {
+	.jest-tooltip > .tooltip-box {
 		background      : rgba(10, 10, 10, 0.92);
 		color           : #fff;
 		font-size       : 13px;
@@ -2358,7 +2382,7 @@ button.jest-button.jest-style-harlequin:active {
 	/*-----------------------------------
 	  Tooltip Attribute(s) With HTML
 	-----------------------------------*/
-	.tooltip-box kbd {
+	.jest-tooltip > .tooltip-box kbd {
 		display         : inline-block;
 		background      : #222;
 		color           : #fff;
@@ -2529,7 +2553,7 @@ button.jest-button.jest-style-harlequin:active {
 	.jest-list {
 		display          : 'flex';
 		flex-direction   : 'column';
-		overflow-y       : 'auto'
+		overflow-y       : 'auto';
 	}
 	.jest-list-item {
 		display          : flex;
@@ -2624,6 +2648,13 @@ button.jest-button.jest-style-harlequin:active {
 		display         : flex;
 		flex-direction  : column;
 		user-select     : none;
+	}
+
+	.jest-mousefollower {
+		position        : absolute;
+		width           : max-content;
+		height          : max-content;
+		min-width       : 0;
 	}
 }
 
@@ -2933,12 +2964,12 @@ button.jest-button.jest-style-harlequin:active {
 		overflow       : auto;
 	}
 
-	.jest-creator-interface .toolbar.interactor {
+	.jest-creator-interface .toolbar.actionbar {
 		flex-direction : row !important;
 	}
 
-	.jest-creator-interface .toolbar.interactor button.disabled,
-	.jest-creator-interface .toolbar.interactor button:hover.disabled {
+	.jest-creator-interface .toolbar.actionbar button.disabled,
+	.jest-creator-interface .toolbar.actionbar button:hover.disabled {
 		background     : #333;
 		color          : #888;
 	}
@@ -3206,7 +3237,7 @@ button.jest-button.jest-style-harlequin:active {
 		flex-wrap      : wrap;
 	}
 
-	.jest-viewport-creator .menu.interactor {
+	.jest-viewport-creator .menu.actionbar {
 		background     : var(--brand-black);
 	}
 
@@ -3627,6 +3658,135 @@ button.jest-button.jest-style-harlequin:active {
 	}
 }
 
+/* --- BEGIN js/apps/jest/clients/plugins/creator/tools/navigation/css/layers.css --- */
+@layer components {
+	/*--------------------------------
+	  Layers List Container
+	--------------------------------*/
+	/* Keep the list visually integrated with the dark sidebar. */
+	.jest-list.level-layers,
+	.level-layers.jest-list {
+		display          : flex;
+		flex-direction   : column;
+		width            : 100%;
+		min-height       : 80px;
+		max-height       : 320px;
+		overflow-y       : auto;
+		background       : #181818;
+		border           : 1px solid #333;
+		border-radius    : 6px;
+		box-sizing       : border-box;
+	}
+
+	/*--------------------------------
+	  Layer List Rows
+	--------------------------------*/
+	/* Give every layer a compact, clearly separated row. */
+	.jest-layer-item {
+		display          : flex;
+		align-items      : center;
+		gap              : 8px;
+		min-height       : 36px;
+		padding          : 5px 8px;
+		background       : #222;
+		border-bottom    : 1px solid #111;
+		border-left      : 3px solid transparent;
+		color            : #ccc;
+		cursor           : pointer;
+		user-select      : none;
+		box-sizing       : border-box;
+
+		/*background       : #e00;
+		text-shadow      : 1px 1px 1px #a00;
+		font-weight      : bold;*/
+	}
+
+	/* Give every layer a compact, clearly separated row. */
+	.jest-layer-item.inactive {
+		/*background       : #222;
+	    text-shadow      : 1px 1px 1px #000;
+		font-weight      : normal;*/
+	}
+
+	/* Provide a subtle hover highlight. */
+	.jest-layer-item:hover {
+		background       : #292929;
+	}
+
+	/* Highlight the currently selected layer. */
+	.jest-layer-item.highlighted {
+		background       : #343434;
+		border-left-color: var(--brand-color, #ff0033);
+		color            : #fff;
+	}
+
+	/* Visually indicate a layer being dragged. */
+	.jest-layer-item.dragging {
+		opacity          : 0.5;
+	}
+
+	/*--------------------------------
+	  Layer Name
+	--------------------------------*/
+	/* Let the layer name occupy remaining horizontal space. */
+	.jest-layer-item .item-label {
+		flex             : 1;
+		min-width        : 0;
+		overflow         : hidden;
+		text-overflow    : ellipsis;
+		white-space      : nowrap;
+		font-size        : 12px;
+	}
+
+	/*--------------------------------
+	  Visibility & Lock Controls
+	--------------------------------*/
+	/* Keep checkboxes compact inside layer rows. */
+	.jest-layer-item .input.checkbox {
+    	display          : flex;
+    	align-items      : center;
+    	justify-content  : center;
+    	flex             : 0 0 auto;
+    	width            : auto;
+    	min-width        : 0;
+    	max-width        : max-content;
+    	padding          : 3px;
+    	margin           : 0;
+    	background       : transparent;
+    	border           : none;
+    	border-radius    : 3px;
+    	box-shadow       : none;
+    }
+
+	/* Prevent inherited sidebar styles from enlarging checkboxes. */
+	.jest-layer-item .input.checkbox input[type="checkbox"] {
+		width            : 15px;
+		height           : 15px;
+		margin           : 0;
+		cursor           : pointer;
+	}
+
+	/*--------------------------------
+	  Layer Editing Form
+	--------------------------------*/
+	/* Separate the name editor from the layer stack. */
+	#layer-form {
+		margin-top       : 8px;
+		padding          : 8px;
+		background       : #202020;
+		border           : 1px solid #333;
+		border-radius    : 6px;
+	}
+
+	/*--------------------------------
+	  Empty Layer List
+	--------------------------------*/
+	/* Avoid a collapsed panel before a level is loaded. */
+	.level-layers .list-body {
+		min-height       : 40px;
+	}
+}
+
 /* --- BEGIN js/apps/jest/clients/plugins/creator/tools/swatches/css/swatches.css --- */
 @layer sidebar {
 	/*==============================================
@@ -3679,6 +3839,30 @@ button.jest-button.jest-style-harlequin:active {
 	}
 }
 
+/* --- BEGIN js/apps/jest/clients/plugins/creator/tools/eyedropper/css/eyedropper.css --- */
+@layer eyedropper {
+	/*==============================================
+	  Eyedropper Plugin Styling
+	==============================================*/
+	.eyedropper-preview {
+		position        : absolute;
+		z-index         : 10000;
+		pointer-events  : none;
+	}
+
+	.eyedropper-preview .contents {
+		border          : 2px solid #ffd84a;
+		border-radius   : 3px;
+		box-shadow      : 0 3px 10px rgba( 0, 0, 0, .65 );
+		overflow        : hidden;
+	}
+
+	.eyedropper-preview canvas {
+		display         : block;
+		image-rendering : pixelated;
+	}
+}
+
 /* --- BEGIN js/apps/jest/clients/plugins/creator/tools/floodfill/css/floodfill.css --- */
 /*-----------------------------
   Form Wrapper
@@ -3688,22 +3872,22 @@ button.jest-button.jest-style-harlequin:active {
 	padding             : 5px 10px;
 }*/
 
-/* --- BEGIN js/apps/jest/clients/plugins/creator/tools/flipbook/css/flipbook.css --- */
-@layer flipbook {
-	/*==============================================
-	  Flipbook Plugin Styling
-	==============================================*/
-	.sidebar-content .tool-flipbook-nav .toolbar {
-		display           : block;
-	}
-}
-
 /* --- BEGIN js/apps/jest/clients/plugins/creator/tools/entities/css/entities.css --- */
 @layer entities {
 	/*==============================================
 	  Entities Plugin Styling
 	==============================================*/
 	.sidebar-content .tool-entities-nav .toolbar {
+		display           : block;
+	}
+}
+
+/* --- BEGIN js/apps/jest/clients/plugins/creator/tools/flipbook/css/flipbook.css --- */
+@layer flipbook {
+	/*==============================================
+	  Flipbook Plugin Styling
+	==============================================*/
+	.sidebar-content .tool-flipbook-nav .toolbar {
 		display           : block;
 	}
 }

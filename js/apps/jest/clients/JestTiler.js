@@ -13,7 +13,7 @@ JestAppsRegistry.AppJestTiler =
 		// Declare properties
 		icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
 		name			= 'Tiler';		// name of application
-		version			= '0.1beta';		// application version
+		version			= '0.3beta';		// application version
 		id				= 'tiler';			// tiler application id.
 		// Server [objects]
 		//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -34,8 +34,6 @@ JestAppsRegistry.AppJestTiler =
 		editor			= null;				// [object] Panel container for editing arena (board & sidebar).
 		board			= null;				// [JestElement] Board for editing the level.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
-		// User login handling
-		userBadge		= null;				// [JestPanel] User login/logout badge element.
 
 		// --------------------------------
 		// Constructor
@@ -210,6 +208,26 @@ JestAppsRegistry.AppJestTiler =
 				});
 			// Initialize tools plugins.
 			await JestTiler.initPlugins( 'tools', this );
+
+			//--------------------------------
+			// Synchronize Tool Availability
+			//--------------------------------
+			// Reevaluate restrictions when application state changes.
+			// The tool remains equipped regardless of the result.
+			this.register(
+				'update', 'refreshToolBlocking',
+				() => this.refreshToolBlocking()
+				);
+			// Refresh immediately after the equipped tool changes.
+			// Do not wait for the next application update cycle.
+			this.toolbox.register(
+				'postequip', 'refreshToolBlocking',
+				() => this.refreshToolBlocking()
+				);
+
+			//--------------------------------
+			// Move Swatch Buttons
+			//--------------------------------
 			// Move swatch buttons to end.
 			toolbar.panel.reorderChild( toolbar.buttons.eyedropper.panel, -1 );
 			toolbar.panel.reorderChild( swatchFg.panel, -1 );
@@ -232,7 +250,7 @@ JestAppsRegistry.AppJestTiler =
 							//persistent: true,
 							buttons   :
 								[
-								{ label: 'Ok', click: () => console.log('Ok pressed') }
+								{ label: 'Ok', click: () =>  {/*console.log('Ok pressed');*/} }
 								]
 							//onExpire  : () => console.log('Notification expired')
 							});
@@ -256,7 +274,7 @@ JestAppsRegistry.AppJestTiler =
 						//persistent: true,
 						buttons   :
 							[
-							{ label: 'Ok', click: () => console.log('Ok pressed') }
+							{ label: 'Ok', click: () =>  {/*console.log('Ok pressed');*/} }
 							]
 						//onExpire  : () => console.log('Notification expired')
 						});
@@ -620,8 +638,8 @@ JestAppsRegistry.AppJestTiler =
 			// Finish & Play Confirmation Sound
 			//--------------------------------
 			// Play sound-effect to signal.
-			if ( this.skim('quiet:openJani')!==true )
-				this.soundboard.playSound( 'jest_open1', 'mp3', 1.1 );
+			//if ( this.skim('quiet:openJani')!==true )
+				//this.soundboard.playSound( 'jest_open1', 'mp3', 1.1 );
 
 			// Return [bool] value.
 			return true; // success
@@ -708,6 +726,20 @@ JestAppsRegistry.AppJestTiler =
 			return report;
 		}
 
+		//--------------------------------
+		// Resolve Current Level File
+		//--------------------------------
+		// RETURNS: [object|null] file status and level reference.
+		/*const current = function() {
+			// Reuse the same file status convention as other JEST tools.
+			const s = client.getFileStatus( tool, true );
+			if ( !s || !s.file || !s.levelView ) return null;
+			// The active level is the level view's file context.
+			const level = s.levelView.file?.context ?? s.file.context ?? null;
+			if ( !level || typeof level.getLayers!=='function' ) return null;
+			return { ...s, level }; // resolved state
+		};*/
+
 		// Return useful information about the selected level and tileset.
 		// RETURNS: [object] containing file status, or [null] if unavailable.
 		//   tool		- [object] Tool requesting the status.
@@ -722,10 +754,14 @@ JestAppsRegistry.AppJestTiler =
 			if ( !bypass && this.busy() ) return null; // app busy‐gate
 
 			//--------------------------------
-			// Define Variable(s)
+			// Handle Tool & Its Status
 			//--------------------------------
-			// Retrieve the requesting tool's primary curator, if available.
-			const curator		= tool ? tool.curators.primary : null; // shorthand
+			// Refresh the requesting tool's availability.
+			// The result does not prevent retrieving file information.
+			if ( tool )
+				this.toolBlockCheck( tool );
+			// Retrieve the tool's primary curator, if available.
+			const curator = tool?.curators?.primary ?? null;
 
 			//--------------------------------
 			// Require File to Be Open
@@ -799,8 +835,8 @@ JestAppsRegistry.AppJestTiler =
 			//--------------------------------
 			// Interactor Buttons Are Disabled (until enabled)
 			//--------------------------------
-			// Disable all interactor tools by default.
-			this.interactor.toggleAll( false );
+			// Disable all actionbar tools by default.
+			this.actionbar.toggleAll( false );
 			//--------------------------------
 			// Handle Mode
 			//--------------------------------
@@ -874,7 +910,7 @@ JestAppsRegistry.AppJestTiler =
 		// --------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
-		// e	- Ticker event [object] data about frame.
+		// * e - Ticker event [object] data about frame.
 		draw( e ) {
 			// --------------------------------
 			// Check State & Status
@@ -890,21 +926,22 @@ JestAppsRegistry.AppJestTiler =
 			// Check If Canvas Is Available
 			// --------------------------------
 			// Determine if editor canvas is set.
-			const editor	= this.gameboard.display.getCanvas( 'workspace' );
+			const editor     = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
 				console.warn( 'Editor canvas is not set or invalid' );
-				return;
+				return; // abort
 			}
-			const editorCtx		= editor.el.getContext( '2d' );
+			const editorCtx  = editor.el.getContext( '2d' );
 			// Determine if palette canvas is set.
-			const palette	= this.gameboard.display.getCanvas( 'palette' );
+			const palette    = this.gameboard.display.getCanvas( 'palette' );
 			if ( !palette || !palette.el ) {
 				console.warn( 'Palette canvas is not set or invalid' );
-				return;
+				return; // abort
 			}
-			const paletteCtx	= palette.el.getContext( '2d' );
+			const paletteCtx = palette.el.getContext( '2d' );
 			// Emit pre-draw hooks.
 			this.emit( 'predraw', null, e, state, enabled, mode, editorCtx, paletteCtx );
+
 			// --------------------------------
 			// Draw Depending Upon Mode
 			// --------------------------------
@@ -916,21 +953,26 @@ JestAppsRegistry.AppJestTiler =
 					// --------------------------------
 					// Require a file to be open.
 					if ( state.levelView!==null ) {
+						// Set the fill color to blue
+						//editorCtx.fillStyle = '#000';
 						// Clear the canvas with an empty screen.
 						editorCtx.clearRect( 0, 0, editor.el.width, editor.el.height );
+						//editorCtx.fillStyle = 'transparent';
 						// --------------------------------
 						// Draw Level Board on Editor
 						// --------------------------------
 						// Draw active view on editor.
-						const levelImage	= state.levelView.getViewRender();
+						state.levelView.refreshCanvas(); // refresh composite render
+						const levelImage = state.levelView.getViewRender(); // get canvas
 						editorCtx.drawImage(
-							levelImage.el,		// image contents being copied
-							0, 0,				// source crop x,y
+							levelImage.el,   // image contents being copied
+							0, 0,            // source crop x,y
 							levelImage.width, levelImage.height, // source W x H
-							0, 0,				// destination x,y
+							0, 0,            // destination x,y
 							editor.width, editor.height // destination W x H
 							);
 					}
+
 					// --------------------------------
 					// Render the Palette Canvas
 					// --------------------------------

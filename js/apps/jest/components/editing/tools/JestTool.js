@@ -11,9 +11,11 @@ console.log( 'jestconsole.log: js/apps/jest/components/editing/tools/JestTool.js
 // This class frames an [object] that serves as a base usable tool.
 class JestTool extends JestElement {
 	// Object propert(ies)
-	name			= 'tool';			// [string] Value of tool name.
-	curators		= {};				// [object] Stack of JestCurators for organizing tool objects.
-	_cooptedTools	= [];				// [array] Co-opted tools (they auto-enable when this enabled).
+	name           = 'tool';           // [string] Value of tool name.
+	curators       = {};               // [object] Stack of JestCurators for organizing tool objects.
+	_cooptedTools  = [];               // [array] Co-opted tools (they auto-enable when this enabled).
+	// Tool properties
+	flags          = new Set();        // [Set<string>] App-defined tool requirements and capabilities.
 
 	// --------------------------------
 	// Constructor
@@ -23,9 +25,9 @@ class JestTool extends JestElement {
 	// * client		- [object] Application client that this piece belongs to.
 	// * name		- [string] Value of tool name.
 	constructor( client, name ) {
-		super( client );				// call parent constructor
-		this.name	= name;				// set tool name
-		this.jot( 'mode', 'idle' );		// default mode is idle
+		super( client );               // call parent constructor
+		this.name = name;              // set tool name
+		this.jot( 'mode', 'idle' );    // default mode is idle
 	}
 
 	//-------------------------
@@ -38,7 +40,7 @@ class JestTool extends JestElement {
 	build( name='tool', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool' ];
+		const defaultClasses = [ 'tool' ];
 		super.build( "div", name, defaultClasses.mergeUnique(classes) );
 		// Tool is disabled by default.
 		this.jot( 'enabled', false );	// disable tool to start
@@ -54,9 +56,9 @@ class JestTool extends JestElement {
 			return;
 		}
 		// Generate a curator for UI data.
-		const curator		= new JestCurator( this.client );
+		const curator       = new JestCurator( this.client );
 		curator.build( `${name}-curator-${name}` ); // build curator DOM
-		this.curators[name]	= curator; // keep ref
+		this.curators[name] = curator; // keep ref
 	}
 
 	//-------------------------
@@ -86,10 +88,11 @@ class JestTool extends JestElement {
 			this._cooptedTools = [];
 
 		// Add unique tool names.
-		tools.forEach( tool => {
-			if ( typeof tool === 'string' && !this._cooptedTools.includes(tool) )
-				this._cooptedTools.push( tool );
-		});
+		tools.forEach(
+			tool => {
+				if ( typeof tool==='string' && !this._cooptedTools.includes(tool) )
+					this._cooptedTools.push( tool );
+			});
 	}
 
 	//-------------------------
@@ -199,5 +202,98 @@ class JestTool extends JestElement {
 		// --------------------------
 		// Call parent jot method.
 		return super.jot?.( key, val ) ?? false;
+	}
+
+	//--------------------------------
+	// Set Tool Flag
+	//--------------------------------
+	// Register an application-defined capability or requirement.
+	// A flag does not automatically enable, disable, or block a tool.
+	// RETURNS: [boolean] true if the flag was newly added.
+	// * flag - [string] unique flag identifier.
+	setFlag( flag ) {
+		// Validate the supplied flag.
+		if ( typeof flag!=='string' || !flag.trim() )
+			return false; // fail
+
+		// Avoid registering the same flag multiple times.
+		if ( this.flags.has(flag) )
+			return false; // prevent duplicate flag
+
+		// Register the flag.
+		this.flags.add( flag );
+		return true; // success
+	}
+
+	//--------------------------------
+	// Unset Tool Flag
+	//--------------------------------
+	// Remove a previously registered tool flag.
+	// RETURNS: [boolean] true if the flag existed and was removed.
+	// * flag - [string] flag identifier.
+	unsetFlag( flag ) {
+		// Remove the flag from the tool's capability set.
+		return this.flags.delete( flag );
+	}
+
+	//--------------------------------
+	// Check Tool Flag
+	//--------------------------------
+	// Determine whether this tool declares a specific requirement.
+	// RETURNS: [boolean] true if the flag exists.
+	// * flag - [string] flag identifier.
+	hasFlag( flag ) {
+		// Check the tool's registered flags.
+		return this.flags.has( flag );
+	}
+
+	//--------------------------------
+	// Determine Tool Usability
+	//--------------------------------
+	// Check whether this tool is equipped and permitted to operate.
+	// Refresh application-defined restrictions before an operation.
+	// RETURNS: [boolean] true if the tool may operate.
+	usable() {
+		//--------------------------------
+		// Validate Tool Selection
+		//--------------------------------
+		// An unequipped tool cannot operate.
+		if ( !this.enabled() ) return false;
+
+		//--------------------------------
+		// Refresh Current Restrictions
+		//--------------------------------
+		// Allow applications that support tool blocking to reevaluate
+		// the tool immediately before an editing action.
+		this.client.toolBlockCheck?.( this );
+
+		// Permit operation only when no restrictions are active.
+		return !this.skim('blocked');
+	}
+
+	//--------------------------------
+	// Determine Tool Blocking
+	//--------------------------------
+	// Set the tool's block status state.
+	// * blocked  - [boolean] Whether to block the tool or not.
+	//   reasons  - [array<strings>|null] Reasons why tool is blocked.
+	block( blocked, reasons=null ) {
+		// Jot down the new blocked status & reasons.
+		this.jot( 'blocked', blocked );
+		this.jot( 'blockReason', reasons );
+		// Emit event depending upon block state.
+		if ( blocked===true )
+			this.emit( 'blocked', null, reasons );
+		else this.emit( 'unblocked' );
+	}
+
+	//--------------------------------
+	// Determine Tool Blocking
+	//--------------------------------
+	// A blocked tool remains equipped but cannot currently operate.
+	// RETURNS: [boolean] true if equipped but restricted.
+	blocked() {
+		// Distinguish a blocked tool from an unequipped tool.
+		return this.enabled() && !!this.skim('blocked');
 	}
 }

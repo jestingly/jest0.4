@@ -48,7 +48,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				name       : 'copyright',
 				tag        : 'div',
 				classes    : [ 'jest-copyright' ],
-				text       : 'Copyright <b>©</b> 2025 <strong>JEST®</strong>. All rights reserved.'
+				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.4</strong>. All rights reserved.'
 				});
 
 			// --------------------------------
@@ -81,7 +81,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 					if ( !state?.levelView ) return;
 					// Require level view & level [object].
 					const view		= state.levelView;
-					const level		= view?.file?.context;
+
+					//--------------------------------
+					// Resolve Target Level Layer
+					//--------------------------------
+					// Acesss active tab level.
+					const level     = view.file.context;
+					const layer     = level.getActiveLayer(); // get layer
+					if ( !layer ) return false;               // can't find layer
+
 					//--------------------------------
 					// Access Tile Data @ Coordinate
 					//--------------------------------
@@ -91,7 +99,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 					const x			= Math.floor( pos.x / units );
 					const y			= Math.floor( pos.y / units );
 					// Get tile (if any) from level
-					const tile		= level?.getTile?.( x, y );
+					const tile		= layer.getTile( x, y );
 					//--------------------------------
 					// Generate Status Display Text
 					//--------------------------------

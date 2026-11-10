@@ -22,6 +22,27 @@ Edit the following files to configure your application:
 • js/apps/jest/components/JestConfiguration_rem.js
 
 //-------------------------------------------------------
+       DEVELOPER NOTES • CHANGES from v0.3 to v0.4
+//-------------------------------------------------------
+
+• Eyedropper tool now has a new "sample preview" zoom-in feature.
+
+• Layers are now possible; levels are migrating to v. JESTNW02 encoding.
+  - add, remove, name and rename layers
+  - show/hide & lock/unlock layers
+
+• New _Crosshair_ option to show perpendicular intersection highlights to the mouse cursor.
+
+• The Hand grab tool is now available to more easily navigate your canvas scrollable window boundaries.
+
+• New Eraser tool will draw with the background tile on the base layer, and will change upper tiles on higher layers transparent when erased.
+
+• The login system & cloud synchronization ironed out some bugs.
+  - install the database using the attached SQL file: /jest_play.sql
+  - login using the generic credentials u="admin" & p="admin"
+  - still under development
+
+//-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.2 to v0.3
 //-------------------------------------------------------
 

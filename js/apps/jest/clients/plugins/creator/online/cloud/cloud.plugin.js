@@ -3,7 +3,7 @@
 // Antago (God of Gravity), author of Graal2001 & Destiny
 // Copyright ® 1999-2026
 //-------------------------------------------------------
-console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud.plugin.js loaded' );
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud/cloud.plugin.js loaded' );
 
 // Cloud handling plugin (for files).
 (function( window ) {
@@ -45,10 +45,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud.plugi
 			client.cloud.build(); // build file viewer
 			// Create cloud viewer sidebar menu.
 			client.sidebar.addDisableExclusion( 'cloud' ); // prevent forced collapse
-			const cloudSection	= client.sidebar.addSection( 'cloud', 'Cloud', null, {}, null );
+			const cloudSection = client.sidebar.addSection( 'cloud', 'Cloud', null, {}, null );
 			// Add cloud panel to the sidebar menu.
-			const cloudMenu		= client.sidebar.getSection( 'cloud' );
+			const cloudMenu    = client.sidebar.getSection( 'cloud' );
 			cloudMenu.addItem( 'viewer', client.cloud.panel );
+
+			//--------------------------------
+			// Wire Cloud List to Tab Change
+			//--------------------------------
+			// Create event for when tab is changed, to switch level.
+			client.tabbarFile.register(
+				'tabChange', 'refreshCloudList',
+				( nextView, prevView, action ) => {
+					// Select file browser list item by cloud id.
+					if ( nextView!==null ) {
+						const id = Number( nextView.file.context?.meta?.cloud_id );
+						client.cloud.fileViewer.listView.selectItemByValue( 'id', id );
+					}
+				});
 
 			//--------------------------------
 			// Wire Cloud List to Sidebar Panel
@@ -57,13 +71,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud.plugi
 			client.cloud.toolbar.buttons.sync.register(
 				'click', 'syncLevel',
 				async () => {
-					// Get active level file view.
-					const state	= client.getState();	// get current program state
-					const view	= state.levelView;		// get active level file
-					// Validate an active view is open.
+					// Get the active application state and open level view.
+					const state	= client.getState(); // get current program state
+					const view	= state.levelView;   // get active level file
+
+					// Sync is available only when a level file is active.
 					if ( !view ) return; // disabled
-					// Call the "save" mechanism in the cabinet for the active file.
-					await client.cabinet.saveFile( view.file.skey, "cloud" ); // sync to cloud
+
+					// Stop here and offer login when the user is not authenticated.
+					const allowed =
+						client.login.requireLogin({
+							action      : 'sync this level',
+							description : 'Your level will be saved to your cloud account.'
+							});
+					if ( !allowed ) return;
+
+					// Save the active level through the existing cloud-save pathway.
+					await client.cabinet.saveFile( view.file.skey, 'cloud' );
 				});
 
 			// Attach to cloud
@@ -75,10 +99,32 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud.plugi
 					// Resize the menu to fit.
 					client.sidebar.refit( 'cloud' );
 				});
-			await client.cloud.list(); // trigger fetch
 
 			// Set the default sort type of the cloud file list.
 			client.cloud.fileViewer.listView.sortByColumn( 'level_name' ); // sort by filename
+
+			// --------------------------------
+			// Load Cloud List After Login
+			// --------------------------------
+			// Fetch the list whenever login succeeds after startup.
+			client.login.register(
+				'loggedIn', 'loadList',
+				() => {
+					// Attempt to auto-populate cloud list.
+					client.cloud.loadList() // load list
+				});
+
+			// Clear the displayed account list when the user logs out.
+			client.login.register(
+				'loggedOut', 'clearCloudList',
+				() => {
+					// Reset the cloud list.
+					client.cloud.reset(); // reset
+				});
+
+			// Fetch now when the user was already logged in before this plugin started.
+			if ( client.login.isLoggedIn() )
+				await client.cloud.loadList(); // trigger fetch
 
 			//--------------------------------
 			// File Open Event
@@ -175,5 +221,5 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud.plugi
 	// register with JestCreator
 	if ( window.JestCreator && typeof window.JestCreator.use==='function' )
 		window.JestCreator.use( type, plugin );
-	else console.error( 'online/cloud.plugin.js load error: JestCreator.use() not found' );
+	else console.error( 'online/cloud/cloud.plugin.js load error: JestCreator.use() not found' );
 })( window );

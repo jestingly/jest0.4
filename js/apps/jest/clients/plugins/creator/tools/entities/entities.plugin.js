@@ -118,7 +118,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			// Add a tool button for selecting and moving hooks.
 			const button = client.toolbar.createButton(
 				{ name : subtype, text : null /*'Entities'*/ } );
-			button.clicker.addAttribute( 'data-tooltip-keys', 'E' );
+			button.clicker.addAttribute( 'data-tooltip', 'Entities' );
+			button.clicker.addAttribute( 'data-tooltip-keys', 'N' );
 			//-----------------------------
 			// Icon Entities
 			//-----------------------------
@@ -169,7 +170,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				});
 
 			// Define keyboard shortcut.
-			client.io.registerShortcut( 'E', subtype );
+			client.io.registerShortcut( 'N', subtype );
 			// Keyboard shortcut menu action.
 			client.io.register( 'keyboardShortcut', 'entitiesCommand',
 				command => {
@@ -1077,7 +1078,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 								// Enable Apply only when an editable hook has changes.
 								const changed	=
 									form && data && data.readonly!==true
-									&& form.checkFieldMismatches( data, compare );
+									&& form.checkFieldInput( data, compare );
 								// Enable the apply button.
 								toolbar.toggle( 'apply', Boolean(changed) );
 							}

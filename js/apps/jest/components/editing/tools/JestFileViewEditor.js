@@ -108,6 +108,8 @@ class JestFileViewEditor extends JestFileView {
 					( item, idx ) => {
 						item.data.index = idx;
 					});
+				// Synchronize the selection after removing abandoned redo states.
+				this.history.selectItemAt( this.governor.getStack('edit').index );
 				// Emit an event signaling the history was updated.
 				this.emit( 'history:updated', null );
 			});
@@ -132,7 +134,6 @@ class JestFileViewEditor extends JestFileView {
 					});
 
 				// Update selected pointer.
-				this.history.selectedIndex = newIndex;
 				this.history.selectItemAt( newIndex );
 
 				// Emit an event signaling the history was updated.
@@ -163,7 +164,9 @@ class JestFileViewEditor extends JestFileView {
 				const index	= stack.index;
 				const label	= `Step ${index + 1}`;
 				const item	= this.history.addItem( label, { index } );
-				item.highlight(); // Optional visual cue
+				// Synchronize the History list with the governor's actual index.
+				this.history.selectItemAt( index );
+				//item.highlight(); // Optional visual cue
 				// Emit an event signaling the history was updated.
 				this.emit( 'history:updated', null );
 				this.emit( 'history:logged', null, item, log );

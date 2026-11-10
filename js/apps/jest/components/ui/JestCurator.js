@@ -54,7 +54,7 @@ class JestCurator extends JestElement {
 			{ name: 'buttons',    tag: 'div', classes: [ 'selector-buttons' ] }
 			]);
 		// Assign detail element
-		this.detail		= this.panel.refs.detail;
+		this.detail  = this.panel.refs.detail;
 		//-------------------------
 		// Create Type Select Box
 		//-------------------------

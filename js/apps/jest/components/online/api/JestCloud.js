@@ -14,15 +14,18 @@ console.log( 'jestAlert: js/apps/jest/components/online/api/JestCloud.js loaded'
 //-----------------------------
 class JestCloud extends JestElement {
 	// Object properties
-	saves			= [];				// [array] list of cloud saves
-	lastSavedId		= null;				// [int|null] last saved entry id
-	lastLoaded		= null;				// [object|null] last loaded save
+	saves        = [];              // [array] list of cloud saves
+	lastSavedId  = null;            // [int|null] last saved entry id
+	lastLoaded   = null;            // [object|null] last loaded save
+	// Track an in-flight request so startup and the login event cannot fetch twice.
+	listLoaded   = false;           // [boolean] Whether cloud list data has loaded.
+	listLoading  = null;            // [Method] To loadback cloud list data.
 	// UI handling properties
-	fileViewer		= null;				// [object] JestFileViewer panel
-	toolbar			= null;				// [object] JestToolbar for buttons
-	container		= null;				// [object] JestPanel item list container
-	modals			= {};				// [object] { conflict:JestModal, rename:JestModal }
-	rename			= { input:null };	// [object] refs for rename modal parts
+	fileViewer   = null;            // [object] JestFileViewer panel
+	toolbar      = null;            // [object] JestToolbar for buttons
+	container    = null;            // [object] JestPanel item list container
+	modals       = {};              // [object] { conflict:JestModal, rename:JestModal }
+	rename       = { input:null };  // [object] refs for rename modal parts
 
 	//-------------------------
 	// Constructor
@@ -30,10 +33,10 @@ class JestCloud extends JestElement {
 	// Create the cloud save manager.
 	// * client		- [object] reference to CMS controller
 	constructor( client ) {
-		super( client );				// construct base element
+		super( client );           // construct base element
 		// Build both modals at construction so they’re ready instantly.
-		this.initModalConflict();		// create conflict modal
-		this.initModalRename();			// create rename modal
+		this.initModalConflict();  // create conflict modal
+		this.initModalRename();    // create rename modal
 	}
 
 	// --------------------------------
@@ -52,8 +55,8 @@ class JestCloud extends JestElement {
 		// Create File Browser Menu
 		//--------------------------------
 		// Add cloud panel to the sidebar menu.
-		const fileViewer	= new JestFileViewer( this );
-		this.fileViewer		= fileViewer; // sidebar cloud record browser
+		const fileViewer = new JestFileViewer( this );
+		this.fileViewer  = fileViewer; // sidebar cloud record browser
 		fileViewer.build(); // build the file viewer
 		// Create columns for list.
 		fileViewer.listView.setColumns([
@@ -73,7 +76,7 @@ class JestCloud extends JestElement {
 			{ name: 'listWrap', tag: 'div', classes: [ 'cloud-list', 'jest-panel' ] },
 			{ name: 'buttons',  tag: 'div', classes: [ 'selector-buttons' ] }
 			]); // add to form
-		this.container	= this.panel.refs.listWrap; // keep ref
+		this.container = this.panel.refs.listWrap; // keep ref
 		// Add file browser to the cloud panel.
 		this.container.addPanel( 'browser', fileViewer.panel );
 
@@ -81,8 +84,8 @@ class JestCloud extends JestElement {
 		// Create Toolbar [object]
 		// --------------------------------
 		// Create the toolbar.
-		const toolbar	= new JestToolbar( this );
-		this.toolbar	= toolbar; // set toolbar
+		const toolbar  = new JestToolbar( this );
+		this.toolbar   = toolbar; // set toolbar
 		toolbar.build(); // build the toolbar
 		// Add toolbar to client interface.
 		this.panel.refs.buttons.addPanel( 'toolbar', toolbar.panel );
@@ -108,6 +111,18 @@ class JestCloud extends JestElement {
 				// Highlight the active swatch in swatch panel.
 				this.setActiveSwatch( data.tx, data.ty );
 			});*/
+	}
+
+	//-------------------------
+	// Configuration Method(s)
+	//-------------------------
+	// Reset the cloud session.
+	// RETURNS: [void].
+	reset() {
+		// Set the list as unloaded.
+		this.listLoaded = false;
+		// Clear the populated list.
+		this.fileViewer.populate( [] );
 	}
 
 	//-------------------------
@@ -141,11 +156,14 @@ class JestCloud extends JestElement {
 			};
 
 		// Transmit the API call.
-		const url		= `${this.client.config.root}php/api/levels/save.php`;
-		const inquiry	= new Inquiry( url, 'cloud-save', 'POST', 'cloud', 'json', payload, 'json' );
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
+		const url     = `${this.client.config.root}php/api/levels/save.php`;
+		const inquiry = new Inquiry( url, 'cloud-save', 'POST', 'cloud', 'json', payload, 'json' );
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
 		console.log( result );
 
+		//-------------------------
+		// Handle Server Response
+		//-------------------------
 		// Check if result was successful.
 		if ( result?.parsed?.code===200 ) {
 			// Retrieve parsed data saves & emit the save event.
@@ -166,13 +184,17 @@ class JestCloud extends JestElement {
 			return null;
 		}
 		//else if ( result?.parsed?.code===404 ) {}	// record not found
-		else if ( result?.parsed?.code===401 ) {	// not logged in
+		else if ( result?.parsed?.code===401 ) {   // not logged in
 			// Check if user is logged in.
-			await this.client.login.check();		// immediately check for existing session
-			alert( 'You must be logged in. Login, then try again.' );
-			// If the user is not logged in, prompt login screen.
-			if ( this.client.login.logged!==true )
-				this.client.login.show( "login" );	// show the login screen
+			if ( !this.client.login.isLoggedIn() ) { // check for session
+				this.client.login.emit(
+					'loginRequired', null,
+					'synch data to the cloud'
+					);
+				// If the user is not logged in, prompt login screen.
+				if ( this.client.login.logged!==true )
+					this.client.login.show( "login" ); // show the login screen
+			}
 		}
 		else { // fail
 			console.warn( '[JestCloud]: Save failed', result );
@@ -230,16 +252,29 @@ class JestCloud extends JestElement {
 	// List Cloud Saves
 	//-------------------------
 	// Loads all cloud saves for the current user.
-	// RETURNS: [void]
+	// RETURNS: [void].
 	async list() {
+		//-------------------------
+		// Check if User Logged In
+		//-------------------------
+		// Require a valid login session before attempting to pull a list.
+		if ( !this.client.login.isLoggedIn() ) // check for session
+			return; // cannot list cloud items without session
+
+		//-------------------------
+		// Send Server Inquiry
+		//-------------------------
 		// Build the API URL to call.
-		const url		= `${this.client.config.root}php/api/levels/list.php`;
+		const url     = `${this.client.config.root}php/api/levels/list.php`;
 		// Create an inquiry [object] using the payload data to transmit.
-		const inquiry	= new Inquiry( url, 'cloud-list', 'GET', 'cloud', 'form', null, 'json' );
+		const inquiry = new Inquiry( url, 'cloud-list', 'GET', 'cloud', 'form', null, 'json' );
 		// Seek response from server using the request.
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
 		console.log( result );
 
+		//-------------------------
+		// Handle Server Response
+		//-------------------------
 		// Check if result was successful.
 		if ( result?.parsed?.code===200 ) {
 			// Retrieve parsed data saves & emit the list event.
@@ -262,13 +297,16 @@ class JestCloud extends JestElement {
 	async load( id ) {
 		if ( !id || typeof id!=='number' ) return;
 		// Build the API URL to call.
-		const url		= `${this.client.config.root}php/api/levels/load.php?id=${id}`;
+		const url     = `${this.client.config.root}php/api/levels/load.php?id=${id}`;
 		// Create an inquiry [object] using the payload data to transmit.
-		const inquiry	= new Inquiry( url, 'cloud-load', 'GET', 'cloud', 'form', null, 'json' );
+		const inquiry = new Inquiry( url, 'cloud-load', 'GET', 'cloud', 'form', null, 'json' );
 		// Seek response from server using the request.
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
 		console.log( result );
 
+		//-------------------------
+		// Handle Server Response
+		//-------------------------
 		// Check if result was successful.
 		if ( result?.parsed?.code===200 ) {
 			// Retrieve parsed data saves & emit the load event.
@@ -291,13 +329,16 @@ class JestCloud extends JestElement {
 	async delete( id ) {
 		if ( !id || typeof id!=='number' ) return;
 		// Build the API URL to call.
-		const url		= `${this.client.config.root}php/api/levels/delete.php`;
+		const url     = `${this.client.config.root}php/api/levels/delete.php`;
 		// Create an inquiry [object] using the payload data to transmit.
-		const inquiry	= new Inquiry( url, 'cloud-delete', 'POST', 'cloud', 'form', { id }, 'json' );
+		const inquiry = new Inquiry( url, 'cloud-delete', 'POST', 'cloud', 'form', { id }, 'json' );
 		// Seek response from server using the request.
-		const result	= await this.client.transmitter.sendInquiry( inquiry );
+		const result  = await this.client.transmitter.sendInquiry( inquiry );
 		console.log( result );
 
+		//-------------------------
+		// Handle Server Response
+		//-------------------------
 		// Check if result was successful.
 		if ( result?.parsed?.code===200 ) {
 			this.emit( 'delete', null, id );
@@ -353,7 +394,7 @@ class JestCloud extends JestElement {
 	}
 
 	//-------------------------
-	// showConflict( info, ctx )
+	// Modal Method(s)
 	//-------------------------
 	// Opens the Conflict modal and resolves to:
 	// 	'overwrite' | 'bind' | 'fork' | null (cancel)
@@ -461,9 +502,6 @@ class JestCloud extends JestElement {
 			});
 	}
 
-	//-------------------------
-	// promptRename( currentName )
-	//-------------------------
 	// Opens the rename modal and resolves with the new name or null if cancelled.
 	// RETURNS: [Promise<string|null>]
 	// * currentName	- [string] Value of file's current filename stem.
@@ -504,4 +542,38 @@ class JestCloud extends JestElement {
 				modal.open(); // open the modal
 			});
 	}
+
+	//-------------------------
+	// List Loading
+	//-------------------------
+	// Fetch the cloud list once for the current logged-in session.
+	// RETURNS: [Promise<void>] Resolves after the cloud list request finishes.
+	async loadList() {
+		//--------------------------------
+		// Check If List's Loaded or Loading
+		//--------------------------------
+		// Do not request account data before authentication is available.
+		if ( this.client.login.logged!==true ) return;
+		// Reuse the active request if another login/startup path already began it.
+		if ( this.listLoading ) return this.listLoading;
+		// Skip a duplicate fetch after this session's list has loaded.
+		if ( this.listLoaded ) return;
+
+		//--------------------------------
+		// Define List-Load Request Method
+		//--------------------------------
+		// Start the request and mark the list loaded after it completes.
+		this.listLoading =
+			(async () => {
+				await this.list();
+				this.listLoaded = true;
+			})();
+
+		//--------------------------------
+		// Call to Load the List
+		//--------------------------------
+		// Clear the in-flight marker even if the request fails.
+		try { await this.listLoading; }
+		finally { this.listLoading = null; }
+	};
 }

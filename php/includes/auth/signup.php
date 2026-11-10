@@ -9,14 +9,25 @@ require_once __DIR__ . '/../jest.client.php';	// Load CMS root client
 // Decode JSON input from fetch() body
 //-----------------------------------------
 // Capture raw POST body and parse JSON
-$data		= client()->input();
+$data    = client()->input();
 
 //-------------------------------------------------
 // Validate credentials
 //-------------------------------------------------
 // Validate required credentials.
-$fields		= [ 'username', 'email', 'password' ];
-$creds		= client()->parser->parseCredentials( $data, $fields );
+$fields  = [ 'username', 'email', 'password' ];
+$options =
+	[
+		'purpose'       => 'register',
+		'passwordRules' => [
+			'minLength'        => 12,
+			'requireLetter'    => true,
+			'requireNumber'    => true,
+			'requireUppercase' => false,
+			'requireSymbol'    => false
+			]
+	];
+$creds   = client()->parser->parseCredentials( $data, $fields, $options );
 dbtlog( $creds );
 
 // Check if credentials validated.
@@ -26,7 +37,7 @@ if ( $creds===null ) {
 }
 
 // Iterate each field & check status.
-$failed		= false;
+$failed  = false;
 foreach ( $creds as $key=>$val ) {
 	if ( $val['status']==='error' ) { // fail
 		$failed = true; // flag for exit
@@ -34,7 +45,7 @@ foreach ( $creds as $key=>$val ) {
 }
 
 // Check if the form failed, exit with error.
-if ( $failed === true ) {
+if ( $failed===true ) {
 	// Return parse info.
 	client()->respond( 400, 'error', $creds, 'Missing or invalid fields.' );
 	exit;
@@ -43,7 +54,7 @@ if ( $failed === true ) {
 //-------------------------------------------------
 // Run registration logic
 //-------------------------------------------------
-$result		=
+$result  =
 	client()->auth->register(
 		$creds['username']['value'],
 		$creds['email']['value'],
@@ -53,6 +64,9 @@ $result		=
 //-------------------------------------------------
 // Respond with result
 //-------------------------------------------------
-client()->respond( 200, 'success', $result );
+// Return success or failure.
+if ( $result['success'] )
+	client()->respond( 200, 'success', $result );
+else client()->respond( 400, 'error', $creds, $result['error'] );
 
 exit;

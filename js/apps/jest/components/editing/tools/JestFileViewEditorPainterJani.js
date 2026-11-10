@@ -95,7 +95,7 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 	// RETURNS: [void].
 	getViewRender() {
 		// Return the jani bitmap canvas.
-		const canvas	 = this.file.context.canvas;
+		const canvas = this.file.context.canvas;
 		return canvas; // jani bitmap canvas
 	}
 }

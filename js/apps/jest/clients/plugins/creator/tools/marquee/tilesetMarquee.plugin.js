@@ -183,24 +183,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 					// Validate Marquee Mask/Trace
 					// -----------------------------
 					// Get tile measurements.
-					const units	= tool.anchor.units;
+					const units  = tool.anchor.units;
 					// Check if current marquee has either valid mask or traced rectangle.
-					const bounds	= tool.anchor?.getBounds?.() ?? null;
-					const mask		= tool.mask;
-					const tracer	= tool.tracer;
-					const trace	= tracer?.getBounds?.() ?? null;
+					const bounds = tool.anchor?.getBounds?.() ?? null;
+					const mask   = tool.mask;
+					const tracer = tool.tracer;
+					const trace  = tracer?.getBounds?.() ?? null;
 
-					let masked	= false;
-					let traced	= false;
+					let masked   = false;
+					let traced   = false;
 
 					// Validate mask area
 					if ( bounds && bounds.w>0 && bounds.h>0
 						 && Array.isArray(mask) && mask.length>0 )
-						masked	= true;
+						masked   = true;
 
 					// Validate traced area
 					if ( trace && trace.w>0 && trace.h>0 )
-						traced	= true;
+						traced   = true;
 
 					// Exit if nothing to process
 					if ( !masked && !traced ) return;

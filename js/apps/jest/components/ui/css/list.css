@@ -2,7 +2,7 @@
 	.jest-list {
 		display          : 'flex';
 		flex-direction   : 'column';
-		overflow-y       : 'auto'
+		overflow-y       : 'auto';
 	}
 	.jest-list-item {
 		display          : flex;

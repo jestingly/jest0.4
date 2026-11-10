@@ -183,6 +183,21 @@
 		cursor           : default;
 		transition       : none;
 	}
+	/* Preserve selection while visually indicating that
+	   the equipped tool cannot currently operate. */
+	.jest-window-viewport .toolbar button.active.tool-blocked,
+	.jest-window-viewport .toolbar button.active.tool-blocked:hover {
+		background       : #555;
+		color            : #bbb;
+		filter           : grayscale(1);
+		opacity          : 0.75;
+		transform        : none;
+	}
+	/* Display the prohibited cursor without intercepting
+	   pointer events or changing the selected tool. */
+	canvas.tool-blocked-cursor {
+		cursor           : not-allowed !important;
+	}
 	.jest-window-viewport .toolbar button:hover.active,
 	.jest-window-viewport .toolbar button:hover.disabled {
 		transform        : none;

@@ -74,12 +74,17 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// RETURNS: [void]
 	// * sourceCanvas	- [HTMLCanvasElement] Source canvas.
 	// * destCanvas		- [HTMLCanvasElement] Destination canvas.
-	refreshCanvas() {
+	/*refreshCanvas() {
 		// Require file to be set.
 		if ( !this.file ) return;
 		super.refreshCanvas(); // call parent method
 		// Obtain file canvas context & copy contents to canvas.
-		const sourceCanvas	= this.getViewRender().el;
+		const render		= this.getViewRender();
+		if ( !render ) {
+			console.error( '[JestFileViewEditorPainterLevel] Could not access level layer canvas.' );
+			return false;
+		}
+		const sourceCanvas	= render.el; // canvas element
 		const destCanvas	= this.canvas.el;
 		const ctx			= destCanvas.getContext('2d');
 		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height ); // optional clear
@@ -90,13 +95,81 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 			0, 0, // destination x,y
 			destCanvas.width, destCanvas.height // destination W x H
 			);
+	}*/
+
+	//--------------------------------
+	// Refresh Level Canvas
+	// RETURNS: [boolean]
+	//--------------------------------
+	// Composite all visible level layers into the
+	// painter preview, preserving their rendering order.
+	// NOTE: Layers are stored bottom-to-top, so drawing
+	// them sequentially produces the correct visual stack.
+	//--------------------------------
+	refreshCanvas() {
+		//--------------------------------
+		// Validate Current File
+		//--------------------------------
+		// A level file must be assigned before rendering.
+		if ( !this.file ) return false;
+
+		// Preserve the parent painter's refresh behavior.
+		super.refreshCanvas();
+
+		//--------------------------------
+		// Resolve Level and Destination
+		//--------------------------------
+		// Retrieve the level represented by this file.
+		const level      = this.file.context;
+		// Retrieve the destination canvas.
+		const destCanvas = this.canvas.el;
+		// Obtain the destination drawing context.
+		const ctx        = destCanvas.getContext( '2d' );
+
+		// Validate the required rendering objects.
+		if ( !level || !ctx ) return false;
+
+		//--------------------------------
+		// Clear Previous Preview
+		//--------------------------------
+		// Remove the previous composite before rebuilding.
+		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height );
+
+		//--------------------------------
+		// Composite Visible Layers
+		//--------------------------------
+		// Iterate from the bottom layer to the top layer.
+		for ( const layer of level.getLayers() ) {
+			// Hidden layers must not appear in the preview.
+			if ( !layer.visible ) continue; // skip
+
+			// Retrieve this layer's rendered canvas.
+			const sourceCanvas = layer.canvas?.el;
+			// Skip layers without an initialized canvas.
+			if ( !sourceCanvas ) continue; // skip
+
+			// Draw the layer over the existing composite.
+			ctx.drawImage(
+				sourceCanvas,
+				0, 0,
+				sourceCanvas.width,
+				sourceCanvas.height,
+				0, 0,
+				destCanvas.width,
+				destCanvas.height
+				);
+		}
+
+		// Rendering completed.
+		return true;
 	}
-	
+
 	// Get level rendering canvas.
 	// RETURNS: [void].
 	getViewRender() {
-		// Return the level bitmap canvas.
-		const canvas	 = this.file.context.canvas;
-		return canvas; // level bitmap canvas
+		// Return composite copy of level bitmap canvas.
+		//const canvas = this.file.context.canvas;
+		//const canvas = this.file.context.getActiveLayer()?.canvas ?? null;
+		return this.canvas; // level bitmap canvas
 	}
 }

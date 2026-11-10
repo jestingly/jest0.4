@@ -7,61 +7,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 
 // Paintbrush plugin
 (function( window ) {
-	// Defined a marquee region as an [object] inside the curator.
-	const defineLevelMarqueeRegion = function( client, tool, type ) {
-		// Block action if app is busy.
-		if ( client.busy() ) return; // app busy‐gate
-		// Generate initial data [object].
-		let data		=  { created: Date.now() };
-		//--------------------------------
-		// Check If Paste Possible
-		//--------------------------------
-		// Validate an active view is open.
-		const state		= client.getState();	// get current program state
-		if ( !state.tilesetView ) return false;	// no active level
-		// Convert the region to a stamp.
-		const levelView	= state.levelView;
-		const levelKey	= state.levelViewKey;
-		const tileset	= state.tilesetView.file.context;
-		//--------------------------------
-		// Check If Selection is Made
-		//--------------------------------
-		// Require tool mode to be either "selected" or "floating".
-		toolMode		= tool.skim( 'mode' );
-		if ( toolMode!=='selected' && toolMode!=='floating' )
-			return; // nothing to add
-		//--------------------------------
-		// Check If Selection is Made
-		//--------------------------------
-		// Get the marquee selected content(s).
-		const region	= client.getLevelMarqueeRegion( tool );
-		data.action		= subtype;			// object is type marquee
-		data.w			= region.w;			// assign width
-		data.h			= region.h;			// assign height
-		//--------------------------------
-		// Get Input Value(s) (from modal)
-		//--------------------------------
-		// Get the value of the input text field(s).
-		let modal, log;
-		switch ( type ) {
-			case 'mosaic': {
-				// Get user input from modal.
-				modal			= client.modals.newMosaic;
-				const name		= modal.inputs.title.getValue().trim();
-				if ( name.length===0 ) return;
-				data.name		= name;			// capture object name
-				// Clone the marquee selected matrix & store in data.
-				const matrix	= tileset.cloneMatrix( region.matrix );
-				data.region		= { matrix };	// capture region
-				break; }
-		}
-	}
-
 	// Rotate a matrix of tiles.
 	function rotateMatrix90( matrix ) {
 		// Rotate [matrix] in-place by 90° clockwise.
-		const rows	= matrix.length, cols = matrix[0]?.length ?? 0;
-		const out	= Array.from({ length: cols }, ()=>Array(rows));
+		const rows = matrix.length, cols = matrix[0]?.length ?? 0;
+		const out  = Array.from( { length: cols }, ()=>Array(rows) );
 		for ( let i=0; i<rows; i++ )
 			for ( let j=0; j<cols; j++ )
 				out[j][rows-1-i] = matrix[i][j];
@@ -69,13 +19,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 		for ( let r of out ) matrix.push( r );
 	}
 
-
 	//-------------------------
 	// Register Plugin
 	//-------------------------
-	const type		= 'tools';
-	const subtype	= 'paintbrush';
-	const plugin	= {
+	const type    = 'tools';
+	const subtype = 'paintbrush';
+	const plugin  = {
 		//--------------------------------
 		// Plug Tool Into Tiler Application
 		//--------------------------------
@@ -84,14 +33,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			// Create Pencil Tool [object]
 			// --------------------------------
 			// Add a pencil tool to the level canvas board.
-			const tool		= new JestToolPencil( client, subtype );
+			const tool    = new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build tool
 			tool.setSwishThreshold( 5 );	// track every [float] # of tile movements
 			tool.setIdleThreshold( 500 );	// reset motion tracking if idle for 500 ms
 			// Wire into the grid.
 			tool.anchor.graticulate( client.config.tileGrid );
-			const canvas	= client.gameboard.display.getCanvas( 'workspace' );
+			const canvas  = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas ); // set target
 
 			// Simultaneous tools allowed:
@@ -103,13 +52,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			//--------------------------------
 			// Paintbrush Options State
 			//--------------------------------
-			let fillBrushId		= null;
-			let strokeBrushId	= null;
-			let step			= 0;
-			let rotator			= 0;
-			let strokeWeight	= 0;
-			let stepCount		= 0;
-			let rotationStep	= 0;
+			let fillBrushId   = null;
+			let strokeBrushId = null;
+			let step          = 0;
+			let rotator       = 0;
+			let strokeWeight  = 0;
+			let stepCount     = 0;
+			let rotationStep  = 0;
 
 			//--------------------------------
 			// Sidebar Panel UI (Control Panel)
@@ -118,7 +67,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			const form = new JestForm( client );
 			form.build( 'options', ['paintbrush-options'] );
 
-			const fillSelect	= new JestInputSelect( client, 'fill', null, null, null, 'Fill Mosaic' );
+			const fillSelect  = new JestInputSelect( client, 'fill', null, null, null, 'Fill Mosaic' );
 			fillSelect.build();
 			fillSelect.register( 'change', 'paintbrush', id => fillBrushId=id );
 			form.addField( 'fill', fillSelect );
@@ -175,7 +124,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			//--------------------------------
 			// Create tool curator.
 			tool.addCurator( 'primary' );
-			const curator	= tool.curators.primary;
+			const curator = tool.curators.primary;
 			tool.curators.primary.registerType( 'fill' );
 			tool.curators.primary.registerType( 'stroke' );
 			//--------------------------------
@@ -290,7 +239,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			// Toolbar Functionality
 			//-------------------------
 			// Add "selector" tool (levelMarquee) button to toolbar.
-			const button	= client.toolbar.createButton( { name: subtype } );
+			const button = client.toolbar.createButton( { name: subtype } );
 			button.clicker.addAttribute( 'data-tooltip', 'Paintbrush' );
 			button.clicker.addAttribute( 'data-tooltip-keys', 'B' );
 			//-----------------------------
@@ -326,7 +275,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			// Create keyboard shortcut.
 			client.io.registerShortcut( 'B', subtype );
 			// Keyboard shortcut menu action.
-			client.io.register( 'keyboardShortcut', 'paintbrushCommand',
+			client.io.register(
+				'keyboardShortcut', 'paintbrushCommand',
 				command => {
 					// Block input shortcuts while user is typing
 					if ( client.io.isTypingInInput() ) return;
@@ -354,18 +304,56 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				});
 
 			//--------------------------------
+			// Handle Tool Block Check
+			//--------------------------------
+			// Determine whether the tool can edit the active layer.
+			tool.register(
+				'blockCheck', 'paintbrushBlocking',
+				( status ) => {
+					//--------------------------------
+					// Validate Level Availability
+					//--------------------------------
+					// A level must exist before its layers can be edited.
+					if ( !status.level ) {
+						status.reasons.push( 'noLevel' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Active Layer
+					//--------------------------------
+					// Editing requires an active layer.
+					const layer = status.layer;
+					if ( !layer ) {
+						status.reasons.push( 'noLayer' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Layer Properties
+					//--------------------------------
+					// Hidden layers are not eligible for direct editing.
+					if ( !layer.visible )
+						status.reasons.push( 'layerHidden' );
+
+					// Locked layers prohibit modifying their contents.
+					if ( layer.locked )
+						status.reasons.push( 'layerLocked' );
+				});
+
+			//--------------------------------
 			// Brushify Button: LevelMarquee Integration
 			//--------------------------------
 			// Grab level marquee tool.
-			const marqueeTool	= client.toolbox.getTool( 'levelMarquee' );
+			const marqueeTool = client.toolbox.getTool( 'levelMarquee' );
 			// Insert button.
-			const brushify		= client.interactor.createButton( { name: 'brushify', text: 'Create Brush' } );
+			const brushify    = client.actionbar.createButton( { name: 'brushify', text: 'Create Brush' } );
 			// Register brushify button click event.
 			brushify.register(
 				'click', 'insert-object',
 				() => {
 					// Get fill definer modal.
-					modal	= client.modals.newPreset;
+					modal = client.modals.newPreset;
 					// Open the modal.
 					modal.open();
 				});
@@ -414,17 +402,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 						case 'fill':
 						case 'stroke': {
 							// Get user input from modal.
-							modal			= client.modals.newPreset;
-							const name		= modal.inputs.title.getValue().trim();
+							modal      = client.modals.newPreset;
+							const name = modal.inputs.title.getValue().trim();
 							// Require fill name input.
 							if ( name.length===0 ) {
 								alert( 'Invalid name. Brush preset not created.')
 								return; // abort
 							}
-							data.name		= name;			// capture object name
-							// Clone the marquee selected matrix & store in data.
-							const matrix	= tileset.cloneMatrix( region.matrix );
-							data.region		= { matrix };	// capture region
+							data.name  = name; // capture object name
+							// A floating marquee's tiles are stored in contents.
+							const selection =
+								marqueeTool.skim('mode')==='floating'
+									? marqueeTool.contents
+									: region;
+							// Copy the selected tiles into the brush preset.
+							const matrix = tileset.cloneMatrix( selection.matrix );
+							data.region  = { matrix };	// capture region
 							break; }
 						default: return; // abort
 					}
@@ -507,16 +500,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Check If Update Possible
 					//--------------------------------
 					// Attempt to enable button(s).
-					const levelMarquee		= client.toolbox.tools.levelMarquee;
-					const levelMarqueeMode	= levelMarquee.skim( 'mode' );
-					const paintbrushMode	= tool.skim( 'mode' );
-					const paintbrushEnabled	= tool.skim( 'enabled' );
-					const interactor		= client.interactor;
-					let toggle				= false; // reusable toggle [bool]
+					const levelMarquee      = client.toolbox.tools.levelMarquee;
+					const levelMarqueeMode  = levelMarquee.skim( 'mode' );
+					const paintbrushMode    = tool.skim( 'mode' );
+					const paintbrushEnabled = tool.skim( 'enabled' );
+					const actionbar         = client.actionbar;
+					let toggle              = false; // reusable toggle [bool]
 					if ( levelMarquee.skim('enabled')===true ) {
 						if ( levelMarqueeMode==='selected' || levelMarqueeMode==='floating' )
 							if ( levelMarquee.rects.length===1 ) // perfect rectangle
-								interactor.toggle( 'brushify', true ); // create allowed
+								actionbar.toggle( 'brushify', true ); // create allowed
 					}
 				});
 
@@ -576,8 +569,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Reset Draw Log For New Draw
 					//-------------------------
 					// Reset the drawing buffer.
-					tool._undoMap	= new Map();	// fresh log each time
-					tool._skipTiles	= new Set();	// ← reset skip tiles
+					tool._undoMap   = new Map();  // fresh log each time
+					tool._skipTiles = new Set();  // ← reset skip tiles
+					tool.layerId    = null;       // reset target layer id
 				});
 
 			//-------------------------
@@ -619,8 +613,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Reset Draw Log For New Draw
 					//-------------------------
 					// Reset the drawing buffer.
-					tool._undoMap	= new Map();	// fresh log each time
-					tool._skipTiles	= new Set();	// ← reset skip tiles
+					tool._undoMap   = new Map();  // fresh log each time
+					tool._skipTiles = new Set();  // ← reset skip tiles
+					tool.layerId    = null;       // reset target layer id
 				});
 
 			//-------------------------
@@ -688,22 +683,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Obtain User Setting(s)
 					//--------------------------------
 					// Get user settings.
-					const optsPanel	= this.sidebar.getSection( subtype );
-					const form		= optsPanel.getContents();
-					const overlap	= form.getField('overlap').getChecked();
-					const fillId	= fillSelect.getValue();	// get selected brush id
-					const strokeId	= strokeSelect.getValue();	// get selected value id
+					const optsPanel = this.sidebar.getSection( subtype );
+					const form      = optsPanel.getContents();
+					const overlap   = form.getField('overlap').getChecked();
+					const fillId    = fillSelect.getValue();	// get selected brush id
+					const strokeId  = strokeSelect.getValue();	// get selected value id
 
 					//--------------------------------
 					// Access Fill & Stroke Mosaic(s)
 					//--------------------------------
 					// Retrieve selected fill & stroke mosaic matrices via presets.
-					const fillObj	= tool.curators.primary.getObject( fillId );
-					const strokeObj	= tool.curators.primary.getObject( strokeId );
+					const fillObj   = tool.curators.primary.getObject( fillId );
+					const strokeObj = tool.curators.primary.getObject( strokeId );
 					if ( !fillObj ) return;
 					// Extract raw matrices.
-					const fillMatrix	= fillObj.data.region.matrix.map( r => r.slice() );
-					const strokeMatrix	= strokeObj
+					const fillMatrix   = fillObj.data.region.matrix.map( r => r.slice() );
+					const strokeMatrix = strokeObj
 					      ? strokeObj.data.region.matrix.map( r => r.slice() )
 					      : null;
 
@@ -713,7 +708,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Periodic rotation of matrix data.
 					rotationStep++;
 					if ( rotator>0 && rotationStep>=rotator ) {
-						console.log( rotationStep );
+						//console.log( rotationStep );
 						rotateMatrix90( fillMatrix );
 						//if ( strokeMatrix ) rotateMatrix90( strokeMatrix );
 						rotationStep = 0;
@@ -725,7 +720,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Stamp the fill and grab this pass’s cells
 					const justFilled =
 						this.toolLevelDrawMatrix(
-							fillMatrix, pos.lx, pos.ly, { overlap } );
+							fillMatrix, pos.lx, pos.ly, { overlap }
+							);
 					// Stamp the stroke perimeters if weight>0.
 					if ( strokeMatrix && strokeWeight>0 && justFilled.length>0 )
 						this.toolLevelDrawStroke(
@@ -781,20 +777,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				if ( !state.levelView || !state.tilesetView ) return;
 
 				//--------------------------------
-				// Prepare undo‐map.
+				// Prepare Undo‐Map
 				//--------------------------------
-				const tool		= this.toolbox.tools[ subtype ];
-				const undoMap	= tool._undoMap;
-				const skipSet	= tool._skipTiles ||= new Set(); // track all drawn coords
+				const tool    = this.toolbox.tools[ subtype ];
+				const undoMap = tool._undoMap;
+				const skipSet = tool._skipTiles ||= new Set(); // track all drawn coords
 
 				//--------------------------------
-				// Iterate matrix rows & cols.
+				// Iterate Matrix Rows & Cols
 				//--------------------------------
-				const rows = matrix.length,
-					  cols = matrix[0]?.length ?? 0;
-				const limit		= this.config.levelGrid;
-				const startX	= x - Math.floor( cols/2 );
-				const startY	= y - Math.floor( rows/2 );
+				const rows    = matrix.length,
+					  cols    = matrix[0]?.length ?? 0;
+				const limit   = this.config.levelGrid;
+				const startX  = x - Math.floor(cols/2);
+				const startY  = y - Math.floor(rows/2);
 
 				//--------------------------------
 				// Overlap Check Pass
@@ -802,52 +798,62 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				for ( let i=0; i<rows; i++ ) {
 					for ( let j=0; j<cols; j++ ) {
 						// Access tile to draw.
-						const tile	= matrix[i][j];
+						const tile = matrix[i][j];
 						if ( !tile ) continue;
 						// Get level coordinates.
-						const lx	= startX + j;
-						const ly	= startY + i;
+						const lx   = startX + j;
+						const ly   = startY + i;
 						// Create undo/redo & logging id.
-						const id	= `${lx},${ly}`;
+						const id   = `${lx},${ly}`;
 						// Skip empty tiles
 						if ( !tile ) continue;
 						// Abort draw if overlap is disallowed and destination is filled
 						if ( !opts.overlap && skipSet.has(id) ) return [];
 						// Abort draw if out-of-bounds
-						if ( lx<0 || ly<0 || lx>=limit || ly>=limit ) return [];
+						//if ( lx<0 || ly<0 || lx>=limit || ly>=limit ) return [];
 					}
 				}
 
 				//--------------------------------
+				// Resolve Target Level Layer
+				//--------------------------------
+				// Acesss active tab level.
+				const level   = state.levelView.file.context;
+				const layer   = level.getLayer( tool.layerId, true ); // get layer
+				if ( !layer || layer.locked ) return false;        // can't find / edit layer
+				if ( tool.layerId==null ) tool.layerId = layer.id; // change tool target layer
+
+				//--------------------------------
 				// Apply Draw to Level
 				//--------------------------------
-				const level = state.levelView.file.context;
 				const justFilled = []; // collect coordinates this pass
 
 				// Iterate rows & columns & fill tile(s).
 				for ( let i=0; i<rows; i++ ) {
 					for ( let j=0; j<cols; j++ ) {
 						// Access tile to draw.
-						const tile	= matrix[i][j];		// tile data in region
-						if ( !tile ) continue;			// tile data missing
+						const tile = matrix[i][j];   // tile data in region
+						if ( !tile ) continue;       // tile data missing
 						// Get level coordinates.
-						const lx	= startX + j;		// x coordinate on level
-						const ly	= startY + i;		// y coordinate on level
+						const lx   = startX + j;     // x coordinate on level
+						const ly   = startY + i;     // y coordinate on level
+						// Abort draw if out-of-bounds
+						if ( lx<0 || ly<0 || lx>=limit || ly>=limit ) continue;
 						// Create undo/redo & logging id.
-						const id	= `${lx},${ly}`;	// tile log id (lx,ly)
+						const id   = `${lx},${ly}`;	// tile log id (lx,ly)
 						//--------------------------------
 						// Draw & log for undo.
 						//--------------------------------
-						const oldT	= level.cloneTile( lx, ly );
-						level.fillRegion( lx, ly, 1, 1, tile );
+						const oldT = layer.cloneTile( lx, ly );
+						layer.fillRegion( lx, ly, 1, 1, tile );
 
 						// Store undo log if not yet set.
 						if ( !undoMap.has(id) ) {
 							undoMap.set(
 								id,
 								{
-									old: { x:lx, y:ly, ...oldT },
-									neu: { x:lx, y:ly, ...tile, __source:'fill' }
+								old: { x:lx, y:ly, ...oldT },
+								neu: { x:lx, y:ly, ...tile, __source:'fill' }
 								});
 						}
 						else undoMap.get(id).neu = { x:lx, y:ly, ...tile, __source:'fill' };
@@ -869,44 +875,57 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			// * fillMatrix		– [Array<Array<Object>>] fill tile pattern (inside stroke)
 			// * fillCells		– [Array<Array<int>>] list of recently filled [x,y] positions
 			// * opts			– [Object] { weight:[int], overlap:[bool], fillMatrix:[2D Array] }
-			proto.toolLevelDrawStroke = function(strokeMatrix, fillMatrix, fillCells, opts) {
+			proto.toolLevelDrawStroke = function( strokeMatrix, fillMatrix, fillCells, opts ) {
 				//--------------------------------
 				// Prep + State
 				//--------------------------------
-				const state		= this.getState();
+				const state   = this.getState();
 				if (!state.levelView || !state.tilesetView) return;
 
-				const tool		= this.toolbox.tools[subtype];
-				const undoMap	= tool._undoMap ||= new Map();
-				const level		= state.levelView.file.context;
-				const limit		= this.config.levelGrid;
-				const skipSet	= tool._skipTiles ||= new Set(); // track all drawn coords
+				//--------------------------------
+				// Prepare Undo‐Map
+				//--------------------------------
+				const tool    = this.toolbox.tools[subtype];
+				const undoMap = tool._undoMap ||= new Map();
+				const limit   = this.config.levelGrid;
+				const skipSet = tool._skipTiles ||= new Set();   // track all drawn coords
+
+				//--------------------------------
+				// Resolve Target Level Layer
+				//--------------------------------
+				// Acesss active tab level.
+				const level   = state.levelView.file.context;
+				const layer   = level.getLayer( tool.layerId, true ); // get layer
+				if ( !layer || layer.locked ) return false;        // can't find / edit layer
+				if ( tool.layerId==null ) tool.layerId = layer.id; // change tool target layer
 
 				//--------------------------------
 				// Compute Bush Bounds & Fill Matrix
 				//--------------------------------
-				const xs = fillCells.map(([x])=>x), ys = fillCells.map(([_,y])=>y);
-				const minX = Math.min(...xs), minY = Math.min(...ys);
+				const xs    = fillCells.map( ([x])=>x ),
+				      ys    = fillCells.map( ([_,y])=>y );
+				const minX  = Math.min( ...xs ),
+				      minY  = Math.min( ...ys );
 				// Clone the original fill matrix
-				let mat = this.grapher.clone2DArray( fillMatrix );
+				let mat     = this.grapher.clone2DArray( fillMatrix );
 
 				//--------------------------------
 				// Build Combined Matrix for strokes
 				//--------------------------------
 				// Lay each stroke row around the matrix perimeter,
 				// tagging each cell with its stroke layer index.
-				const rows = strokeMatrix.length;
+				const rows  = strokeMatrix.length;
 				const totalExpansions = rows * opts.weight;
 				for ( let layer=0; layer<totalExpansions; layer++ ) {
 					// Expand matrix by 1 cell in all directions.
 					mat = this.grapher.expand2DArray( mat, 1, null );
 
 					// Select stroke row (bottom-up per pass)
-					const rowIndex	= rows - 1 - (layer % rows);
-					const rawRow	= strokeMatrix[ rowIndex ];
+					const rowIndex  = rows - 1 - (layer % rows);
+					const rawRow    = strokeMatrix[ rowIndex ];
 
 					// Clone each tile.
-					const strokeRow	= rawRow.map( tile => tile ? { ...tile, sl: layer } : null );
+					const strokeRow = rawRow.map( tile => tile ? { ...tile, sl: layer } : null );
 
 					// Fill outermost ring with current stroke row
 					mat = this.grapher.fillMatrixPerimeter( mat, strokeRow, 0 );
@@ -916,15 +935,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				// Determine Matrix Dimension(s)
 				//--------------------------------
 				// Get Width x Height (rows/cols count) or NxM of matrix.
-				const h = mat.length, w = mat[0]?.length ?? 0;
+				const h = mat.length,
+				      w = mat[0]?.length ?? 0;
 
 				//--------------------------------
 				// Distance Conflict Check Setup
 				//--------------------------------
 				// Store closest distances for each [gx,gy] tile already filled
 				const stampedDistMap = new Map(); // key = id, value = distance to center
-				const centerX = Math.floor(w / 2);
-				const centerY = Math.floor(h / 2);
+				const centerX  = Math.floor( w/2 );
+				const centerY  = Math.floor( h/2 );
 
 				//--------------------------------
 				// Stamp Final Matrix to Level
@@ -932,18 +952,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				// Align top-left of matrix.
 				//const originX	= minX - totalExpansions;
 				//const originY	= minY - totalExpansions;
-				const originX	= minX - Math.floor( (w-(fillMatrix[0]?.length??0)) / 2 );
-				const originY	= minY - Math.floor( (h-(fillMatrix.length)) / 2 );
+				const originX  = minX - Math.floor( (w-(fillMatrix[0]?.length??0)) / 2 );
+				const originY  = minY - Math.floor( (h-(fillMatrix.length)) / 2 );
 
 				// Iterate each cell in the matrix to lay tile(s).
-				for ( let ry = 0; ry < h; ry++ ) {
-					for ( let cx = 0; cx < w; cx++ ) {
+				for ( let ry=0; ry<h; ry++ ) {
+					for ( let cx=0; cx<w; cx++ ) {
 						const tile = mat[ry][cx];
 						if ( !tile ) continue; // skip nulls
 
-						const gx	= originX + cx;
-						const gy	= originY + ry;
-						const id	= `${gx},${gy}`;
+						const gx   = originX + cx;
+						const gy   = originY + ry;
+						const id   = `${gx},${gy}`;
 
 						// Bounds check
 						if ( gx<0 || gy<0 || gx>=limit || gy>=limit ) continue;
@@ -964,8 +984,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 						// Distance Conflict Check
 						//--------------------------------
 						// Compute distance from center of mat
-						/*const dist		= Math.abs(cx-centerX) + Math.abs(ry-centerY);
-						const existing	= stampedDistMap.get(id);
+						/*const dist   = Math.abs(cx-centerX) + Math.abs(ry-centerY);
+						const existing = stampedDistMap.get(id);
 						// Skip if a tile closer to the center already drawn.
 						if ( existing!==undefined && existing<=dist ) continue;*/
 
@@ -975,15 +995,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 						//-------------------------
 						// Stamp & log
 						//-------------------------
-						const oldT		= level.cloneTile( gx, gy );
-						level.fillRegion( gx, gy, 1, 1, tile );
+						const oldT  = layer.cloneTile( gx, gy );
+						layer.fillRegion( gx, gy, 1, 1, tile );
 
 						// Write or overwrite the undoMap entry with "sl" (stroke layer).
-						const neu	= { x:gx, y:gy, ...tile, __source:'stroke', sl: tileLayer };
+						const neu   = { x:gx, y:gy, ...tile, __source:'stroke', sl: tileLayer };
 						if ( !undoMap.has(id) ) {
-							undoMap.set(id, {
-								old: { x:gx, y:gy, ...oldT },
-								neu: neu
+							undoMap.set(
+								id,
+								{
+								old : { x:gx, y:gy, ...oldT },
+								neu : neu
 								});
 						}
 						else undoMap.get(id).neu = neu;
@@ -1000,17 +1022,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				// Gather state & undo entries.
 				//--------------------------------
 				// Check for app state, level-view & data.
-				const state		= this.getState(),
-					  view		= state.levelView,
-					  key		= state.levelView.skey;
-				const tool		= this.toolbox.tools[ subtype ],
-					  undoMap	= tool._undoMap ?? new Map();
+				const state   = this.getState(),
+					  view    = state.levelView,
+					  key     = state.levelView.skey;
+				const tool    = this.toolbox.tools[ subtype ],
+					  undoMap = tool._undoMap ?? new Map();
 
 				//--------------------------------
 				// Build old/new arrays.
 				//--------------------------------
-				const oldArr = [],
-					  newArr = [];
+				const oldArr  = [],
+					  newArr  = [];
 				for ( const [_, pair] of undoMap.entries() ) {
 					oldArr.push( pair.old );
 					newArr.push( pair.neu );
@@ -1022,17 +1044,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 				//--------------------------------
 				// Create log for undo/redo.
 				const log	= {
-					action : 'sparseRegion',
-					old    : oldArr,
-					neu    : newArr
-				};
+					action  : 'sparseRegion',
+					layerId : tool.layerId,
+					old     : oldArr,
+					neu     : newArr
+					};
 				// Label the action for history panel.
-				view.governor.enqueue(
-					'edit', { history: `Paint tiles.` } );
+				view.governor.enqueue( 'edit', { history: `Paint tiles.` } );
 				// Log change(s) instead open level view's governor.
 				view.governor.log( 'edit', log );
-				// Reset undo map.
-				tool._undoMap = new Map();
+
+				//--------------------------------
+				// Clear Undo State
+				//--------------------------------
+				// Reset undo map & target layer id.
+				tool._undoMap = new Map();  // reset for next stroke
+				tool.layerId  = null;       // reset target layer id
 				return true; // success
 			};
 		}

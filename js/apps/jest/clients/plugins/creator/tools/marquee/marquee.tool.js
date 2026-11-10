@@ -29,6 +29,7 @@ class JestToolMarquee extends JestTool {
 	dragStartY	= null;			// [number] Far top y origin of a new drag selection.
 	grabOffsetX	= 0;			// [number] Grab x offset from selection top-left while dragging.
 	grabOffsetY	= 0;			// [number] Grab y offset from selection top-left while dragging.
+	layerId		= null;			// [int] Z value of layer index / id.
 	// Boolean flags
 	moved		= false;		// [bool] Whether the marquee has been moved during selection.
 	lastState	= null;			// history save state
@@ -154,13 +155,13 @@ class JestToolMarquee extends JestTool {
 	//-------------------------
 	// Reset the marquee tool.
 	// RETURNS: [void].
-	// * drop	- [bool] Whether to drop the selection (true, else false).
+	// * drop - [bool] Whether to drop the selection (true, else false).
 	reset( drop=true, recordHistory=true ) {
 		//-------------------------
 		// Clear Selection
 		//-------------------------
-		const previous = this.getSelectionState();
-		this.deselect( drop ); // deselect if selected
+		const previous	= this.getSelectionState();
+		this.deselect( drop );			// deselect if selected
 		//-------------------------
 		// Reset Selection
 		//-------------------------
@@ -173,6 +174,7 @@ class JestToolMarquee extends JestTool {
 		// Empty contents.
 		this.rects		= [];			// reset selections
 		this.bounds		= null;			// reset selection boundaries
+		this.layerId	= null;			// capture layer id
 		this.mask		= null;			// reset mask
 		this.contents	= null;			// reset contents to [null]
 		//-------------------------
@@ -216,33 +218,41 @@ class JestToolMarquee extends JestTool {
 
 	// Handle the click event based upon mode, i/o key(s), & location.
 	// RETURNS: [void].
-	// * e		- Event [object] from mouse click.
+	// * e - Event [object] from mouse click.
 	checkClick( e ) {
-		//-------------------------
-		// Check Keyboard Action
-		//-------------------------
-		// Get keyboard modifiers.
-		const mod		= this.getModifiers( e );
-		// Determine if shift key is pressed.
-		const add		= mod.shift;
-		// Check for alt/option key.
-		const sub		= mod.alt;
-
-		//-------------------------
-		// Check Click Context
-		//-------------------------
-		// Determine if adding or subtracting.
-		const restart	= !( add || sub );
-		// Check if click is inside an active selection.
-		let inside		= this.isClickInsideSelection( e );
+		//--------------------------------
+		// Validate Marquee Availability
+		//--------------------------------
+		// Automatically explain why the paste operation is blocked.
+		// The helper returns true when the operation must be canceled.
+		if ( this.client.alertToolBlocked(this,'begin marquee selection') )
+			return; // tool unavailable
 
 		//-------------------------
 		// Calibrate Mode
 		//-------------------------
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		let mode		= this.skim( 'mode' );
+		const enabled  = this.skim( 'enabled' );
+		let mode       = this.skim( 'mode' );
 		if ( !enabled ) return;
+
+		//-------------------------
+		// Check Keyboard Action
+		//-------------------------
+		// Get keyboard modifiers.
+		const mod      = this.getModifiers( e );
+		// Determine if shift key is pressed.
+		const add      = mod.shift;
+		// Check for alt/option key.
+		const sub      = mod.alt;
+
+		//-------------------------
+		// Check Click Context
+		//-------------------------
+		// Determine if adding or subtracting.
+		const restart  = !( add || sub );
+		// Check if click is inside an active selection.
+		let inside     = this.isClickInsideSelection( e );
 
 		//-------------------------
 		// Capture Existing State
@@ -367,14 +377,34 @@ class JestToolMarquee extends JestTool {
 	//-----------------------------
 	// Begin the marquee drawing.
 	// RETURNS: [void].
-	// * e		- Event [object] from mouse click.
-	// * info	- [object] Calculated initial click information.
-	// * tx,ty	- [int] Value of tile x,y coordaintes.
+	// * e     - Event [object] from mouse click.
+	// * info  - [object] Calculated initial click information.
+	// * tx,ty - [int] Value of tile x,y coordaintes.
 	startDrawSelection( e, info, tx, ty ) {
+		//--------------------------------
+		// Validate Marquee Availability
+		//--------------------------------
+		// Explain why the pendown operation is blocked (if it is).
+		if ( this.client.alertToolBlocked(this,'begin marquee selection') )
+			return; // abort action
+
+		//-------------------------
+		// Check Availability
+		//-------------------------
+		// Require the tool to be available.
+		if ( !this.usable() )
+			return this.cancel(); // tool unavailable
+
+		//-------------------------
+		// Check Tool Modifier
+		//-------------------------
 		// If subtracting with no previous marquees, cancel.
 		if ( this.rects.length===0 && info.sub===true )
 			return this.cancel();
 
+		//-------------------------
+		// Clamp Boundaries
+		//-------------------------
 		// Don't go below 0
 		tx	= Math.max( 0, tx );
 		ty	= Math.max( 0, ty );
@@ -389,20 +419,34 @@ class JestToolMarquee extends JestTool {
 		this.tracer.resize( 0, 0 ); // resize the anchor
 		//console.log( this.clickX, this.clickY );
 
+		//-------------------------
+		// Emit Event(s)
+		//-------------------------
 		// Emit event listener signaling .
-		this.emit( 'pendown', null, this );
+		const action = { permit: true };
+		this.emit( 'pendown', null, action );
 
 		//-------------------------
 		// Add Event Listener(s)
 		//-------------------------
-		// Add mouse listener for dragging & creating.
-		this.target.register( 'mousemove', 'selecting', e=>this.drawSelection(e), 'window' );
-		// Add window listener(s) for relase.
-		this.target.register( jsos.mouseUps, 'selected', e=>this.endDrawSelection(e), 'window' );
+		// Check if action is permitted.
+		if ( action.permit===true ) {
+			// Add mouse listener for dragging & creating.
+			this.target.register( 'mousemove', 'selecting', e=>this.drawSelection(e), 'window' );
+			// Add window listener(s) for relase.
+			this.target.register( jsos.mouseUps, 'selected', e=>this.endDrawSelection(e), 'window' );
+		}
 	}
 
 	// Track the expansion or contraction (or neither) of the marquee.
+	// RETURNS: [void].
+	// * e - Event [object] from mouse click.
 	drawSelection( e ) {
+		//-------------------------
+		// Check Availability
+		//-------------------------
+		// Require the tool to be available.
+		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
 		const enabled	= this.skim( 'enabled' );
 		const mode		= this.skim( 'mode' );
@@ -433,6 +477,8 @@ class JestToolMarquee extends JestTool {
 	}
 
 	// Finish drawing the marquee selection.
+	// RETURNS: [void].
+	// * e - Event [object] from mouse click.
 	endDrawSelection( e ) {
 		//console.log( 'ended');
 		//-------------------------
@@ -448,7 +494,7 @@ class JestToolMarquee extends JestTool {
 		// Get keyboard modifiers.
 		const mod		= this.getModifiers( e );
 		// Reset the marquee tool for new selection.
-		const isAdd		= mod.shif;
+		const isAdd		= mod.shift;
 		const isSub		= mod.alt;
 		const isNew		= !( isAdd || isSub );
 		const action	= isAdd ? 'add'		// ⌘ Shift = additive
@@ -467,8 +513,17 @@ class JestToolMarquee extends JestTool {
 			if ( rect.type==='replace' )
 				this.rects = [ rect ]; // clear old rects, keep replace
 			else this.rects.push( rect );
-			// Recompute total bounds & mask.
+
+			//--------------------------------
+			// Compute & Finalize Selection Mask
+			//--------------------------------
+			// First apply the user's manual add/subtract rectangles.
 			this._computemask();
+
+			// Let application-specific plugins refine the computed mask.
+			// Level Marquee can remove empty tile cells here.
+			// This happens before the selected event records undo history.
+			this.emit( 'maskFinalized', null, this );
 
 			//-------------------------
 			// Finalize state
@@ -484,8 +539,34 @@ class JestToolMarquee extends JestTool {
 			// Emit event listener.
 		}
 
-		// If any selection exists, set mode 'selected'.
-		if ( this.rects.length>0 ) {
+		//--------------------------------
+		// Ignore Visually Unchanged Level Selections
+		//--------------------------------
+		// An additive/subtractive operation may affect only empty tiles.
+		// Compare the actual selected tile coordinates rather than the
+		// rectangle commands used to construct them.
+		// If nothing changed, restore the original selection without
+		// creating an unnecessary undo/redo entry.
+		if ( this.name==='levelMarquee' && this.lastState?.mode==='selected' ) {
+			//--------------------------------
+			// Reject Unchanged Shape
+			//--------------------------------
+			// Ignore rectangle metadata differences when the selected cells
+			// have not changed at all.
+			const before = JSON.stringify( this.selectionCells(this.lastState) );
+			const after  = JSON.stringify( this.selectionCells(this) );
+			if ( before===after ) {
+				// Restore the original rectangles and mask together.
+				// This prevents useless empty additive rectangles accumulating.
+				this.restoreSelectionState( this.lastState );
+				return;
+			}
+		}
+
+		// A selection must contain at least one included tile.
+		// The application may have subtracted all empty cells.
+		if ( this.rects.length>0
+			 && this.mask?.some(row=>row.some(Boolean)) ) {
 			this.jot( 'mode', 'selected' );
 			this.emit( 'selected', null, this );
 		}
@@ -509,41 +590,92 @@ class JestToolMarquee extends JestTool {
 		this.removeGlobalListeners(); // remove window events
 	}
 
+	//--------------------------------
+	// Generate Selected Cell Signature
+	//--------------------------------
+	// Convert a mask into an ordered list of absolute tile positions.
+	// Bounds may differ even when the actual selection is identical.
+	selectionCells( selection ) {
+		// Access marquee selection irregular mask & rectangular bounds.
+		const mask   = selection.mask;
+		const bounds = selection.bounds;
+		if ( !mask || !bounds ) return []; // fail
+
+		// Build return [array] of serialized masks.
+		const cells  = [];
+		for ( let y=0; y<mask.length; y++ ) {
+			for ( let x=0; x<mask[y].length; x++ ) {
+				if ( mask[y][x] )
+					cells.push( `${bounds.x+x},${bounds.y+y}` );
+			}
+		}
+		// Return [array] of serialized masks.
+		return cells; // [array]
+	}
+
 	//-------------------------
 	// Set Selection Method(s)
 	//-------------------------
 	// Manually set the marquee selection.
 	// RETURNS: [void].
-	// * x,y	- [number] Coordinates of location on level to fill.
-	// * w,h	- [number] Width and height dimensions of region to fill.
-	// * matrix	- 2d [array] of matrix tiles.
-	// * stamp	- ElementCanvas [object] image of internal contents.
-	// rects	- [array] Rectangle selection(s).
-	select( x, y, w, h, matrix, stamp, rects ) {
-		// Mode / enableability requirement.
+	// * x,y    - [number] Coordinates of location on level to fill.
+	// * w,h    - [number] Width and height dimensions of region to fill.
+	// * matrix - 2d [array] of matrix tiles.
+	// * stamp  - ElementCanvas [object] image of internal contents.
+	//   rects  - [array] Rectangle selection(s).
+	select( x, y, w, h, matrix, stamp, rects, layerId=null ) {
+		//--------------------------------
+		// Validate Tool Availability
+		//--------------------------------
+		// Programmatic selection requires an equipped, empty marquee.
 		const enabled	= this.skim( 'enabled' );
 		const mode		= this.skim( 'mode' );
 		if ( !enabled || mode!=='empty' ) return;
-		//-------------------------
-		// Calibrate Selection
-		//-------------------------
-		// Move and resize the anchor.
+
+		//--------------------------------
+		// Position Selection
+		//--------------------------------
+		// Align the selection anchor with the supplied matrix.
 		this.anchor.move( x, y );		// move selection to coordinates
 		this.anchor.resize( w, h );		// resize selection to dimensions
-		//-------------------------
-		// Set Selection Content(s)
-		//-------------------------
-		// Set selection contents.
-		this.contents	= { x, y, w, h, matrix, stamp }; // store contents
-		this.rects		= rects;		// store rectangle selection(s)
-		this._computemask();			// compute selection mask from rects
-		//-------------------------
-		// Change Mode & Emit Event
-		//-------------------------
-		// Emit "selected" event for new selection.
-		// Bypass mode directly to floating.
+
+		//--------------------------------
+		// Assign Source Layer and Contents
+		//--------------------------------
+		// Preserve the owning layer before recording history.
+		if ( layerId!==null )
+			this.layerId = layerId;
+		// Store the matrix, stamp, location, and source layer together.
+		this.contents = { x, y, w, h, matrix, stamp, layerId: this.layerId };
+		this.rects    = rects;
+
+		//--------------------------------
+		// Construct Initial Mask
+		//--------------------------------
+		// Preserve the existing rectangle-based selection calculation.
+		this._computemask();
+
+		//--------------------------------
+		// Preserve Sparse Level Selections
+		//--------------------------------
+		// A pasted matrix already defines which cells contain tiles.
+		// Use it as the authoritative mask for Level Marquee.
+		// Do not resample the destination layer or alter the paste shape.
+		if ( this.name==='levelMarquee' &&
+			 Array.isArray(matrix) && matrix.length===h &&
+			 matrix.every(row=>Array.isArray(row) && row.length===w) ) {
+			// Null matrix entries must remain excluded.
+			this.mask   = matrix.map( row => row.map(tile=>tile!=null) );
+			// Match mask origin and dimensions to the inserted region.
+			this.bounds = { x, y, w, h };
+		}
+
+		//--------------------------------
+		// Finalize Selection and History
+		//--------------------------------
+		// The selected event sees the completed mask and layer ID.
 		this.jot( 'mode', 'floating' );
-		this.emit( 'selected', null, this ); // change mode
+		this.emit( 'selected', null, this );
 	}
 
 	// -------------------------------
@@ -721,10 +853,17 @@ class JestToolMarquee extends JestTool {
 	// Dragging Selection Method(s)
 	//-----------------------------
 	// Called during selection to see if user clicked inside the marquee region.
-	// * e		- Event [object] from mouse click.
-	// * info	- [object] Calculated initial click information.
-	// * tx,ty	- [int] Value of tile x,y coordaintes.
+	// RETURNS: [void].
+	// * e     - Event [object] from mouse click.
+	// * info  - [object] Calculated initial click information.
+	// * tx,ty - [int] Value of tile x,y coordaintes.
 	startDragSelection( e, info, tx, ty ) {
+		//-------------------------
+		// Check Availability
+		//-------------------------
+		// Require the tool to be available.
+		if ( !this.usable() ) return; // tool unavailable
+
 		//-------------------------
 		// Change Mode to Dragging
 		//-------------------------
@@ -764,11 +903,22 @@ class JestToolMarquee extends JestTool {
 	}
 
 	// Called on every mousemove while in mode = 'dragging'
+	// RETURNS: [void].
+	// * e - Event [object] from mouse click.
 	dragSelection( e ) {
+		//-------------------------
+		// Check Availability
+		//-------------------------
+		// Require the tool to be available.
+		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
 		const enabled	= this.skim( 'enabled' );
 		const mode		= this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
+
+		//-------------------------
+		// Convert Coordinates to Grid
+		//-------------------------
 		// Convert to tile coords
 		const mouse		= this.target.mousePos( e );
 		let tileX		= Math.floor( mouse.x/this.anchor.units );
@@ -782,6 +932,9 @@ class JestToolMarquee extends JestTool {
 		const boxW		= this.anchor.width;
 		const boxH		= this.anchor.height;*/
 
+		//-------------------------
+		// Check Modifiers (Alt/Opt/Ctrl/Cmd)
+		//-------------------------
 		// Get keyboard modifiers.
 		const mod		= this.getModifiers( e );
 		// Axis lock modifier.
@@ -801,6 +954,8 @@ class JestToolMarquee extends JestTool {
 	}
 
 	// Called on mouseup (or blur/contextmenu) to finish dragging.
+	// RETURNS: [void].
+	// * e - Event [object] from mouse click.
 	endDragSelection( e ) {
 		//-------------------------
 		// Mode Gatekeep & Handling
@@ -830,6 +985,7 @@ class JestToolMarquee extends JestTool {
 	// Deselect Method(s)
 	//-------------------------
 	// Deselect the selection if selected.
+	// RETURNS: [void].
 	// * drop	- [bool] Whether to drop the selection (true, else false).
 	deselect( drop=true ) {
 		//-------------------------
@@ -916,6 +1072,7 @@ class JestToolMarquee extends JestTool {
 			width	= Math.min( size, tw-startX );
 			height	= Math.min( size, th-startY );
 		}
+
 		// -----------------------------
 		// Modifier: Lock Axis (Shift)
 		// -----------------------------
@@ -934,6 +1091,7 @@ class JestToolMarquee extends JestTool {
 	// Selection State
 	// --------------------------------
 	// Capture the current marquee without modifying it.
+	// RETURNS: [void].
 	getSelectionState() {
 		// Get current marquee mode.
 		const mode = this.skim( 'mode' );
@@ -943,6 +1101,7 @@ class JestToolMarquee extends JestTool {
 							? (mode==='dragging' ? 'floating' : 'selected') : mode,
 			rects		: structuredClone( this.rects ),
 			bounds  	: this.bounds ? structuredClone(this.bounds) : null,
+			layerId     : this.layerId, // level layer id / z-index
 			mask		: this.mask ? structuredClone(this.mask) : null,
 			contents	:
 				this.contents ?
@@ -962,6 +1121,7 @@ class JestToolMarquee extends JestTool {
 
 	// Restore a previously captured marquee state.
 	// Does NOT emit floated/dropped events.
+	// RETURNS: [void].
 	restoreSelectionState( state=null ) {
 		// Remove any active drag/selection listeners.
 		this.removeTargetListeners();
@@ -970,6 +1130,7 @@ class JestToolMarquee extends JestTool {
 		// Restore or clear the selection.
 		this.rects		= state ? structuredClone(state.rects) : [];
 		this.bounds		= state?.bounds ? structuredClone(state.bounds) : null;
+		this.layerId	= state?.layerId ?? null;
 		this.mask		= state?.mask ? structuredClone(state.mask) : null;
 		this.contents	=
 			state?.contents ? {
@@ -1001,6 +1162,7 @@ class JestToolMarquee extends JestTool {
 	// Remove Listeners
 	//-------------------------
 	// Remove marquee listener(s).
+	// RETURNS: [void].
 	removeTargetListeners() {
 		// Remove selection listener(s).
 		this.target.unregister( 'mousedown', 'selectStart' );
@@ -1009,6 +1171,7 @@ class JestToolMarquee extends JestTool {
 		this.target.unregister( 'mousemove', 'dragging' );
 	}
 	// Remove window listener(s).
+	// RETURNS: [void].
 	removeGlobalListeners() {
 		// Remove window event(s) for selecting release.
 		this.target.unregister( jsos.mouseUps, 'selected' );

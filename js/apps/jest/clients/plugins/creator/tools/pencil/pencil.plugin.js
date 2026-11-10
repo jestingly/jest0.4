@@ -41,6 +41,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			// Generate a "form" inside the sidebar for pencil tool options.
 			const optsPanel = new JestForm( client ); // create DOM panel element [object]
 			optsPanel.build( 'options', ['pencil-options'] ); // build the form (pencil-options CSS class)
+
 			// Create the "size" (brush-size) range input field.
 			const inputSize = new JestInputRange( client, 'size', null, 1, 'Size' );
 			inputSize.setMin( 1 );
@@ -53,6 +54,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			inputSize.panel.addAttribute( 'data-tooltip-keys', '[+]' );
 			optsPanel.addField( 'size', inputSize );
 			inputSize.showLabel();
+
 			// Create roundness input (0=diamond, 0.5=circle, 1=square)
 			const inputRound = new JestInputRange( client, 'roundness', null, 1, 'Roundness' );
 			inputRound.setMin( 0 );
@@ -60,8 +62,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			inputRound.setStep( 0.1 );
 			inputRound.setValue( 1 );
 			inputRound.build( 'input-roundness' );
+			inputRound.panel.addAttribute( 'data-tooltip', 'Brush Roundness' );
 			optsPanel.addField( 'roundness', inputRound );
 			inputRound.showLabel();
+
 			// Stroke Outline Width
 			const inputStroke = new JestInputRange( client, 'stroke', null, 0, 'Stroke' );
 			inputStroke.setMin( 0 );
@@ -69,8 +73,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			inputStroke.setStep( 1 );
 			inputStroke.setValue( 0 );	// default to 0 (no stroke)
 			inputStroke.build( 'input-stroke' );
+			inputStroke.panel.addAttribute( 'data-tooltip', 'Brush Stroke' );
 			optsPanel.addField( 'stroke', inputStroke );
 			inputStroke.showLabel();
+
 			// Add the pencil tool's panel section to the sidebar.
 			client.sidebar.addSection( subtype, 'Pencil', optsPanel.panel, {}, optsPanel );
 			client.sidebar.refit( subtype );
@@ -83,7 +89,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			client.io.registerShortcut( ']', 'sizeUp' );
 			// Keyboard shortcut menu actions for brush resizing
 			client.io.register(
-				'keyboardShortcut', 'brushResizeCommand',
+				'keyboardShortcut', 'pencilResizeCommand',
 				command => {
 					//--------------------------------
 					// Require Pencil Availability
@@ -119,7 +125,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			// Toolbar Functionality
 			//-------------------------
 			// Add "pencil" tool button to toolbar.
-			const button	= client.toolbar.createButton( { name: subtype, text: null /*Pencil*/ } );
+			const button = client.toolbar.createButton( { name: subtype, text: null /*Pencil*/ } );
 			button.clicker.addAttribute( 'data-tooltip', 'Pencil' );
 			button.clicker.addAttribute( 'data-tooltip-keys', 'D' );
 			//-----------------------------
@@ -179,8 +185,46 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 						client.toolbox.setTool( subtype );
 				});
 
+			//--------------------------------
+			// Handle Tool Block Check
+			//--------------------------------
+			// Determine whether the tool can edit the active layer.
+			tool.register(
+				'blockCheck', 'pencilBlocking',
+				( status ) => {
+					//--------------------------------
+					// Validate Level Availability
+					//--------------------------------
+					// A level must exist before its layers can be edited.
+					if ( !status.level ) {
+						status.reasons.push( 'noLevel' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Active Layer
+					//--------------------------------
+					// Editing requires an active layer.
+					const layer = status.layer;
+					if ( !layer ) {
+						status.reasons.push( 'noLayer' );
+						return; // blocked
+					}
+
+					//--------------------------------
+					// Validate Layer Properties
+					//--------------------------------
+					// Hidden layers are not eligible for direct editing.
+					if ( !layer.visible )
+						status.reasons.push( 'layerHidden' );
+
+					// Locked layers prohibit modifying their contents.
+					if ( layer.locked )
+						status.reasons.push( 'layerLocked' );
+				});
+
 			//-------------------------
-			// Start Shift-Click Draw
+			// Draw a Shift-Click Point-to-Point
 			//-------------------------
 			// Register shift-click drawing listener.
 			tool.register(
@@ -191,13 +235,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Reset Draw Log For New Draw
 					//-------------------------
 					// Reset the drawing buffer.
-					tool._undoMap	= new Map();	// fresh log each time
-					tool._skipTiles	= new Set();	// ← reset skip tiles
+					tool._undoMap	= new Map();  // fresh log each time
+					tool._skipTiles	= new Set();  // ← reset skip tiles
+					tool.layerId    = null;       // reset target layer id
 				});
 
-			//-------------------------
-			// Draw a Shift-Click Point-to-Point
-			//-------------------------
 			// Register shift-click drawing.
 			tool.register(
 				'drawShiftlining', 'drawLine',
@@ -211,7 +253,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Lay Each Point as a Stamp
 					//--------------------------------
 					// Iterate each point & atempt to draw.
-					for ( const [ lx, ly ] of points )
+					for ( const [lx,ly] of points )
 						// Send the 'draw' event to intercept for drawing.
 						tool.emit( 'draw', null, e, { lx, ly }  );
 					//--------------------------------
@@ -234,8 +276,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Reset Draw Log For New Draw
 					//-------------------------
 					// Reset the drawing buffer.
-					tool._undoMap	= new Map();	// fresh log each time
-					tool._skipTiles	= new Set();	// ← reset skip tiles
+					tool._undoMap   = new Map();  // fresh log each time
+					tool._skipTiles = new Set();  // ← reset skip tiles
+					tool.layerId    = null;       // reset target layer id
 				});
 
 			//-------------------------
@@ -246,13 +289,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				'swish', 'swishDraw',
 				( e, trackLapse, tracked, pos, distance, swishLapse ) => {
 					// Define motion track timeout.
-					const trackLapseThreshold	= 400;
-					const swishLapseThreshold	= 400;
-					const units					= tool.anchor.units;
+					const trackLapseThreshold = 400;
+					const swishLapseThreshold = 400;
+					const units               = tool.anchor.units;
 					// Buffer movement speeds
 					if ( trackLapse>=trackLapseThreshold || tracked===0 ) {
-						if ( swishLapse / distance <= 20
-							 || ( swishLapse>=swishLapseThreshold && distance>=3 ) )
+						if ( swishLapse/distance <= 20
+							 || (swishLapse>=swishLapseThreshold && distance>=3) )
 							tool.motionTrack();	// track motion
 					}
 				});
@@ -282,8 +325,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Determine whether drawing with foreground or background tile.
-					const key		= tool._mouseButton===0 ? 'foreground' : 'background';
-					const swatch	= client.swatches[key].contents;
+					const key    = tool._mouseButton===0 ? 'foreground' : 'background';
+					const swatch = client.swatches[key].contents;
 					// Replace a tile on the level.
 					client.toolLevelDraw( swatch, pos.lx, pos.ly );
 				});
@@ -308,32 +351,40 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state		= this.getState();		// get current program state
-				if ( !state.levelView )   return false;	// no active level
-				if ( !state.tilesetView ) return false;	// no active level
+				const state     = this.getState();                 // get current program state
+				if ( !state.levelView )   return false;            // no active level
+				if ( !state.tilesetView ) return false;            // no active level
 				// Gather propert(ies) we will use.
-				const level		= state.levelView.file.context;		// [object] JestLevel instance
-				const tileset	= state.tilesetView.file.context;	// [object] JestTileset instance
-				const key		= state.levelView.skey;				// [string] Governor stack key
-				const tool		= this.toolbox.tools.pencil;		// [object] Pencil tool
-				const mode		= tool.skim( 'mode' );				// [string] Drawing mode
-				const gridLimit	= this.config.levelGrid;			// [int] Value of level WxH
+				const level     = state.levelView.file.context;    // [object] JestLevel instance
+				const tileset   = state.tilesetView.file.context;  // [object] JestTileset instance
+				const key       = state.levelView.skey;            // [string] Governor stack key
+				const tool      = this.toolbox.tools.pencil;       // [object] Pencil tool
+				const mode      = tool.skim( 'mode' );             // [string] Drawing mode
+				const gridLimit = this.config.levelGrid;           // [int] Value of level WxH
+
+				//--------------------------------
+				// Resolve Target Level Layer
+				//--------------------------------
+				// Resolve target level layer.
+				const layer     = level.getLayer( tool.layerId, true ); // get layer
+				if ( !layer || layer.locked ) return false;        // can't find / edit layer
+				if ( tool.layerId==null ) tool.layerId = layer.id; // change tool target layer
 
 				//--------------------------------
 				// Get Brush Size Setting(s)
 				//--------------------------------
 				// Get brush size from options
-				const optsPanel	= this.sidebar.getSection( tool.name );
-				const form		= optsPanel.getContents();
-				const size		= parseInt( form.getField('size')?.getValue?.() ?? 1 );
-				const stroke	= parseInt( form.getField('stroke')?.getValue?.() ?? 0 );
-				const roundness	= parseFloat( form.getField('roundness')?.getValue?.() ?? 1 );
+				const optsPanel = this.sidebar.getSection( tool.name );
+				const form      = optsPanel.getContents();
+				const size      = parseInt( form.getField('size')?.getValue?.() ?? 1 );
+				const stroke    = parseInt( form.getField('stroke')?.getValue?.() ?? 0 );
+				const roundness = parseFloat( form.getField('roundness')?.getValue?.() ?? 1 );
 
 				//--------------------------------
 				// Define Tile Data
 				//--------------------------------
-				const fgTile	= tile ?? { ...this.swatches.foreground.contents };
-				const bgTile	= { ...this.swatches.background.contents };
+				const fgTile    = tile ?? { ...this.swatches.foreground.contents };
+				const bgTile    = { ...this.swatches.background.contents };
 
 				//--------------------------------
 				// Initialize undo map if needed
@@ -344,41 +395,42 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				// Draw on the Level (updates tilemap + canvas)
 				//--------------------------------
 				// Use the full size as a side length, and center it accurately:
-				const radius	= size / 2;
-				const offset	= Math.floor( radius );
-				const rCorner	= radius * roundness;
-				const inner		= radius - rCorner;
+				const radius    = size / 2;
+				const offset    = Math.floor( radius );
+				const rCorner   = radius * roundness;
+				const inner     = radius - rCorner;
 
 				//--------------------------------
 				// Track which tiles were filled
 				//--------------------------------
-				const fillSet = new Set();
+				const fillSet   = new Set();
 
 				//-----------------------------
 				// Rounded Brush Loop (in proto.toolLevelDraw)
 				// Applies square → rounded corners → circle based on `roundness`
 				//-----------------------------
-				for ( let dx = -offset; dx < (size-offset); dx++ ) {
-					for ( let dy = -offset; dy < (size-offset); dy++ ) {
+				for ( let dx=-offset; dx<(size-offset); dx++ ) {
+					for ( let dy=-offset; dy<(size-offset); dy++ ) {
 						// Get tile coordinates.
 						const tx = x + dx,
 							  ty = y + dy;
 
 						// OOB check → skip if outside level
-						if ( tx < 0 || ty < 0 || tx >= gridLimit || ty >= gridLimit )
+						if ( tx<0 || ty<0 || tx>=gridLimit || ty>=gridLimit )
 							continue; // outside level
 
 						// Check if inside central rectangle.
-						const absX	= Math.abs(dx), absY = Math.abs(dy);
-						let include	= false;
+						const absX   = Math.abs(dx),
+						      absY   = Math.abs(dy);
+						let include  = false;
 
 						// If inside central rect → always draw
 						if ( absX<=inner || absY<=inner )
-							include	= true;
+							include  = true;
 						// Else, check quarter-circle at corner
 						else {
-							const cx	= absX - inner;   // x distance into corner
-							const cy	= absY - inner;   // y distance into corner
+							const cx = absX - inner;   // x distance into corner
+							const cy = absY - inner;   // y distance into corner
 							if ( (cx*cx + cy*cy) <= (rCorner*rCorner) )
 								include	= true;
 						}
@@ -386,14 +438,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 						if ( !include ) continue;
 
 						//--------------------------------
-						// Clone, draw, and log for undo
+						// Clone, Draw & Log for Undo/Redo
 						//--------------------------------
 						// Draw tile & log inside fillSet
-						const id		= `${tx},${ty}`;
-						const oldTile	= level.cloneTile( tx, ty ); // [Tile] snapshot before change
-						level.fillRegion( tx, ty, 1, 1, fgTile );
+						const id      = `${tx},${ty}`;
+						const oldTile = layer.cloneTile( tx, ty ); // [Tile] snapshot before change
+						layer.fillRegion( tx, ty, 1, 1, fgTile );
 						fillSet.add( id );
 
+						// Log for undo/redo.
 						if ( mode==='drawing' || mode==='shiftlining' ) {
 							const map = tool._undoMap;
 							if ( !map.has(id) )
@@ -410,33 +463,33 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				//--------------------------------
 				// Applies stroke around the perimeter of newly filled tiles only.
 				// Skips if stroke is 0 or tool not actively drawing.
-				if ( stroke > 0 && mode === 'drawing' ) {
+				if ( stroke>0 && mode==='drawing' ) {
 					// Gather Undo Map for Stroke Pass
 					const map = tool._undoMap;	// [Map] Existing fill + stroke log entries
 					//--------------------------------
 					// Iterate Filled Tiles (from map)
 					//--------------------------------
-					for ( let [ id, entry ] of map.entries() ) {
+					for ( let [id,entry] of map.entries() ) {
 						// Only process tiles that were filled (not already stroke or other)
-						if ( entry.neu.__source !== 'fill' ) continue;
+						if ( entry.neu.__source!=='fill' ) continue;
 						// Deconstruct tile ID to get coords
 						const [ fx, fy ] = id.split(',').map( Number );
 
 						//--------------------------------
 						// Check Neighbor Tiles (stroke radius)
 						//--------------------------------
-						for ( let dx = -stroke; dx <= stroke; dx++ ) {
-							for ( let dy = -stroke; dy <= stroke; dy++ ) {
+						for ( let dx=-stroke; dx<=stroke; dx++ ) {
+							for ( let dy=-stroke; dy<=stroke; dy++ ) {
 								// Skip center (the filled tile itself)
 								if ( dx===0 && dy===0 ) continue;
 
 								// Skip diagonal if manhattan distance exceeds stroke
-								if ( Math.abs(dx) + Math.abs(dy) > stroke ) continue;
+								if ( (Math.abs(dx)+Math.abs(dy))>stroke ) continue;
 
 								// Calculate target tile
-								const sx	= fx + dx;
-								const sy	= fy + dy;
-								const sid	= `${sx},${sy}`;
+								const sx  = fx + dx;
+								const sy  = fy + dy;
+								const sid = `${sx},${sy}`;
 
 								// Skip if outside level bounds
 								if ( sx<0 || sy<0 || sx>=gridLimit || sy>=gridLimit )
@@ -451,8 +504,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 								//--------------------------------
 								// Draw Stroke Tile & Log It
 								//--------------------------------
-								const oldTile = level.cloneTile( sx, sy );
-								level.fillRegion( sx, sy, 1, 1, bgTile );
+								// Draw stroke tile(s).
+								const oldTile = layer.cloneTile( sx, sy );
+								layer.fillRegion( sx, sy, 1, 1, bgTile );
+								// Log for undo/redo.
 								map.set( sid, {
 									old: { x:sx, y:sy, ...oldTile },
 									neu: { x:sx, y:sy, ...bgTile, __source: 'stroke' }
@@ -487,18 +542,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				const undoMap = tool._undoMap ?? new Map();	// fallback to empty
 				const old = [], neu = [];
 				// Collect all former (old) & their replaced (new) tile data.
-				for ( const [ id, pair ] of undoMap.entries() ) {
-					old.push(
-						{
-							x: pair.old.x, y: pair.old.y,
-							ts: pair.old.ts,
-							tx: pair.old.tx, ty: pair.old.ty
+				for ( const [id,pair] of undoMap.entries() ) {
+					old.push({
+						x  : pair.old.x,
+						y  : pair.old.y,
+						ts : pair.old.ts,
+						tx : pair.old.tx,
+						ty : pair.old.ty
 						});
-					neu.push(
-						{
-							x: pair.neu.x, y: pair.neu.y,
-							ts: pair.neu.ts,
-							tx: pair.neu.tx, ty: pair.neu.ty
+					neu.push({
+						x  : pair.neu.x,
+						y  : pair.neu.y,
+						ts : pair.neu.ts,
+						tx : pair.neu.tx,
+						ty : pair.neu.ty
 						});
 				}
 				// Check if a logged activity took place.
@@ -509,7 +566,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				// Submit Undo/Redo Log
 				//--------------------------------
 				// Log the action inside the governor.
-				const log = { action: "sparseRegion", old, neu };
+				const log    = {
+					action  : "sparseRegion",
+					layerId : tool.layerId,
+					old     : old,
+					neu     : neu
+					};
 				// Label the action for history panel.
 				view.governor.enqueue(
 					'edit', { history: `Pencil drawing.` } );
@@ -521,7 +583,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 				// Clear Undo State
 				//--------------------------------
 				// Reset change log to ensure next drawing data doesn't intermix.
-				tool._undoMap = new Map(); // reset for next stroke
+				tool._undoMap = new Map();  // reset for next stroke
+				tool.layerId  = null;       // reset target layer id
 				return true; // success
 			}
 		}

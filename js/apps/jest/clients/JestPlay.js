@@ -13,7 +13,7 @@ JestAppsRegistry.AppJestPlay =
 		// Declare properties
 		icon			= 'images/icons/jest_hat.png';	// application icon image URL [string] value
 		name			= 'JEST®';			// name of application
-		version			= '0.0';			// application version
+		version			= '0.3beta';		// application version
 		id				= 'tiler';			// tiler application id.
 		// Game [objects]
 		camera			= null;				// [object] JestCamera for viewport clipping the world.

@@ -184,6 +184,7 @@ class JestInputRange extends JestInput {
 			// Ensure 'input' event runs (if requested).
 			/*if ( emit===true )
 				this.input( { target: this.field.el } );*/
+			this.updateLabel( val );
 			return true; // already set
 		}
 
@@ -194,7 +195,8 @@ class JestInputRange extends JestInput {
 		this.field.el.value = val;
 		this.updateLabel( val );
 		// Emit the changed event.
-		this.emit( 'change', null, val );
+		if ( emit )
+			this.emit( 'change', null, val );
 	}
 
 	//-------------------------

@@ -17,9 +17,9 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// --------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
+	// * client - [object] Application client that this piece belongs to.
 	constructor( client ) {
-		super( client );		// call parent constructor
+		super( client ); // call parent constructor
 	}
 
 	//-------------------------
@@ -37,8 +37,8 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build ( name='file-view-editor-painter-tileset', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -72,8 +72,8 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	initView() {
 		super.initView(); // call parent method
 		// Resize to level size.
-		const width		= this.file.context.image.file.el.width;
-		const height	= this.file.context.image.file.el.height;
+		const width  = this.file.context.image.file.el.width;
+		const height = this.file.context.image.file.el.height;
 		this.anchor.resize( width, height );
 	}
 
@@ -82,16 +82,16 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	//-------------------------
 	// Copies the source canvas to the destination canvas at (0,0).
 	// RETURNS: [void]
-	// * sourceCanvas	- [HTMLCanvasElement] Source canvas.
-	// * destCanvas		- [HTMLCanvasElement] Destination canvas.
+	// * sourceCanvas - [HTMLCanvasElement] Source canvas.
+	// * destCanvas   - [HTMLCanvasElement] Destination canvas.
 	refreshCanvas( /*sourceCanvas, destCanvas*/ ) {
 		// Require file to be set.
 		if ( !this.file ) return;
 		super.refreshCanvas(); // call parent method
 		// Obtain file canvas context & copy contents to canvas.
-		const sourceCanvas	= this.getViewRender().el;
-		const destCanvas	= this.canvas.el;
-		const ctx			= destCanvas.getContext( '2d' );
+		const sourceCanvas = this.getViewRender().el;
+		const destCanvas   = this.canvas.el;
+		const ctx          = destCanvas.getContext( '2d' );
 		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height ); // optional clear
 		ctx.drawImage(
 			sourceCanvas, // image contents being copied
@@ -106,7 +106,7 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// RETURNS: [void].
 	getViewRender() {
 		// Return the tileset image canvas.
-		const canvas	 = this.file.context.image.file;
+		const canvas = this.file.context.image.file;
 		return canvas; // tileset image canvas
 	}
 }

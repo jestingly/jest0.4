@@ -11,21 +11,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 // This class frames an [object] that serves as a base usable tool.
 class JestToolEntities extends JestTool {
 	// UI handling properties
-	toolbar			= null;			// [object] JestToolbar for buttons
-	imageSelect		= null;			// JestInputFileSelect [object] for sprite image(s).
+	toolbar     = null;         // [object] JestToolbar for buttons
+	imageSelect = null;         // JestInputFileSelect [object] for sprite image(s).
 
 	// Canvas target
-	target			= null;			// [ElementCanvas] workspace canvas
+	target      = null;         // [ElementCanvas] workspace canvas
 	// Entity selection
-	selected		= null;			// [JestCuratorObject|null] selected entity
-	hovered         = null;			// [JestCuratorObject|null] hovered entity
+	selected    = null;         // [JestCuratorObject|null] selected entity
+	hovered     = null;         // [JestCuratorObject|null] hovered entity
 	// Dragging measurements
-	dragStartX		= null;			// [number] original entity X
-	dragStartY		= null;			// [number] original entity Y
-	grabOffsetX		= 0;			// [number] cursor offset in pixels
-	grabOffsetY		= 0;			// [number] cursor offset in pixels
+	dragStartX  = null;         // [number] original entity X
+	dragStartY  = null;         // [number] original entity Y
+	grabOffsetX = 0;            // [number] cursor offset in pixels
+	grabOffsetY = 0;            // [number] cursor offset in pixels
 	// Dragging state
-	moved			= false;		// [bool] whether entity has moved
+	moved       = false;        // [bool] whether entity has moved
 
 	// --------------------------------
 	// Constructor
@@ -131,6 +131,7 @@ class JestToolEntities extends JestTool {
 		//--------------------------------
 		this.removeTargetListeners();
 		this.removeGlobalListeners();
+
 		//--------------------------------
 		// Clear Selection
 		//--------------------------------
@@ -143,6 +144,7 @@ class JestToolEntities extends JestTool {
 		this.hovered		= null;
 		// Return to idle mode.
 		this.jot( 'mode', 'empty' );
+
 		//--------------------------------
 		// Register Mouse Listener
 		//--------------------------------
@@ -159,6 +161,7 @@ class JestToolEntities extends JestTool {
 				e=>this.updateCursor(e), 'dom'
 				);
 		}
+
 		//--------------------------------
 		// Emit Reset Event
 		//--------------------------------

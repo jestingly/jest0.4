@@ -29,4 +29,11 @@
 		flex-direction  : column;
 		user-select     : none;
 	}
+
+	.jest-mousefollower {
+		position        : absolute;
+		width           : max-content;
+		height          : max-content;
+		min-width       : 0;
+	}
 }

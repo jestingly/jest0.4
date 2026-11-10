@@ -34,55 +34,68 @@ class JestTransmitter extends JestGamepiece {
 	//-------------------------
 	// Transmission Handling
 	//-------------------------
-	// Gather and process multiple file requests in batches
-	// This function handles fetching multiple files in parallel while leveraging caching
-	// to avoid redundant network requests.
-	// RETURNS: [void] (Updates internal cache)
-	// * files		- [array] Array of objects { address: [string], responseType: [string], cacheTime?: [number], strict?: [boolean] }
-	// * batchSize	- [number] Number of files to process simultaneously (default: 5)
-	// * cacheTime	- [number] Duration (in ms) to cache the response (default: this.defaultCacheTime)
-	// * strict		- [boolean] If true, prevents the cache from being forcefully cleared
-	async loadFiles( files, batchSize=5, cacheTime=this.defaultCacheTime, strict=false ) {
-		const now	= Date.now(); // Capture the current timestamp
-		// Iterate through the file list in chunks of batchSize
+	// Load requested files in batches while reusing cached and in-progress requests.
+	// RETURNS: [void] after processing the requested files.
+	// * files           - [array] File request objects.
+	// * batchSize       - [number] Maximum number of concurrent requests per batch.
+	// * cacheTime       - [number] Cache lifetime in milliseconds.
+	// * strict          - [boolean] Protect cache entries against forced removal.
+	// * continueOnError - [boolean] Continue loading other files when one request rejects.
+	async loadFiles( files, batchSize=5, cacheTime=this.defaultCacheTime, strict=false, continueOnError=true ) {
+		// Capture one timestamp for this batch of cache checks.
+		const now = Date.now(); // Capture the current timestamp
+
+		// Process the requested files in concurrent batches.
 		for ( let i=0; i<files.length; i+=batchSize ) {
-			const batch		= files.slice( i, i+batchSize ); // Extract the current batch
+			// Isolate the current batch from the full request list.
+			const batch    = files.slice( i, i+batchSize ); // Extract the current batch
 			// Process each file in the batch concurrently using Promise.all
-			const results	=
+			const results  =
 				await Promise.all(
 					batch.map(
 						async file => {
-							// Check if the file exists in cache and is still valid
-							const cached = this.results.get( file.address );
-							if ( cached && cached.expiresAt>now ) {
-								console.log( `Cache hit: ${file.address}` );	// Log cache usage
-								return cached;								// Return cached result
+							try {
+								// Check if the file exists in cache and is still valid
+								const cached = this.results.get( file.address );
+								if ( cached && cached.expiresAt>now ) {
+									console.log( `Cache hit: ${file.address}` ); // Log cache usage
+									return cached; // Return cached result
+								}
+								// If file is already being fetched, return the same promise
+								if ( this.pendingLoads.has(file.address) ) {
+									console.log( `Waiting for ongoing load: ${file.address}` );
+									return await this.pendingLoads.get( file.address );
+								}
+								// Start this file request and remove it from pending when it finishes.
+								const loadPromise =
+									this.loadFile(
+										file,
+										typeof file.cacheTime==='number' ? file.cacheTime : cacheTime,
+										typeof file.strict==='boolean' ? file.strict : strict
+										)
+										.finally(
+											() => {
+												this.pendingLoads.delete( file.address ); // Remove from pending on completion
+											});
+								// Register the request so later callers can share its promise.
+								this.pendingLoads.set( file.address, loadPromise );
+								// Return this file's loaded result.
+								return await loadPromise;
 							}
-							// If file is already being fetched, return the same promise
-							if ( this.pendingLoads.has(file.address) ) {
-								console.log( `Waiting for ongoing load: ${file.address}` );
-								return await this.pendingLoads.get( file.address );
+							catch ( error ) {
+								// Report which request failed.
+								console.error( `File request failed: ${file?.address}`, error );
+								// Resolve this request as a failed item when batch continuation is enabled.
+								if ( continueOnError ) return null;
+								// Preserve fail-fast behavior when the caller opts out.
+								throw error;
 							}
-							// Otherwise, fetch the file and store the promise in pendingLoads
-							const loadPromise	=
-								this.loadFile(
-									file,
-									typeof file.cacheTime==='number' ? file.cacheTime : cacheTime,
-									typeof file.strict==='boolean' ? file.strict : strict
-									)
-									.finally(
-										() => {
-											this.pendingLoads.delete( file.address ); // Remove from pending on completion
-										});
-							// If not cached or expired, fetch the file
-							this.pendingLoads.set( file.address, loadPromise );
-							return await loadPromise;
 						})
 					);
-			// Store results for later retrieval (commented out)
-			//this.results.push( ...results );
+			// Keep the per-file results available for optional inspection or caching work.
+			console.log( 'Batch results:', results );
 		}
-		//onsole.log( this.results ); // Log all results for debugging
+		//console.log( this.results ); // Log all results for debugging
 	}
 
 	// Load a file either from cache (if valid) or by making a new request

@@ -1459,7 +1459,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 											};
 										// Compare live fields to saved data.
 										// Toggle "apply" button if fields changed.
-										if ( form.checkFieldMismatches(data,compare) )
+										if ( form.checkFieldInput(data,compare) )
 											toolbar.toggle( 'apply', true );
 										// Enable image swap button.
 										toolbar.toggle( 'image', true );
@@ -1485,7 +1485,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 										};
 									// Compare live fields to saved data.
 									// Toggle "apply" button if fields changed.
-									if ( form.checkFieldMismatches(data,compare) )
+									if ( form.checkFieldInput(data,compare) )
 										toolbar.toggle( 'apply', true );
 									// Enable sprite remove button.
 									toolbar.toggle( 'remove', true );

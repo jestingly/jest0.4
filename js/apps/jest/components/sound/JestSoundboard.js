@@ -94,11 +94,11 @@ class JestSoundboard extends JestSavable {
 			const record	= this.client.secretary.getRecord(address) ?? null;
 			if ( !record ) { // record not found
 				console.warn( `Cannot find sound data: ${address}` );
-				return;
+				continue; // don't cache non-existent sound
 			}
 			// Continue to create sound [object].
-			const sound		= new JestSound( this.client, address );
-			const key		= this.soundKey( address );
+			const sound  = new JestSound( this.client, address );
+			const key    = this.soundKey( address );
 			this.sounds[key] = sound;		// store sound [object]
 			sound.setup();					// call any necessary setup
 			sound.render( record.blob );	// render blob into JestSound [object]

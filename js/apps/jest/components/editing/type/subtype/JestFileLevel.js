@@ -73,7 +73,13 @@ class JestFileLevel extends JestFileImage {
 		const level		= new JestLevel( this.client, stem );
 		await level.setup(); // setup new [object]
 		// Create variables that will be loaded in.
-		let board		= [];
+		let layer = [{
+			id      : 0,
+			name    : 'Ground',
+			visible : true,
+			locked  : false,
+			board   : null
+			}];
 		let regions		= {};
 		console.log( JestParserLevel.keywords );
 
@@ -87,15 +93,15 @@ class JestFileLevel extends JestFileImage {
 			const baseTile		= { ts: 0, tx: 0, ty: 0 };
 			// level is your JestLevel instance
 			const levelGrid		= this.client.config.levelGrid; // level WxH
-			board	= this.client.grapher.createMatrix( levelGrid, levelGrid, baseTile );
+			const board			= this.client.grapher.createMatrix( levelGrid, levelGrid, baseTile );
+			layer[0].board		= board; // add board to base layer
 			// Dynamically assign regions via parser keyword registration
 			for ( const keyword of JestParserLevel.keywords ) {
 				const key		= keyword.toLowerCase();
-				if ( key==='board' ) continue;
+				if ( key==='board' || key==='layer' ) continue;
 				regions[key]	= []; // empty region (by default)
 			}
 		}
-
 		//--------------------------------
 		// Generate Level From File Data
 		//--------------------------------
@@ -105,20 +111,60 @@ class JestFileLevel extends JestFileImage {
 			const secretary		= this.client.secretary;	// secretary [object]
 			const transmitter	= this.client.transmitter;	// transmitter [object]
 			const record		= secretary.getRecord( fileInfo.address, 'local' );
+	        if ( !record )
+	            throw new Error( 'Level file record not found.' );
+
 			// Remove record from secretary & transmitter cache.
 			secretary.removeRecord( fileInfo.address, 'local' );
 			transmitter.removeFromCache( fileInfo.address, true );
+
+			//--------------------------------
+	        // Normalize Level Format
+	        //--------------------------------
 			// Get tile board data from the read file.
 			console.log( record );
-			board	= record.board; // board from parsed file
+            // Convert legacy board into a single layer.
+	        if ( record.version==='GLEVNW01' )
+				layer[0].board = record.board; // add board to base layer
+			else if ( record.version==='JESTNW02' )
+            	layer = record.layers;
+        	else throw new Error( `Unsupported level version: ${record.version}` );
+
+			//--------------------------------
+			// Debug Parsed Layer Records
+			//--------------------------------
+			// Verify that the parser supplied layer definitions
+			// before converting them into JestLevelLayer objects.
+			console.log( '[JEST Layers] Version:', record.version );
+			console.log( '[JEST Layers] Parsed layers:', record.layers );
+			console.log( '[JEST Layers] Selected layer records:', layer );
+
+	        //--------------------------------
+	        // Load Other Keyword Regions
+	        //--------------------------------
 			// Dynamically assign regions via parser keyword registration
 			for ( const keyword of JestParserLevel.keywords ) {
 				const key		= keyword.toLowerCase();
-				if ( key==='board' ) continue;
+				if ( key==='board' || key==='layer' ) continue;
 				regions[key]	= record[key] ?? [];
 			}
 		}
 		console.log( regions );
+
+		//--------------------------------
+	    // Create Level Layers
+	    //--------------------------------
+		// Iterate each layer & add to level.
+	    for ( const record of layer ) {
+	        await level.addLayer(
+				record.name,
+				{
+		            id      : record.id,
+		            visible : record.visible,
+		            locked  : record.locked,
+		            tilemap : record.board
+	        	});
+	    }
 
 		//--------------------------------
 		// Render Tilemap Into Level
@@ -128,7 +174,7 @@ class JestFileLevel extends JestFileImage {
 		console.log( `Rendering "${stem}" level data into level [object]...` );
 		// Set new level as this file [object] context.
 		try {
-			level.render( board ); // populates level.tilemap and calls blit()
+			level.render(); // populates level layer tilemaps using blit()
 		}
 		catch ( err ) {
 			console.error( 'Could not render level using supplied board data.' );
@@ -144,7 +190,10 @@ class JestFileLevel extends JestFileImage {
 		// Emit Various Event(s)
 		//-----------------------------
 		// Emit a load file event with data [objects].
-		this.emit( 'openFile', null, { board, ...regions } );
+		this.emit(
+			'openFile', null,
+			{ layers: level.getLayers(), ...regions }
+			);
 		return true; // success
 	}
 
@@ -160,14 +209,29 @@ class JestFileLevel extends JestFileImage {
 	// * method		- [string] Value: "new", "overwrite", "cloud", "download"
 	// * fallback	- [bool] Allow fallback forced download (default: true)
 	async saveToDisk( method="overwrite", fallback=true ) {
-		// Convert level tilemap to .nw file [string] syntax.
-		const tilemap	= this.context.tilemap; // 2D [array] of
+		//--------------------------------
+		// Collect Layer Data
+		//--------------------------------
+		// Convert level layers to .nw file [string] syntax.
+		const layers =
+			this.context.getLayers().map(
+				layer => ({
+				    id      : layer.id,
+				    name    : layer.name,
+				    visible : layer.visible,
+				    locked  : layer.locked,
+				    board   : layer.tilemap
+					}));
 
+		//--------------------------------
+		// Collect Keyword Data
+		//--------------------------------
 		// Generate list of all dynamic keyword data.
 		const keywordData = {};
 		for ( const keyword of JestParserLevel.keywords ) {
 			const key	= keyword.toLowerCase();
-			if ( key==='board' ) continue;
+			// BOARD and LAYER are handled by the layer collection.
+			if ( key==='board' || key==='layer' ) continue;
 			// Check for keyword stack in the queue.
 			const data	= this.dequeue( key );
 			if ( data!==null ) {
@@ -176,29 +240,36 @@ class JestFileLevel extends JestFileImage {
 			}
 		}
 
+		//--------------------------------
+		// Encode Level
+		//--------------------------------
 		// Build data to save using parsd queued data.
 		this.data		=
 			this.client.parsers.level.encode({
-				board: tilemap,
+				version : 'JESTNW02',
+				layers  : layers,
 				...keywordData
 				});
 		// Get tilemap from level & convert to string.
 		//this.data	= JSON.stringify( this.context.tilemap );
 
-		// Save data to file on local disk.
+		//--------------------------------
+		// Proceed to Write Data
+		//--------------------------------
+		// Save data to cloud or file on local disk.
 		switch ( method ) {
 			case "cloud":
 				// Check for cloud handler.
 				if ( this.client.cloud ) {
 					// Get JestCloud [object]
-					await this.client.cloud.save( this, "manual" );
+					return await this.client.cloud.save( this, "manual" );
 				}
 				break;
 			case "download":
 			case "overwrite":
 			case "new":
 				const forceSaveAs = method==="new" ? true : false;
-				super.saveToDisk( 'text/plain', forceSaveAs, fallback );
+				return await super.saveToDisk( 'text/plain', forceSaveAs, fallback );
 				break;
 		}
 	}

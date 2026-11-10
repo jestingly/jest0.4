@@ -61,10 +61,10 @@ class JestNoticer extends JestElement {
 	// * id		- [string] ID of notification to close.
 	close( id ) {
 		// Get index # using id.
-		const index		= this.notices.findIndex( panel => panel.id===id );
+		const index  = this.notices.findIndex( panel => panel.id===id );
 		if ( index<0 ) return; // not found
 		// Get notice [object] using index.
-		const notice		= this.notices[index];
+		const notice = this.notices[index];
 		notice.close(); // close target notice
 		this.notices.splice( index, 1 ); // remove notice from stack
 		// Readjust all notices.

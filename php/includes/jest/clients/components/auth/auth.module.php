@@ -25,17 +25,19 @@ class JestAuth extends Gamepiece {
 	// * $password	- [string] user's input password
 	public function login( $username, $password ) {
 		// Begin query to check for account.
-		$query	= "SELECT * FROM users WHERE username = ?";
-		$stmt	= $this->client->mysql->pdo->prepare( $query );
+		$query  = "SELECT * FROM users WHERE username = ?";
+		$stmt   = $this->client->mysql->pdo->prepare( $query );
 		$stmt->execute( [$username] );
-		$user	= $stmt->fetch( PDO::FETCH_ASSOC );
+		$user   = $stmt->fetch( PDO::FETCH_ASSOC );
 
+		// Verify the password using its stored hash.
 		if ( $user && password_verify($password,$user['password_hash']) ) {
-			unset( $user['password_hash'] );	// Remove sensitive field
-			$_SESSION['user'] = $user;			// Store in session
+			unset( $user['password_hash'] ); // Remove sensitive field
+			$_SESSION['user'] = $user;       // Store in session
 			return [ 'success'=>true, 'user'=>$user ];
 		}
-
+		
+		// User did not successfully login.
 		return [ 'success'=>false, 'error'=>'Invalid login.' ];
 	}
 
@@ -48,8 +50,8 @@ class JestAuth extends Gamepiece {
 	// * $email		- [string] email address
 	// * $password	- [string] password to hash
 	public function register( $username, $email, $password ) {
-		$hash	= password_hash( $password, PASSWORD_DEFAULT );
-		$query	= "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
+		$hash   = password_hash( $password, PASSWORD_DEFAULT );
+		$query  = "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)";
 		/*error_log( $query );
 		error_log( $username );
 		error_log( $email );

@@ -18,6 +18,7 @@ class JestToolFloodfill extends JestTool {
 	scatter			= 0;			// [int] value of randomness to the fill
 	// Context propert(ies)
 	target			= null;			// [object] ElementCanvas for click event.
+	layerId			= null;			// [int] Z value of layer index / id.
 	_targetTile		= null;			// [object|null] tile to match against during flood
 	_newTile		= null;			// [object|null] tile to apply during flood
 	// Tile container(s)
@@ -142,6 +143,7 @@ class JestToolFloodfill extends JestTool {
 	removeTargetListeners() {
 		this.target.unregister( 'click', 'floodfillStart' );
 	}
+
 	// Remove window event listener(s).
 	removeGlobalListeners() {
 		//this.target.unregister( jsos.mouseUps, 'floodfill' );
@@ -154,10 +156,24 @@ class JestToolFloodfill extends JestTool {
 	// RETURNS: [void].
 	// * e		- Event [object] from mouse click.
 	start( e ) {
+		//--------------------------------
+		// Validate Tool Availability
+		//--------------------------------
+		// Explain why the start operation is blocked (if it is).
+		if ( this.client.alertToolBlocked(this,'begin floodfill') )
+			return; // abort action
+
+		//--------------------------------
+		// Check Mode Availability
+		//--------------------------------
 		// Mode / enableability requirement
 		const enabled	= this.skim( 'enabled' );
 		const mode		= this.skim( 'mode' );
 		if ( !enabled || mode!=='idle' ) return;
+
+		//--------------------------------
+		// Reset & Begin Floodill
+		//--------------------------------
 		// Reset the floodfill tool for new floodfill.
 		this.jot( 'replacing', true );	// replace mode on by default
 		this.jot( 'mode', 'starting' );	// change mode

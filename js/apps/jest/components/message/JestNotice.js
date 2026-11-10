@@ -14,6 +14,15 @@ class JestNotice extends JestElement {
 	id				= '';
 	noticer			= null;		// [JestNoticer] Parent JestNoticer reference.
 	options			= {};		// [object] Original options object.
+	//--------------------------------
+	// Notification Lifecycle
+	//--------------------------------
+	// Track closure and pending callbacks independently.
+	// This prevents timers from operating on destroyed panels.
+	_closed			= false;
+	_expireTimer	= null;
+	_showTimer		= null;
+	_destroyTimer	= null;
 
 	//--------------------------------
 	// Constructor
@@ -31,15 +40,24 @@ class JestNotice extends JestElement {
 		this.id			= `notif_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
 		// Build the notification [object].
 		this.build();
-		// If notification is not persistent, give it a timeout.
-		if ( !options.persistent ) {
-			setTimeout(
-				() => {
-					this.noticer.close( this.id );
-					options.onExpire && options.onExpire();
-				},
-				options.duration || 5000 );
-		}
+		//--------------------------------
+		// Schedule Automatic Expiration
+		//--------------------------------
+		// Only nonpersistent notifications expire automatically.
+		// Store the timer so manual dismissal can cancel it.
+		if ( !options.persistent )
+			this._expireTimer =
+				setTimeout(
+					() => {
+						// Ignore expiration if the notice was already closed.
+						if ( this._closed ) return;
+						// Dismiss the notification through its owner.
+						this.noticer.close( this.id );
+						// Notify the caller only for genuine expiration.
+						options.onExpire?.();
+					},
+					options.duration || 5000
+					);
 	}
 
 	// --------------------------------
@@ -54,30 +72,32 @@ class JestNotice extends JestElement {
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['notification'].mergeUnique(classes) );
 		// Access the notification noticer.
-		const container	= this.noticer.panel;
+		const container = this.noticer.panel;
 		// Create the panel [object] for the notice.
-		const panel		= container.createPanel({
-			name		: this.id,
-			id			: this.id,
-			classes		: [ 'jest-notification' ]
+		const panel     = container.createPanel({
+			name    : this.id,
+			id      : this.id,
+			classes : [ 'jest-notification' ]
 			});
-		this.panel		= panel;
+		this.panel      = panel;
 
 		// If icon is supplied, add it.
 		if ( this.options.icon ) {
-			const img	= panel.createPanel({
-				tag		: 'img',
-				name	: 'icon',
-				classes	: [ 'jest-notification-icon' ]
-				});
-			img.el.src	= this.options.icon;
+			const img   =
+				panel.createPanel({
+					tag     : 'img',
+					name    : 'icon',
+					classes : [ 'jest-notification-icon' ]
+					});
+			img.el.src  = this.options.icon;
 		}
 		// If text is supplied, add text.
-		const txt		= panel.createPanel({
-			tag		: 'span',
-			name	: 'text',
-			classes	: [ 'jest-notification-text' ]
-			});
+		const txt       =
+			panel.createPanel({
+				tag     : 'span',
+				name    : 'text',
+				classes : [ 'jest-notification-text' ]
+				});
 		txt.el.textContent = this.options.text;
 
 		// Add buttons.
@@ -111,21 +131,80 @@ class JestNotice extends JestElement {
 				});
 		}
 
-		// Animate in
-		setTimeout( ()=>panel.addClass('jest-notif-show'), 10 );
+		//--------------------------------
+		// Animate Notification Appearance
+		//--------------------------------
+		// Do not attempt to animate a notice that has already closed.
+		this._showTimer =
+			setTimeout(
+				() => {
+					// Determine if notification is already closed or gone.
+					if ( this._closed || !this.panel?.el ) return;
+					this.panel.addClass( 'jest-notif-show' );
+				}, 10 );
 		// Enable drag-to-dismiss
 		this._enableDrag();
 	}
 
 	//--------------------------------
-	// Close Panel
+	// Close Notification
 	//--------------------------------
-	// Close and remove this notification panel.
+	// Close a notification once, cancel its pending timers,
+	// detach all listeners, and destroy its panel after fading.
+	// Repeated calls are safe and do not schedule another destroy.
+	// RETURNS: [boolean] true when closure begins,
+	//                    false if already closed.
 	close() {
-		// Remove class.
-		this.panel.removeClass( 'jest-notif-fade-out' );
-		// Set timer to destroy the panel.
-		setTimeout( ()=>this.panel.destroy(), 300 );
+		//--------------------------------
+		// Prevent Duplicate Closure
+		//--------------------------------
+		// Multiple dismissal paths may request closure.
+		if ( this._closed ) return false;
+
+		// Mark closed before any additional operations.
+		this._closed = true;
+
+		//--------------------------------
+		// Cancel Pending Timers
+		//--------------------------------
+		// Stop delayed callbacks from accessing a removed panel.
+		clearTimeout( this._expireTimer );
+		clearTimeout( this._showTimer );
+
+		// Preserve the panel reference through its exit animation.
+		const panel = this.panel;
+
+		// Nothing further to do if the panel is already gone.
+		if ( !panel?.el ) return true;
+
+		//--------------------------------
+		// Detach Notification Listeners
+		//--------------------------------
+		// Remove mousemove/mouseup listeners from window, along
+		// with DOM listeners attached to the notification panel.
+		// Our revised OSEventTarget.unregisterAll() handles both.
+		panel.unregisterAll();
+
+		//--------------------------------
+		// Animate Notification Exit
+		//--------------------------------
+		// Start the fade-out animation rather than removing it.
+		panel.addClass( 'jest-notif-fade-out' );
+
+		//--------------------------------
+		// Destroy Notification Panel
+		//--------------------------------
+		// Allow the fade animation to finish before destruction.
+		this._destroyTimer =
+			setTimeout(
+				() => {
+					// Avoid destroying a panel already removed elsewhere.
+					if ( panel.el ) panel.destroy();
+					// Release the notice's reference to the panel.
+					this.panel = null;
+				}, 300 );
+
+		return true; // success
 	}
 
 	//--------------------------------
@@ -138,7 +217,7 @@ class JestNotice extends JestElement {
 		// Register an animation end DOM event.
 		this.panel.register(
 			'animationend', 'removeNotice',
-			() => this.panel.el.classList.remove( 'jest-notif-bounce-down' ),
+			() => this.panel.removeClass( 'jest-notif-bounce-down' ),
 			'dom', null, { once: true } );
 	}
 
@@ -147,16 +226,16 @@ class JestNotice extends JestElement {
 	//--------------------------------
 	// Enable drag-to-dismiss interaction on this panel.
 	_enableDrag() {
-		let startX		= 0;
-		let currentX	= 0;
-		let dragging	= false;
-		const threshold	= 0.5;
+		let startX      = 0;
+		let currentX    = 0;
+		let dragging    = false;
+		const threshold = 0.5;
 		// Create mouse down dragstart event.
 		this.panel.register(
 			'mousedown', 'dragstart',
 			( e ) => {
-				startX		= e.clientX;
-				dragging	= true;
+				startX   = e.clientX;
+				dragging = true;
 				this.panel.el.classList.add( 'jest-notif-slide-dragging' );
 			}, 'dom' );
 		// Create mouse drag listener (dragging notice off screen).
@@ -176,8 +255,8 @@ class JestNotice extends JestElement {
 				// Set dragging to false (mouse released).
 				dragging	= false; // no longer dragging
 				// Remove CSS classes.
-				this.panel.el.classList.remove( 'jest-notif-slide-dragging' );
-				this.panel.el.style.removeProperty( 'translate' ); // clear translate style
+				this.panel.removeClass( 'jest-notif-slide-dragging' );
+				this.panel?.el?.style.removeProperty( 'translate' ); // clear translate style
 				// Check if dragging past the threshold.
 				if ( Math.abs(currentX)>(this.panel.el.offsetWidth*threshold) ) {
 					// Slide out

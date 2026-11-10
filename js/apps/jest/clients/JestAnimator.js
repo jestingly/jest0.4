@@ -13,7 +13,7 @@ JestAppsRegistry.AppJestAnimator =
 		// Declare properties
 		icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
 		name			= 'Animator';		// name of application
-		version			= '0.1beta';		// application version
+		version			= '0.3beta';		// application version
 		id				= 'animator';		// animator application id.
 		// Server [objects]
 		//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -27,9 +27,7 @@ JestAppsRegistry.AppJestAnimator =
 		editor			= null;				// [object] Panel container for editing arena (board & sidebar).
 		board			= null;				// [JestElement] Board for editing the jani.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
-		// User login handling
-		userBadge		= null;				// [JestPanel] User login/logout badge element.
-
+		
 		// --------------------------------
 		// Constructor
 		// --------------------------------
@@ -176,7 +174,7 @@ JestAppsRegistry.AppJestAnimator =
 						//persistent: true,
 						buttons   :
 							[
-							{ label: 'Ok', click: () => console.log('Ok pressed') }
+							{ label: 'Ok', click: () =>  {/*console.log('Ok pressed');*/} }
 							]
 						//onExpire  : () => console.log('Notification expired')
 						});
@@ -550,10 +548,14 @@ JestAppsRegistry.AppJestAnimator =
 			if ( !bypass && this.busy() ) return null; // app busy‐gate
 
 			//--------------------------------
-			// Define Variable(s)
+			// Handle Tool & Its Status
 			//--------------------------------
-			// Retrieve the requesting tool's primary curator, if available.
-			const curator		= tool ? tool.curators.primary : null; // shorthand
+			// Refresh the requesting tool's availability.
+			// The result does not prevent retrieving file information.
+			if ( tool )
+				this.toolBlockCheck( tool );
+			// Retrieve the tool's primary curator, if available.
+			const curator = tool?.curators?.primary ?? null;
 
 			//--------------------------------
 			// Require File to Be Open
@@ -629,8 +631,8 @@ JestAppsRegistry.AppJestAnimator =
 			//--------------------------------
 			// Interactor Buttons Are Disabled (until enabled)
 			//--------------------------------
-			// Disable all interactor tools by default.
-			this.interactor.toggleAll( false );
+			// Disable all actionbar tools by default.
+			this.actionbar.toggleAll( false );
 			//--------------------------------
 			// Handle Mode
 			//--------------------------------

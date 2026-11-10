@@ -42,7 +42,7 @@ Edit the following files to configure your application:
   - login using the generic credentials u="admin" & p="admin"
   - still under development
 
-• New _Grid_ feature in the options panel to display a light grid at minimum of 1 tile units, up to half the canvas width & height.
+• New _Grid_ feature in the options panel to display a light grid lattice at a minimum of 1 tile units up to half the canvas width & height.
   - slider starts at 0 (no grid)
   - max value is canvas dimensions/2
 

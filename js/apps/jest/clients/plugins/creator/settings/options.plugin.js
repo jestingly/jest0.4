@@ -258,9 +258,48 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 
 					// Composite the complete grid with transparency.
 					editorCtx.save();
-					editorCtx.globalAlpha *= 0.25;
+					editorCtx.globalAlpha *= 0.3;
 					editorCtx.drawImage( sketchpad.el, 0, 0 );
 					editorCtx.restore();
+				});
+
+			//-------------------------
+			// Options Keyboard Command(s)
+			//-------------------------
+			// Register comma and period for grid spacing control.
+			client.io.registerShortcut( ',', 'gridSizeDown' );
+			client.io.registerShortcut( '.', 'gridSizeUp' );
+
+			// Change the grid spacing through the options slider.
+			client.io.register(
+				'keyboardShortcut', 'gridResizeCommand',
+				command => {
+					// Ignore shortcuts while the user is typing.
+					if ( client.io.isTypingInInput() ) return;
+
+					// Ignore commands unrelated to grid spacing.
+					if ( !['gridSizeUp','gridSizeDown'].includes(command) )
+						return;
+
+					// Get the grid slider from the Options form.
+					const form  =
+						client.sidebar.getSection(subtype)?.getContents();
+					const field = form?.getField( 'grid' );
+					if ( !field ) return;
+
+					// Read the current spacing and slider limits.
+					const value = Number( field.getValue() ?? 0 );
+					const min   = Number( field.getMin() ?? 0 );
+					const max   = Number( field.getMax() ?? maxGrid );
+
+					// Increase or decrease by one, allowing zero to turn it off.
+					const nextValue =
+						command==='gridSizeUp' ?
+							Math.min( value+1, max ) :
+							Math.max( value-1, min );
+
+					// Update the slider; its change handler updates client.settings.grid.
+					field.setValue( nextValue );
 				});
 
 			//-------------------------

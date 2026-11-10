@@ -85,8 +85,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			// Options Keyboard Command(s)
 			//-------------------------
 			// Register "[" and "]" for brush size control
-			client.io.registerShortcut( '[', 'sizeDown' );
-			client.io.registerShortcut( ']', 'sizeUp' );
+			client.io.registerShortcut( '[', 'pencilSizeDown' );
+			client.io.registerShortcut( ']', 'pencilSizeUp' );
 			// Keyboard shortcut menu actions for brush resizing
 			client.io.register(
 				'keyboardShortcut', 'pencilResizeCommand',
@@ -99,7 +99,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Check if active tool is "pencil"
 					if ( !tool.enabled() ) return;
 					// Validate accepted commands.
-					if ( !['sizeUp','sizeDown'].includes(command) )
+					if ( !['pencilSizeUp','pencilSizeDown'].includes(command) )
 						return; // unrecognized command
 					//--------------------------------
 					// Access Options Form Data
@@ -115,9 +115,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Alter Options
 					//--------------------------------
 					// Apply logic
-					if ( command==='sizeUp' )
+					if ( command==='pencilSizeUp' )
 						field.setValue( Math.min( value+1, field.getMax() ?? 10 ) );
-					else if ( command==='sizeDown' )
+					else if ( command==='pencilSizeDown' )
 						field.setValue( Math.max( value-1, field.getMin() ?? 1 ) );
 				});
 

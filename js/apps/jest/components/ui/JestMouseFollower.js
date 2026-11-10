@@ -162,7 +162,6 @@ class JestMouseFollower extends JestElement {
 	// Monitor pointer entry, movement, and exit through the element event system.
 	// RETURNS: [void].
 	registerWatchEvents() {
-		console.log('reg');
 		// Register all pointer events under this follower's unique key.
 		this.watchElement.register(
 			['mouseenter','mousemove','mouseleave','wheel'],
@@ -177,7 +176,6 @@ class JestMouseFollower extends JestElement {
 	// Remove pointer callbacks previously registered on the watched element.
 	// RETURNS: [void].
 	unregisterWatchEvents() {
-		console.log('unreg');
 		// A watched element is optional for visual-only followers.
 		this.watchElement?.unregister(
 			['mouseenter','mousemove','mouseleave','wheel'],

@@ -43,7 +43,7 @@ class JestParserTiledefs extends JestGamepiece {
 				// Look for a new type declaration (any uppercase word)
 				if ( /^[A-Z]+$/.test(line) ) {
 					currentType			= line;
-					console.log( `${currentType}END` );
+					//console.log( `${currentType}END` );
 					defs[currentType]	= [];
 					types.push( currentType );
 				}

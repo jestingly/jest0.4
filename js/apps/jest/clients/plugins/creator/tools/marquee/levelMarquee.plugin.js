@@ -973,6 +973,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					client.soundboard.playSound( 'jest_float', 'wav', 1.02 );
 					// Copy matrix region & clear underneath.
 					client.toolLevelMarqueeFloat( tool );
+					// Tighten bounds, mask, and floating matrix together.
+					tool.tightenFloatingBounds();
 					// A subsequent drag starts from the already-floated state.
 					tool.lastState = tool.getSelectionState();
 				});

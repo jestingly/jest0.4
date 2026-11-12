@@ -622,109 +622,6 @@ class JestToolMarquee extends JestTool {
 		this.removeGlobalListeners(); // remove window events
 	}
 
-	// Tighten a floating selection to the outermost included mask cells.
-	// The mask and tile matrix are cropped together so transform bounds,
-	// selected tiles, and the floating preview stay aligned.
-	// RETURNS: [boolean] `true` if the floating bounds were updated.
-	tightenFloatingBounds() {
-		//--------------------------------
-		// Validate Floating Selection
-		//--------------------------------
-		// Require matching mask and floating tile data.
-		const mask   = this.mask;
-		const matrix = this.contents?.matrix;
-
-		if ( !this.bounds || !Array.isArray(mask) || !mask.length ||
-			 !Array.isArray(matrix) || matrix.length!==mask.length )
-			return false; // no floating selection data
-
-		// Require a rectangular mask and matrix before cropping them together.
-		const width = mask[0]?.length ?? 0;
-		if ( width===0 ||
-			 !mask.every(row => Array.isArray(row) && row.length===width) ||
-			 !matrix.every(row => Array.isArray(row) && row.length===width) )
-			return false; // malformed selection data
-
-		//--------------------------------
-		// Find Included Cell Bounds
-		//--------------------------------
-		// Find the smallest rectangle containing every included mask cell.
-		let minX = width;
-		let minY = mask.length;
-		let maxX = -1;
-		let maxY = -1;
-
-		for ( let y=0; y<mask.length; y++ ) {
-			for ( let x=0; x<width; x++ ) {
-				if ( !mask[y][x] ) continue; // skip excluded or transparent cell
-
-				minX = Math.min( minX, x );
-				minY = Math.min( minY, y );
-				maxX = Math.max( maxX, x );
-				maxY = Math.max( maxY, y );
-			}
-		}
-
-		// Do not create a zero-sized floating selection.
-		if ( maxX<minX || maxY<minY )
-			return false; // mask contains no selected tiles
-
-		//--------------------------------
-		// Crop Mask and Tile Matrix
-		//--------------------------------
-		// Keep the original holes inside the new bounds.
-		const croppedMask = mask
-			.slice( minY, maxY+1 )
-			.map( row => row.slice( minX, maxX+1 ) );
-
-		// Crop the tile matrix to the same rectangle.
-		// Clear matrix cells excluded by the mask so they will not move.
-		const croppedMatrix = matrix
-			.slice( minY, maxY+1 )
-			.map(
-				(row, y) =>
-					row.slice( minX, maxX+1 )
-						.map( (tile, x) => croppedMask[y][x] ? tile : null )
-				);
-
-		//--------------------------------
-		// Update Floating Geometry
-		//--------------------------------
-		// Move the world-space origin inward by the cropped top and left edges.
-		const bounds = {
-			x : this.bounds.x + minX,
-			y : this.bounds.y + minY,
-			w : maxX - minX + 1,
-			h : maxY - minY + 1
-			};
-
-		// Keep all floating-selection data on the same dimensions and origin.
-		this.mask                  = croppedMask;
-		this.bounds                = bounds;
-		this.contents.matrix       = croppedMatrix;
-		this.contents.x            = bounds.x;
-		this.contents.y            = bounds.y;
-		this.contents.w            = bounds.w;
-		this.contents.h            = bounds.h;
-		this.rects                 = [ { ...bounds, type:'replace' } ];
-
-		// Align the visible marquee anchor with the tightened bounds.
-		this.anchor.move( bounds.x, bounds.y );
-		this.anchor.resize( bounds.w, bounds.h );
-
-		//--------------------------------
-		// Reset Transform Source
-		//--------------------------------
-		// The next resize must snapshot this newly cropped matrix and mask.
-		this.transform     = null;
-		this.transformDrag = null;
-
-		// Rebuild the preview stamp from the cropped tile matrix.
-		this.emit( 'transformPreview', null, this );
-
-		return true; // bounds tightened
-	}
-
 	//--------------------------------
 	// Generate Selected Cell Signature
 	//--------------------------------
@@ -843,15 +740,16 @@ class JestToolMarquee extends JestTool {
 		// Setup Computation Vars
 		//-------------------------
 		// Setup grid dims in tiles.
-		const units	= this.anchor.units;
-		const cols	= this.target.width  / units;
-		const rows	= this.target.height / units;
+		const units = this.anchor.units;
+		const cols  = this.target.width  / units;
+		const rows  = this.target.height / units;
 
 		//-------------------------
 		// Find total bounding box
 		//-------------------------
 		// Bounding rectangle
-		let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+		let minX =  Infinity, minY =  Infinity,
+		    maxX = -Infinity, maxY = -Infinity;
 		// Apply each rect in order.
 		for ( const rect of this.rects ) {
 			const sx = rect.x;
@@ -896,8 +794,8 @@ class JestToolMarquee extends JestTool {
 					const ty = sy + y;
 					if ( tx<0 || ty<0 || tx>=maskW || ty>=maskH ) continue;
 					if ( rect.type==='sub' )
-						mask[ty][tx]  = false;	// subtract rect
-					else mask[ty][tx] = true;	// add or replace
+						mask[ty][tx]  = false; // subtract rect
+					else mask[ty][tx] = true;  // add or replace
 				}
 			}
 		};
@@ -906,9 +804,9 @@ class JestToolMarquee extends JestTool {
 		// Store output
 		//-------------------------
 		// Store the mask in the tool properties.
-		this.mask	= mask;
+		this.mask   = mask;
 		// Final bounding rect of selection area
-		this.bounds	= {
+		this.bounds = {
 			x: minX,
 			y: minY,
 			w: maskW,
@@ -921,9 +819,9 @@ class JestToolMarquee extends JestTool {
 		// Try to collapse to a single rect if mask is solid
 		const simpleRect = this.tightRectFromMask( mask, minX, minY );
 		if ( simpleRect ) {
-			this.rects	= [ simpleRect ];
-			this.mask	= [ ...Array(simpleRect.h) ].map( ()=>Array(simpleRect.w).fill(true) );
-			this.bounds	= {
+			this.rects  = [ simpleRect ];
+			this.mask   = [ ...Array(simpleRect.h) ].map( ()=>Array(simpleRect.w).fill(true) );
+			this.bounds = {
 				x: simpleRect.x,
 				y: simpleRect.y,
 				w: simpleRect.w,

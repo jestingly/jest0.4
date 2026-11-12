@@ -900,7 +900,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// The finalized mask will be captured by the history event.
 			tool.register(
 				'maskFinalized', 'subtractEmptyTiles',
-				( marquee ) => {
+				marquee => {
 					//--------------------------------
 					// Resolve Original Selection Layer
 					//--------------------------------
@@ -924,7 +924,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					for ( let my=0; my<mask.length; my++ ) {
 						for ( let mx=0; mx<mask[my].length; mx++ ) {
 							// A manually excluded cell must stay excluded.
-							if ( !mask[my][mx] ) continue;
+							if ( !mask[my][mx] ) continue; // skip
 
 							// Determine the tile's absolute level coordinates.
 							const lx = x + mx;
@@ -936,6 +936,44 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 								mask[my][mx] = false;
 						}
 					}
+
+					//--------------------------------
+					// Tighten Bounds Around Included Tiles
+					//--------------------------------
+					// Find the outermost included cells in the refined mask.
+					let minX = mask[0]?.length ?? 0;
+					let minY = mask.length;
+					let maxX = -1;
+					let maxY = -1;
+
+					for ( let my=0; my<mask.length; my++ ) {
+						for ( let mx=0; mx<mask[my].length; mx++ ) {
+							if ( !mask[my][mx] ) continue; // skip empty or excluded tile
+							minX = Math.min( minX, mx );
+							minY = Math.min( minY, my );
+							maxX = Math.max( maxX, mx );
+							maxY = Math.max( maxY, my );
+						}
+					}
+
+					// Leave an empty mask for endDrawSelection() to reject.
+					if ( maxX<minX || maxY<minY ) return; // abort
+
+					//--------------------------------
+					// Crop Mask and Move Its Origin
+					//--------------------------------
+					// Preserve interior holes while removing empty outer rows and columns.
+					marquee.mask =
+						mask.slice( minY, maxY+1 )
+							.map( row => row.slice(minX,maxX+1) );
+
+					// Keep the cropped mask aligned with its original level position.
+					marquee.bounds = {
+						x : x + minX,
+						y : y + minY,
+						w : maxX - minX + 1,
+						h : maxY - minY + 1
+						};
 				});
 
 			//-------------------------
@@ -973,8 +1011,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					client.soundboard.playSound( 'jest_float', 'wav', 1.02 );
 					// Copy matrix region & clear underneath.
 					client.toolLevelMarqueeFloat( tool );
-					// Tighten bounds, mask, and floating matrix together.
-					tool.tightenFloatingBounds();
 					// A subsequent drag starts from the already-floated state.
 					tool.lastState = tool.getSelectionState();
 				});
@@ -2155,23 +2191,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState();			// get current program state
+				const state       = this.getState();            // get current program state
 				// Convert the region to a stamp.
-				const levelView		= state.levelView;
-				const tilesetView	= state.tilesetView;
+				const levelView   = state.levelView;
+				const tilesetView = state.tilesetView;
 				if ( !levelView || !tilesetView ) return false; // no active level or tileset
-				const level			= levelView.file.context;
-				const layer			= level.getActiveLayer();	// get active level layer
-				if ( !layer || layer.locked ) return false;		// can't find / edit layer
-				const tileset		= tilesetView.file.context;
+				const level       = levelView.file.context;
+				const layer       = level.getActiveLayer();     // get active level layer
+				if ( !layer || layer.locked ) return false;     // can't find / edit layer
+				const tileset     = tilesetView.file.context;
 
 				//--------------------------------
 				// Validate Matrix Dimensions
 				//--------------------------------
 				// Determine dimensions of matrix.
 				if ( !Array.isArray(matrix) || !matrix.length ) return;
-				const w			= matrix[0].length;	// width
-				const h			= matrix.length;	// height
+				const w    = matrix[0].length;	// width
+				const h    = matrix.length;	// height
 				if ( w<1 || h<1 ) return; // no selection
 
 				//--------------------------------
@@ -2179,9 +2215,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				//--------------------------------
 				// Switch to the level marquee tool.
 				this.toolbox.setTool( 'levelMarquee' );
-				const tool		= this.toolbox.tools.levelMarquee; // level marquee tool
+				const tool = this.toolbox.tools.levelMarquee; // level marquee tool
 				// If marquee is floating, drop its contents.
-				const mode		= tool.skim( 'mode' );
+				const mode = tool.skim( 'mode' );
 				if ( mode==='floating' ) tool.reset(); // drop marquee
 				else tool.reset( false ); // no need to drop
 

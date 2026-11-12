@@ -69,7 +69,7 @@ class JestFileLevel extends JestFileImage {
 		// Call parent to begin opening the file.
 		await super.openFile( fileInfo );
 		 // Render the level file.
-		const data = this.client.renderLevelData( fileInfo );
+		const data = await this.client.renderLevelData( fileInfo );
 
 		//--------------------------------
 		// Finish & Set Context

@@ -199,18 +199,10 @@ JestAppsRegistry.AppJestPlay =
 			// --------------------------------
 			// Create Level [objects]
 			// --------------------------------
-			const levels		= {};
-			for ( let i=0; i<levelNames.length; i++ ) {
-				// Render level13
-				const name		= levelNames[i];
-				const level		= new JestLevel( this, name );
-				this.gameboard.addLevel( name, level ); // store ref in gameboard
-				await level.setup();
-				const record	= this.secretary.getRecord( name );
-				level.render( record.board ); // render the level bitmap
-				levels[name]	= level;
-			}
+			// Load every test level using the board or layers from its file version.
+			const levels = await this.loadLevels( levelNames );
 			console.log( levels );
+
 			// Assume levels have been created as in original code
 			// Now create the giant map:
 			//this.createGiantMap(levelNames, levels);
@@ -226,21 +218,21 @@ JestAppsRegistry.AppJestPlay =
 					}
 				}
 			}*/
-			overworld.addLevel( levels['level39.nw'], 0, 0 );		// MoD?
-			overworld.addLevel( levels['level16.nw'], 1, 0 );		// supernick
-			overworld.addLevel( levels['level18.nw'], 2, 0 );		// church?
-			overworld.addLevel( levels['level14.nw'], 0, 1 );		// vangel
-			overworld.addLevel( levels['level13.nw'], 1, 1 );		// zol pub
-			overworld.addLevel( levels['level17.nw'], 2, 1 );		// fox den
-			overworld.addLevel( levels['level38.nw'], 0, 2 );		// angel clan
-			overworld.addLevel( levels['level9.nw'], 1, 2 );		// taylor richards
-			overworld.addLevel( levels['level10.nw'], 3, 2 );		// master-li fields
+			overworld.addLevel( levels['level39.nw'], 0, 0 );  // MoD?
+			overworld.addLevel( levels['level16.nw'], 1, 0 );  // supernick
+			overworld.addLevel( levels['level18.nw'], 2, 0 );  // church?
+			overworld.addLevel( levels['level14.nw'], 0, 1 );  // vangel
+			overworld.addLevel( levels['level13.nw'], 1, 1 );  // zol pub
+			overworld.addLevel( levels['level17.nw'], 2, 1 );  // fox den
+			overworld.addLevel( levels['level38.nw'], 0, 2 );  // angel clan
+			overworld.addLevel( levels['level9.nw'],  1, 2 );  // taylor richards
+			overworld.addLevel( levels['level10.nw'], 3, 2 );  // master-li fields
 
 			// --------------------------------
 			// Create the server connect [object]
 			// --------------------------------
-			const online	= new JestOnline( this );	// server interactor
-			this.online		= online;
+			const online = new JestOnline( this );	// server interactor
+			this.online  = online;
 			// Add online mode events.
 			online.register(
 				'selfJoin', 'selfJoin',
@@ -266,14 +258,14 @@ JestAppsRegistry.AppJestPlay =
 			// --------------------------------
 			// Create the user [object]
 			// --------------------------------
-			const user		= new JestUser( this, 0 ); // user character
+			const user   = new JestUser( this, 0 ); // user character
 			await user.setup();
 				/*.catch(
 					( err ) => {
 						console.warn( 'user did not setup properly. Application [should quit].' );
 					});*/
-			this.user		= user;
-			user.level		= /*'destinyg_b3';//*/ 'level13.nw';
+			this.user    = user;
+			user.level   = /*'destinyg_b3';//*/ 'level13.nw';
 			user.anchor.move( 10, 5 );
 
 			// --------------------------------
@@ -284,7 +276,7 @@ JestAppsRegistry.AppJestPlay =
 					e => {
 						// Update gameboard drawing
 						this.draw( e );
-					} );
+					});
 
 			// --------------------------------
 			// Setup Debugging
@@ -325,25 +317,58 @@ JestAppsRegistry.AppJestPlay =
 		// --------------------------------
 		// Drawing
 		// --------------------------------
+		// Load test levels and register them with the gameboard.
+		// RETURNS: [object] Levels keyed by their requested filenames.
+		// * filenames - [array] Remote level filenames already loaded by Secretary.
+		async loadLevels( filenames ) {
+			// Store each ready level under the key existing game code expects.
+			const levels = {};
+			// Prepare each level through the shared level loader.
+			for ( const filename of filenames ) {
+				// Resolve the remote file metadata required by renderLevelData().
+				const fileInfo = this.getFileInfo( filename, null, null, null, 'remote' );
+				// Stop if the filename did not resolve to file information.
+				if ( !fileInfo )
+					throw new Error( `Could not resolve file information for "${filename}".` );
+
+				// Build the JestLevel, its layers, and its rendered layer canvases.
+				const prepared = await this.renderLevelData( fileInfo );
+				// The shared loader returns null when rendering fails.
+				if ( !prepared?.level )
+					throw new Error( `Could not prepare level "${filename}".` );
+
+				// Register the ready level for gameplay and overworld lookup.
+				const level = prepared.level;
+				this.gameboard.addLevel( filename, level );
+				levels[filename] = level;
+			}
+
+			// Return all loaded levels to the caller.
+			return levels; // [object]
+		}
+
+		// --------------------------------
+		// Drawing
+		// --------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
 		draw( e ) {
 			// Clear the canvas with a black screen
-			const canvas	= this.gameboard.display.getCanvas( 'world' );
+			const canvas    = this.gameboard.display.getCanvas( 'world' );
 			// Determine if canvas is set
 			if ( !canvas || !canvas.el ) {
 				console.warn( 'Canvas is not set or invalid' );
 				return;
 			}
-			const ctx		= canvas.el.getContext( '2d' );
+			const ctx       = canvas.el.getContext( '2d' );
 			// Update camera view rendering data
 			this.camera.update();
 			//ctx.fillStyle = "green";
 			ctx.clearRect( 0, 0, canvas.el.width, canvas.el.height );
 			// Draw level onto canvas
-			const overworld	= this.gameboard.overworlds.map1;
-			const snapshot	= overworld.getSnapshot();
+			const overworld = this.gameboard.overworlds.map1;
+			const snapshot  = overworld.getSnapshot();
 			overworld.renderVisibleLevels( ctx, snapshot );
 			/*ctx.fillStyle = "#FF00FF";
 			ctx.fillRect( 0, 0, this.canvas.el.width, this.canvas.el.height );*/
@@ -365,8 +390,8 @@ JestAppsRegistry.AppJestPlay =
 			// Sort by Y depth — lower Y = in front (higher Z)
 			views.sort(
 				(a,b) => {
-					const ay	= Math.round( a.globalY );
-					const by	= Math.round( b.globalY );
+					const ay = Math.round( a.globalY );
+					const by = Math.round( b.globalY );
 					return ay - by;
 				});
 			//console.log( `${view.globalX},${view.globalY}` );
@@ -379,8 +404,7 @@ JestAppsRegistry.AppJestPlay =
 				this.inspector.update( e );
 		}
 
-		// File: giantMap.js
-		// Creates a giant map canvas from individual level canvases arranged in a 4x5 grid,
+		/*// Creates a giant map canvas from individual level canvases arranged in a 4x5 grid,
 		// then opens the resulting image in a new window.
 		// *levelNames	- [array] of level names.
 		// *levels		- [object] where each key is a level name and its value is the level object containing a canvas.
@@ -430,7 +454,7 @@ JestAppsRegistry.AppJestPlay =
 			document.body.appendChild(downloadLink);				// File: giantMap.js, line 56, char #1
 			downloadLink.click();									// File: giantMap.js, line 57, char #1
 			document.body.removeChild(downloadLink);				// File: giantMap.js, line 58, char #1
-		}
+		}*/
 
 		// --------------------------------
 		// Online Mode Handling

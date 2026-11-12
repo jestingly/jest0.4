@@ -253,57 +253,62 @@ class JestOverworld extends JestSavable {
 
 	// Gets only the levels that are visible within the viewport.
 	// RETURNS: [array] Visible level canvases with cropped sections.
-	// * camera		- [object] JestCamera controlling the viewport.
+	// * camera   - [object] JestCamera controlling the viewport.
 	getSnapshot() {
 		// Retrieve padded view rectangle from camera.
-		const paddedRect	= this.client.camera.getPaddedViewRect();
+		const paddedRect    = this.client.camera.getPaddedViewRect();
 		// Get level width/height.
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan     = this.client.config.levelSpan;
 		// Build the bounds
-		const minX			= paddedRect.x;
-		const minY			= paddedRect.y;
-		const maxX			= paddedRect.x + paddedRect.width;
-		const maxY			= paddedRect.y + paddedRect.height;
+		const minX          = paddedRect.x;
+		const minY          = paddedRect.y;
+		const maxX          = paddedRect.x + paddedRect.width;
+		const maxY          = paddedRect.y + paddedRect.height;
 		// Convert world-space bounds to level grid indices
-		let minLevelX		= Math.floor( minX/levelSpan );
-		let maxLevelX		= Math.ceil( maxX/levelSpan ) - 1;
-		let minLevelY		= Math.floor( minY/levelSpan );
-		let maxLevelY		= Math.ceil( maxY/levelSpan ) - 1;
+		let minLevelX       = Math.floor( minX/levelSpan );
+		let maxLevelX       = Math.ceil( maxX/levelSpan ) - 1;
+		let minLevelY       = Math.floor( minY/levelSpan );
+		let maxLevelY       = Math.ceil( maxY/levelSpan ) - 1;
 		// Begin return data [array]
-		let visibleSections	= [];
+		let visibleSections = [];
 		// Iterate only over levels inside the visible range
 		for ( let gridY=minLevelY; gridY<=maxLevelY; gridY++ ) {
 			for ( let gridX=minLevelX; gridX<=maxLevelX; gridX++ ) {
-				const level			= this.getLevelAtXY( gridX, gridY );
+				const level         = this.getLevelAtXY( gridX, gridY );
 				if ( !level ) continue;
 				// Compute the level's world-space rectangle.
-				const levelWorldX	= gridX * levelSpan;
-				const levelWorldY	= gridY * levelSpan;
+				const levelWorldX   = gridX * levelSpan;
+				const levelWorldY   = gridY * levelSpan;
 				// Find the intersection between this level and the padded camera view.
-				const interLeft		= Math.max( levelWorldX, minX );
-				const interTop		= Math.max( levelWorldY, minY );
-				const interRight	= Math.min( levelWorldX+levelSpan, maxX );
-				const interBottom	= Math.min( levelWorldY+levelSpan, maxY );
-				const interWidth	= interRight - interLeft;
-				const interHeight	= interBottom - interTop;
+				const interLeft     = Math.max( levelWorldX, minX );
+				const interTop      = Math.max( levelWorldY, minY );
+				const interRight    = Math.min( levelWorldX+levelSpan, maxX );
+				const interBottom   = Math.min( levelWorldY+levelSpan, maxY );
+				const interWidth    = interRight - interLeft;
+				const interHeight   = interBottom - interTop;
 				if ( interWidth<=0 || interHeight<=0 ) continue; // No visible area
 				// Compute the visible portion of the level
-				let sx				= interLeft - levelWorldX;
-				let sy				= interTop - levelWorldY;
-				let sWidth			= interWidth;
-				let sHeight			= interHeight;
+				let sx              = interLeft - levelWorldX;
+				let sy              = interTop - levelWorldY;
+				let sWidth          = interWidth;
+				let sHeight         = interHeight;
 				// Destination rectangle on the screen.
-				const screenPos		= this.client.camera.globalToScreen( interLeft, interTop );
-				const dx			= screenPos.x;
-				const dy			= screenPos.y;
-				const dWidth		= interWidth;
-				const dHeight		= interHeight;
-				// Generate more return data [object]
-				visibleSections.push({
-					canvas: level.canvas.el, // The level's canvas element.
-					sx, sy, sWidth, sHeight, // Source rect in level space.
-					dx, dy, dWidth, dHeight  // Destination rect in screen space.
-					});
+				const screenPos     = this.client.camera.globalToScreen( interLeft, interTop );
+				const dx            = screenPos.x;
+				const dy            = screenPos.y;
+				const dWidth        = interWidth;
+				const dHeight       = interHeight;
+				// Add each visible layer canvas in the level's draw order.
+				for ( const layer of level.getLayers() ) {
+					// Skip hidden layers and layers without a rendered canvas.
+					if ( !layer.visible || !layer.canvas?.el ) continue;
+					// Add this layer's cropped canvas to the snapshot.
+					visibleSections.push({
+						canvas: layer.canvas.el, // The layer's canvas element.
+						sx, sy, sWidth, sHeight, // Source rect in level space.
+						dx, dy, dWidth, dHeight  // Destination rect in screen space.
+						});
+				}
 			}
 		}
 		// Return snapshot specification [array] data
@@ -312,8 +317,8 @@ class JestOverworld extends JestSavable {
 
 	// Render the visible snapshot of the map user is in.
 	// RETURNS: [bool] `true` on success, else `false`.
-	// * ctx			- [objet] HTML Canvas element 2d context.
-	// * snapshot		- [object] Data of snapshot to render (use getSnapshot() to obtain this data).
+	// * ctx       - [objet] HTML Canvas element 2d context.
+	// * snapshot  - [object] Data of snapshot to render (use getSnapshot() to obtain this data).
 	renderVisibleLevels( ctx, snapshot ) {
 		// Iterate each specification & snapshot
 		snapshot.forEach(

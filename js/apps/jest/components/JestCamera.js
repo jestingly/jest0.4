@@ -244,19 +244,19 @@ class JestCamera extends JestMatrix {
 		const { width: userWidth, height: userHeight } = this.client.user.anchor;
 		// Get level neighbors (only N, E, S, W)
 		const limits = {
-			n:	overworld.matrix[levelY - 1]?.[levelX] || null,
-			e:	overworld.matrix[levelY]?.[levelX + 1] || null,
-			s:	overworld.matrix[levelY + 1]?.[levelX] || null,
-			w:	overworld.matrix[levelY]?.[levelX - 1] || null
+			n: overworld.matrix[levelY - 1]?.[levelX] || null,
+			e: overworld.matrix[levelY]?.[levelX + 1] || null,
+			s: overworld.matrix[levelY + 1]?.[levelX] || null,
+			w: overworld.matrix[levelY]?.[levelX - 1] || null
 			};
 
 		// User movement boundaries
-		const bleedX	= 0;
-		const bleedY	= 0;
-		const minX		= limits.w ? -bleedX : 0;
-		const maxX		= limits.e ? levelWidth - bleedX : levelWidth - 1;
-		const minY		= limits.n ? -bleedY : 0;
-		const maxY		= limits.s ? levelHeight - bleedY : levelHeight - 2;
+		const bleedX = 0;
+		const bleedY = 0;
+		const minX   = limits.w ? -bleedX : 0;
+		const maxX   = limits.e ? levelWidth - bleedX : levelWidth - 1;
+		const minY   = limits.n ? -bleedY : 0;
+		const maxY   = limits.s ? levelHeight - bleedY : levelHeight - 2;
 
 		// Instantiate dynamic variables to calculate new position
 		let newX = x, newY = y, newLevelX = levelX, newLevelY = levelY;
@@ -264,12 +264,12 @@ class JestCamera extends JestMatrix {
 		const overshootX = x<minX ? minX-x : x>maxX ? x-maxX : 0;
 		const overshootY = y<minY ? minY-y : y>maxY ? y-maxY : 0;
 		// Handle transitions
-		if ( x<minX && limits.w )		{ newLevelX--; newX = levelWidth - bleedX - (minX-x); }
-		else if ( x>maxX && limits.e )	{ newLevelX++; newX = x-maxX; }
+		if ( x<minX && limits.w )      { newLevelX--; newX = levelWidth - bleedX - (minX-x); }
+		else if ( x>maxX && limits.e ) { newLevelX++; newX = x-maxX; }
 		else newX = Math.max( minX, Math.min(maxX,x) );
 
-		if ( y<minY && limits.n )		{ newLevelY--; newY = levelHeight - bleedY - (minY-y); }
-		else if ( y>maxY && limits.s )	{ newLevelY++; newY = y-maxY; }
+		if ( y<minY && limits.n )      { newLevelY--; newY = levelHeight - bleedY - (minY-y); }
+		else if ( y>maxY && limits.s ) { newLevelY++; newY = y-maxY; }
 		else newY = Math.max( minY, Math.min(maxY,y) );
 
 		// Get new level or stay in the current one
@@ -286,15 +286,15 @@ class JestCamera extends JestMatrix {
 	// is centered, clamped to the world boundaries.
 	update() {
 		// Get user & viewport info
-		const { userGlobalX, userGlobalY }		= this.getUserLocation();
-		const { viewportWidth, viewportHeight }	= this.getViewport();
-		const { globalWidth, globalHeight }		= this.getGlobalDimensions();
+		const { userGlobalX, userGlobalY }      = this.getUserLocation();
+		const { viewportWidth, viewportHeight } = this.getViewport();
+		const { globalWidth, globalHeight }     = this.getGlobalDimensions();
 		// Center the camera on the user:
-		let camX	= userGlobalX - (viewportWidth/2);
-		let camY	= userGlobalY - (viewportHeight/2);
+		let camX = userGlobalX - (viewportWidth/2);
+		let camY = userGlobalY - (viewportHeight/2);
 		// Clamp to world bounds:
-		camX		= Math.max( 0, Math.min(camX,globalWidth-viewportWidth) );
-		camY		= Math.max( 0, Math.min(camY,globalHeight-viewportHeight) );
+		camX     = Math.max( 0, Math.min(camX,globalWidth-viewportWidth) );
+		camY     = Math.max( 0, Math.min(camY,globalHeight-viewportHeight) );
 		this.anchor.move( Math.round(camX), Math.round(camY) );
 	}
 }

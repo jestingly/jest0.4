@@ -73,15 +73,15 @@ Jest.prototype.urlFileinfo = function( url ) {
 // Convert raw file components into a normalized FileInfo [object].
 // RETURNS: [object]
 // 		{
-// 			extension,	// file extension (e.g. "txt")
-// 			stem,		// filename without extension (e.g. "pics1")
-// 			filename,	// filename with extension (e.g. "pics1.png")
-// 			path,		// file path
-// 			file,
-// 			handle,
-// 			data,
-// 			network,	// 'local', 'remote', 'none'
-// 			address		// full address
+// 		extension,	// file extension (e.g. "txt")
+// 		stem,		// filename without extension (e.g. "pics1")
+// 		filename,	// filename with extension (e.g. "pics1.png")
+// 		path,		// file path
+// 		file,
+// 		handle,
+// 		data,
+// 		network,	// 'local', 'remote', 'none'
+// 		address		// full address
 // 		}
 // * path		- [string] URL or local file path
 // * file		- [object|null] File reference (optional)

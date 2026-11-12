@@ -460,16 +460,16 @@ class JestUser extends JestPlayer {
 		}
 
 		// Capture current user x & y coordinates
-		const userX		= this.anchor.x;
-		const userY		= this.anchor.y;
+		const userX = this.anchor.x;
+		const userY = this.anchor.y;
 
 		// Calculate new x & y
-		const newX		= userX + forceX/tileGrid; //dx;
-		const newY		= userY + forceY/tileGrid; //dy;
+		const newX  = userX + forceX/tileGrid; //dx;
+		const newY  = userY + forceY/tileGrid; //dy;
 
 		// Move the user anchor.
-		const move		= this.client.camera.checkUserPosition( newX, newY );
-		this.level		= move.level;			// set level [string] name
-		super.move( false, move.x, move.y );	// delegate movement to parent
+		const move  = this.client.camera.checkUserPosition( newX, newY );
+		this.level  = move.level; // set level [string] name
+		super.move( false, move.x, move.y ); // delegate movement to parent
 	}
 }

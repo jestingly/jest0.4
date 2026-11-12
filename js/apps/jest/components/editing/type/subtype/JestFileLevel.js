@@ -67,124 +67,15 @@ class JestFileLevel extends JestFileImage {
 		// Create New Level [object]
 		//--------------------------------
 		// Call parent to begin opening the file.
-		await super.openFile( fileInfo );	// pass file info to parent
-		const stem		= this.stem;		// Use filename "stem" as shorthand for filename.
-		// Create a new level [object] with filename stem.
-		const level		= new JestLevel( this.client, stem );
-		await level.setup(); // setup new [object]
-		// Create variables that will be loaded in.
-		let layer = [{
-			id      : 0,
-			name    : 'Ground',
-			visible : true,
-			locked  : false,
-			board   : null
-			}];
-		let regions		= {};
-		console.log( JestParserLevel.keywords );
-
-		//--------------------------------
-		// Build Empty Level
-		//--------------------------------
-		// Create empty level if no file opened.
-		if ( fileInfo.network==='none' ) {
-			console.log( 'No File Data Supplied: Generating level using empty file data...' );
-			// Choose base generic tile @ index (0,0)
-			const baseTile		= { ts: 0, tx: 0, ty: 0 };
-			// level is your JestLevel instance
-			const levelGrid		= this.client.config.levelGrid; // level WxH
-			const board			= this.client.grapher.createMatrix( levelGrid, levelGrid, baseTile );
-			layer[0].board		= board; // add board to base layer
-			// Dynamically assign regions via parser keyword registration
-			for ( const keyword of JestParserLevel.keywords ) {
-				const key		= keyword.toLowerCase();
-				if ( key==='board' || key==='layer' ) continue;
-				regions[key]	= []; // empty region (by default)
-			}
-		}
-		//--------------------------------
-		// Generate Level From File Data
-		//--------------------------------
-		else {
-			console.log( 'File Data Supplied: Generating level using file data...' );
-			// Attempt to get the file record.
-			const secretary		= this.client.secretary;	// secretary [object]
-			const transmitter	= this.client.transmitter;	// transmitter [object]
-			const record		= secretary.getRecord( fileInfo.address, 'local' );
-	        if ( !record )
-	            throw new Error( 'Level file record not found.' );
-
-			// Remove record from secretary & transmitter cache.
-			secretary.removeRecord( fileInfo.address, 'local' );
-			transmitter.removeFromCache( fileInfo.address, true );
-
-			//--------------------------------
-	        // Normalize Level Format
-	        //--------------------------------
-			// Get tile board data from the read file.
-			console.log( record );
-            // Convert legacy board into a single layer.
-	        if ( record.version==='GLEVNW01' )
-				layer[0].board = record.board; // add board to base layer
-			else if ( record.version==='JESTNW02' )
-            	layer = record.layers;
-        	else throw new Error( `Unsupported level version: ${record.version}` );
-
-			//--------------------------------
-			// Debug Parsed Layer Records
-			//--------------------------------
-			// Verify that the parser supplied layer definitions
-			// before converting them into JestLevelLayer objects.
-			console.log( '[JEST Layers] Version:', record.version );
-			console.log( '[JEST Layers] Parsed layers:', record.layers );
-			console.log( '[JEST Layers] Selected layer records:', layer );
-
-	        //--------------------------------
-	        // Load Other Keyword Regions
-	        //--------------------------------
-			// Dynamically assign regions via parser keyword registration
-			for ( const keyword of JestParserLevel.keywords ) {
-				const key		= keyword.toLowerCase();
-				if ( key==='board' || key==='layer' ) continue;
-				regions[key]	= record[key] ?? [];
-			}
-		}
-		console.log( regions );
-
-		//--------------------------------
-	    // Create Level Layers
-	    //--------------------------------
-		// Iterate each layer & add to level.
-	    for ( const record of layer ) {
-	        await level.addLayer(
-				record.name,
-				{
-		            id      : record.id,
-		            visible : record.visible,
-		            locked  : record.locked,
-		            tilemap : record.board
-	        	});
-	    }
-
-		//--------------------------------
-		// Render Tilemap Into Level
-		//--------------------------------
-		console.log( `Converted "${stem}" successfully into level [object]!` );
-		// Load-in retrieved or generated board data & render its bitmap in the level [object].
-		console.log( `Rendering "${stem}" level data into level [object]...` );
-		// Set new level as this file [object] context.
-		try {
-			level.render(); // populates level layer tilemaps using blit()
-		}
-		catch ( err ) {
-			console.error( 'Could not render level using supplied board data.' );
-		}
+		await super.openFile( fileInfo );
+		 // Render the level file.
+		const data = this.client.renderLevelData( fileInfo );
 
 		//--------------------------------
 		// Finish & Set Context
 		//--------------------------------
 		// Set the level context.
-		this.setContext( level );
+		this.setContext( data.level );
 
 		//-----------------------------
 		// Emit Various Event(s)
@@ -192,8 +83,10 @@ class JestFileLevel extends JestFileImage {
 		// Emit a load file event with data [objects].
 		this.emit(
 			'openFile', null,
-			{ layers: level.getLayers(), ...regions }
-			);
+			{
+			layers: data.level.getLayers(),
+			...data.regions
+			});
 		return true; // success
 	}
 

@@ -12,29 +12,29 @@ console.log( 'jestAlert: js/apps/jest/components/parse/JestParserLevel.js loaded
 class JestParserLevel extends JestGamepiece {
 	// Static class properties
 	// Keywords: [object] Set array of acceptable keyword(s).
-	static keywords			= new Set();
-	static keywordParsers	= {};	// { keywordName : (ctx, lineArray, indexRef, resultObj) => newIndex }
-	static keywordEncoders	= {};	// { keywordName : (ctx, dataObjArray) => stringLines[] }
+	static keywords        = new Set();
+	static keywordParsers  = {};   // { keywordName : (ctx, lineArray, indexRef, resultObj) => newIndex }
+	static keywordEncoders = {};   // { keywordName : (ctx, dataObjArray) => stringLines[] }
 	// Explicit filetype & versioning properties
-	version					= 'JESTNW02';		// Level file version
+	version          = 'JESTNW02'; // Level file version
 	// Tileset scanline reading / handling definition(s)
-	charset					= null;				// [string] Default tile decoding order.
-	tileWrap				= 16;				// after 16 tiles, the indices wrap
-	tileBlock				= null;				// how many tiles in the wrapping block
-	tilesetWidth			= 2048;				// width of tileset in pixels
-	tilesetHeight			= 512;				// height of tileset in pixels
-	tilesetRows				= null;				// 128 tiles per row
-	tilesetColumns			= null;				// 32 tiles per column
-	totalTiles				= null;				// 4096 total tiles
+	charset          = null;       // [string] Default tile decoding order.
+	tileWrap         = 16;         // after 16 tiles, the indices wrap
+	tileBlock        = null;       // how many tiles in the wrapping block
+	tilesetWidth     = 2048;       // width of tileset in pixels
+	tilesetHeight    = 512;        // height of tileset in pixels
+	tilesetRows      = null;       // 128 tiles per row
+	tilesetColumns   = null;       // 32 tiles per column
+	totalTiles       = null;       // 4096 total tiles
 
 	//-------------------------
 	// Constructor
 	//-------------------------
 	// Initializes the parser.
 	// RETURNS: [void] Nothing.
-	// * client		- client [object] that this piece belongs to.
-	// * options	- [object] Optional configuration parameters.
-	//   tileOrder	- [string] Custom tile decoding order.
+	// * client    - client [object] that this piece belongs to.
+	// * options   - [object] Optional configuration parameters.
+	//   tileOrder - [string] Custom tile decoding order.
 	constructor( client, options={} ) {
 		super( client ); // call parent constructor
 		// Accept custom tileOrder parse algorithm

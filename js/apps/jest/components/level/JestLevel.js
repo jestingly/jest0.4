@@ -28,6 +28,7 @@ class JestLevel extends JestSavable {
 		super( client, name );	// construct the parent
 		this.jot( 'status', 'constructed' ); // set status
 		this.resetCloudBinding();	// initialize cloud meta data
+		console.log( `Level ${this.name} constructed.` );
 	}
 
 	//-------------------------
@@ -143,8 +144,8 @@ class JestLevel extends JestSavable {
 	//-------------------------
 	// Creates and registers a new layer.
 	// RETURNS: [JestLevelLayer] Created layer.
-	//   name		- [string] value of layer name.
-	//   options	- [object] of layer options.
+	//   name      - [string] value of layer name.
+	//   options   - [object] of layer options.
 	async addLayer( name='Layer', options={} ) {
 		// Create a new layer.
 		const layer   = new JestLevelLayer( this.client, name );
@@ -524,5 +525,24 @@ class JestLevel extends JestSavable {
 		if ( this.activeLayerId===null )
 			this.activeLayerId = layer.id;
 		return layer; // return layer [object] ref
+	}
+
+	//--------------------------------
+	// Check Tile Types Across Layers
+	//--------------------------------
+	// Check whether any layer has any requested type at this tile.
+	// RETURNS: [boolean] `true` if any requested type matches.
+	// * x, y  - [int] Exact board tile coordinates.
+	// * types - [string|string[]] One or more tile types to check.
+	isPointType( x, y, types ) {
+		// Normalize a single type so both input forms use the same check.
+		const requestedTypes = Array.isArray(types) ? types : [types];
+		const layers = this?.getLayers?.() ?? [];
+		// Read the tile types once per layer and stop at the first match.
+		return layers.some(
+			layer => {
+				const tileTypes = layer?.getTileTypes( x, y );
+				return requestedTypes.some( type => tileTypes?.has(type) );
+			});
 	}
 }

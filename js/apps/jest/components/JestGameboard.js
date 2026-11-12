@@ -126,6 +126,8 @@ class JestGameboard extends JestSavable {
 			console.warn( `removeLevel: Level "${name}" not found.` );
 			return false; // no level removed
 		}
+		// Destroy the level & its child layers before removing the reference.
+		existing.destroy?.();
 		// Remove level
 		delete this.levels[name];
 		return true; // success

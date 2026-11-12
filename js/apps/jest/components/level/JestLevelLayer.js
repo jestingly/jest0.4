@@ -11,31 +11,30 @@ console.log( 'jestAlert: js/apps/jest/components/level/JestLevelLayer.js loaded'
 // Represents a single tile layer belonging to a level.
 // Manages tile data, visibility, locking, and rendering.
 //-------------------------------------------------------
-class JestLevelLayer extends JestSavable {
+class JestLevelLayer extends JestMatrix {
 	// Layer properties
-	id				= null;				// Unique layer identifier
-	name			= null;				// Display name
-	level			= null;				// Parent JestLevel reference
-	visible			= true;				// Whether layer is rendered
-	locked			= false;			// Whether layer can be edited
+	id          = null;        // Unique layer identifier
+	name        = null;        // Display name
+	level       = null;        // Parent JestLevel reference
+	visible     = true;        // Whether layer is rendered
+	locked      = false;       // Whether layer can be edited
 	// Object properties
-	canvas			= null;				// [ElementCanvas] object
-	stamp			= null;				// [ElementCanvas] object used for tile stamping
-	overworld		= null;				// [object] JestOverworld reference level is within.
+	canvas      = null;        // [ElementCanvas] object
+	stamp       = null;        // [ElementCanvas] object used for tile stamping
+	overworld   = null;        // [object] JestOverworld reference level is within.
 	// Level parts
-	tilemap			= null; 			// 2D [array] Raw tile map of level.
-	chunks			= null;				// [array] Tile map of level compressed into chunks.
-	tiledefs		= null;				// [object] Tiledefs aligned to specific tile indices.
+	tilemap     = null;        // 2D [array] Raw tile map of level.
+	chunks      = null;        // [array] Tile map of level compressed into chunks.
+	tiledefs    = null;        // [object] Tiledefs aligned to specific tile indices.
 
 	// --------------------------------
 	// Constructor
 	// --------------------------------
 	// Construct the [object].
-	// * client		- [object] Application client creating the object.
-	// * name		- [string] Value of level name (e.g. 'level1').
-	constructor( client, name ) {
+	// * client  - [object] Application client creating the object.
+	constructor( client ) {
 		// Call the parent object constructor
-		super( client, name );	// construct the parent
+		super( client ); // construct the parent
 		this.jot( 'status', 'constructed' ); // set status
 	}
 
@@ -133,10 +132,10 @@ class JestLevelLayer extends JestSavable {
 	// * tiles		- Ordered 2D [array] of tile tileset indices.
 	buildTileTypes( tiles ) {
 		// Gather variable(s)
-		let tileset		= this.client.gameboard.getTileset( 'pics1' );
-		const levelGrid	= this.client.config.levelGrid;
+		let tileset     = this.client.gameboard.getTileset( 'pics1' );
+		const levelGrid = this.client.config.levelGrid;
 		// Initialize a 2D array of Sets
-		const levelTileTypes	=
+		const levelTileTypes    =
 			Array.from(
 				{ length: levelGrid },
 				() => Array.from( { length: levelGrid }, () => new Set() )
@@ -145,11 +144,12 @@ class JestLevelLayer extends JestSavable {
 		for ( let y=0; y<levelGrid; y++ ) {
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Get tile @ coordinate (x,y).
-				const tile		= tiles[y][x];
-				if ( !tile ) continue; // skip transparent tile
+				// Read this cell safely when the layer map is sparse.
+				const tile = tiles?.[y]?.[x];
+				if ( !tile ) continue; // skip empty tile
 				// Get tile code (b64 string).
-				const tileCode	= tile.c ?? this.client.parsers.level.encodeTile( tile.tx, tile.ty );
-				const tileTypes	= tileset.tiledefs.getTypesByCode( tileCode ); // Get types
+				const tileCode  = tile.c ?? this.client.parsers.level.encodeTile( tile.tx, tile.ty );
+				const tileTypes = tileset.tiledefs.getTypesByCode( tileCode ); // Get types
 				if ( tileTypes.size>0 )
 					levelTileTypes[y][x] = tileTypes; // Store types
 			}
@@ -162,7 +162,10 @@ class JestLevelLayer extends JestSavable {
 	// RETURNS: [Set] of types, or empty Set if none exist.
 	// * x, y	- [int] Tile coordinates in the tileset.
 	getTileTypes( x, y ) {
-		return this.tiledefs[y]?.[x] || new Set();
+		// Return no types until this layer has built its tile definitions.
+		if ( !this.tiledefs ) return new Set();
+		// An empty or out-of-range cell has no tile types.
+		return this.tiledefs[y]?.[x] ?? new Set();
 	}
 
 	// --------------------------------
@@ -187,33 +190,34 @@ class JestLevelLayer extends JestSavable {
 
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * tiles		- Ordered 2D [array] of tile tileset indices.
+	// * tiles  - Ordered 2D [array] of tile tileset indices.
 	render( tiles ) {
 		// Generate list of tile
-		//const tiles		= this.genLevel();
+		//const tile   = { ts:0, tx:0, ty:0 };
+		//const tiles  = this.genLevel tile );
 		//console.log( tiles );
 		// Iterate tiles & map local tiledefs
 		/*for ( let y=0; y<tiles.length; y++ ) {
 			for ( let x=0; x<tiles[y].length; x++ ) {
-				const tile	= tiles[y][x];
+				const tile = tiles?.[y]?.[x];
 				if ( !tile ) continue;
 				foreach
 			}
 		}*/
 		// Gatekeep the method with mode-check.
-		const status	= this.skim( 'status' );
+		const status  = this.skim( 'status' );
 		if ( status!=='empty' && status!=='rendered' ) return false;
 		this.jot( 'status', 'rendering' ); // set status
 		// Collect all known tile-types on board.
-		this.tilemap	= tiles;		// store tiles 2D [array]
+		this.tilemap  = tiles;		// store tiles 2D [array]
 		this.buildTileTypes( tiles );	// store tile def types
 		// Organize tile types into chunks for blitting.
-		const chunks	= this.encodeRawLevelToChunks( tiles );
-		this.chunks		= chunks; // save chunks
+		const chunks  = this.encodeRawLevelToChunks( tiles );
+		this.chunks   = chunks; // save chunks
 		//console.log( tilemap );
 		// Get canvas contexts & clear it.
 		if ( this.canvas?.el ) {
-			const ctx	= this.canvas.el.getContext( '2d' );
+			const ctx = this.canvas.el.getContext( '2d' );
 			ctx.clearRect( 0, 0, this.canvas.el.width, this.canvas.el.height );
 		}
 		this.blit( chunks ); // render level bitmap
@@ -229,10 +233,10 @@ class JestLevelLayer extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	/*resize() {
 		// Update canvas dimensions
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan = this.client.config.levelSpan;
 		if ( this.canvas )
 			this.canvas.resize( levelSpan, levelSpan );
-		return true;	// success
+		return true; // success
 	}*/
 
 	//-------------------------
@@ -300,25 +304,24 @@ class JestLevelLayer extends JestSavable {
 
 	// Generate a level of tiles.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	genLevel() {
+	genLevel( fillTile=null ) {
 		// Validate level width/height
-		const tiles			= [];		// [array] of tiles
-		const levelGrid		= this.client.config.levelGrid;
+		const tiles        = []; // [array] of tiles
+		const levelGrid    = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
-			const row		= [];
+			const row      = [];
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create tile & add to row
-				const tile	= { ts:0, tx:0, ty:0 };
-				row.push( tile );
+				row.push( fillTile ? { ...fillTile } : null );
 			}
 			tiles.push( row );
 		}
 		// Return the generated tiles
 		return tiles;
 		/*// Encode the raw level into chunks.
-		const chunks	= this.encodeRawLevelToChunks( tiles );
+		const chunks = this.encodeRawLevelToChunks( tiles );
 		// Set tiles
-		this.chunks		= chunks;*/
+		this.chunks  = chunks;*/
 	}
 
 	// Encodes raw 2D [array] of tiles to level chunks [array]
@@ -327,29 +330,29 @@ class JestLevelLayer extends JestSavable {
 	encodeRawLevelToChunks( tiles ) {
 		if ( !tiles || !tiles.length ) return false
 		// Group positions by tileId
-		const chunks		= {};
-		const visited		= new Set();
-		const levelGrid		= this.client.config.levelGrid;
+		const chunks    = {};
+		const visited   = new Set();
+		const levelGrid = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create a [string] keyname.
-				let key			= `${x},${y}`;
+				let key = `${x},${y}`;
 				// Skip already processed tiles
-				if ( visited.has(key) || !tiles[y][x] ) continue;
+				if ( visited.has(key) || !tiles?.[y]?.[x] ) continue;
 				// Treat each tile as a single 1x1 matrix
-				let matrix		= [[ tiles[y][x] ]];
+				let matrix = [[ tiles?.[y]?.[x] ]];
 				// Encode the matrix
-				const matrixID	= this.encodeMatrixID( matrix );
+				const matrixID = this.encodeMatrixID( matrix );
 				// Find all matching tiles in the grid
 				for ( let yy=0; yy<levelGrid; yy++ ) {
 					for ( let xx=0; xx<levelGrid; xx++ ) {
-						let matchKey		= `${xx},${yy}`;
-						if ( !visited.has(matchKey) && this.sameTile(tiles[y][x],tiles[yy][xx]) ) {
+						let matchKey = `${xx},${yy}`;
+						if ( !visited.has(matchKey) && this.sameTile(tiles?.[y]?.[x],tiles?.[yy]?.[xx]) ) {
 							// Store position as a hex string
-							const posHex	= this.encodePosition( { x: xx, y: yy } );
+							const posHex = this.encodePosition( { x: xx, y: yy } );
 							if ( !chunks[matrixID] )
 								chunks[matrixID] = "";
-							chunks[matrixID]	+= posHex;
+							chunks[matrixID]    += posHex;
 							visited.add( matchKey );
 						}
 					}

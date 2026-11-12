@@ -47,11 +47,11 @@ async function jestBootup( request ) {
 							// --------------------------------
 							// Open the game application
 							// --------------------------------
-							//JestEnvironment.execute( 'JestPlay' );
-							//const app  = JestEnvironment.apps.JestPlay;
+							JestEnvironment.execute( 'JestPlay' );
+							const app  = JestEnvironment.apps.JestPlay;
 
-							JestEnvironment.execute( 'JestTiler' );
-							const app  = JestEnvironment.apps.JestTiler;
+							//JestEnvironment.execute( 'JestTiler' );
+							//const app  = JestEnvironment.apps.JestTiler;
 
 							//JestEnvironment.execute( 'JestAnimator' );
 							//const app  = JestEnvironment.apps.JestAnimator;

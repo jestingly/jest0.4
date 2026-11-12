@@ -96,8 +96,8 @@ class JestWebsocket extends OSCallback {
 		//-------------------------
 		// Setup Data For Connection
 		//-------------------------
-		await this.disconnect();		// disconnect existing connection
-		this.trying			= true;		// trying to connect
+		await this.disconnect();  // disconnect existing connection
+		this.trying = true;       // trying to connect
 		//-------------------------
 		// Attempt to Connect
 		//-------------------------
@@ -105,23 +105,23 @@ class JestWebsocket extends OSCallback {
 		try {
 			// Attempt to open a connection to the WebSocket server
 			console.log( `[JESTWebsocket] Connecting to [${this.url}]...` );
-			this.ws				= new WebSocket( `${this.url}` );
+			this.ws           = new WebSocket( `${this.url}` );
 			// Successfully connected
-			this.ws.onopen		= () => this.open();
+			this.ws.onopen    = () => this.open();
 			// Handle incoming message from server
-			this.ws.onmessage	= (e) => this.message( JSON.parse(e.data) );
+			this.ws.onmessage = e => this.message( JSON.parse(e.data) );
 			// A non-fatal error occurred with the socket
-			this.ws.onerror		= (err) => this.error( err );
+			this.ws.onerror   = err => this.error( err );
 			// Socket closed (server down, lost connection, etc.)
-			this.ws.onclose		= (e) => this.close( e );
+			this.ws.onclose   = e => this.close( e );
 			return true; // connection made
 		}
 		catch ( err ) {
 			// If creating the WebSocket throws (very rare), log it
 			console.error( "[JESTWebsocket] Unexpected exception during connection:", err );
 			// Failed to connect
-			this.trying		= false;	// not trying to connect
-			return false;				// connection failed
+			this.trying     = false;  // not trying to connect
+			return false;             // connection failed
 		}
 	}
 

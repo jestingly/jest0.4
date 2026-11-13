@@ -739,7 +739,7 @@ class JestToolMarquee extends JestTool {
 		//-------------------------
 		// Setup Computation Vars
 		//-------------------------
-		// Setup grid dims in tiles.
+		// Setup grid dimensions in tiles.
 		const units = this.anchor.units;
 		const cols  = this.target.width  / units;
 		const rows  = this.target.height / units;

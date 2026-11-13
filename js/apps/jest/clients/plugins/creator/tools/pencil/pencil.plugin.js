@@ -336,6 +336,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			//-------------------------
 			// Log the entire line of tile(s) drawn as one undo/redo action.
 			tool.register( 'stop', 'logPencil', ()=>client.toolLogPencil() );
+
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'pencilZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------

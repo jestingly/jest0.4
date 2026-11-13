@@ -11,17 +11,18 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestToolCrate.js 
 // This class makes a draggable & droppable crate for "garages".
 class JestToolCrate extends JestTool {
 	// Object propert(ies)
-	garages			= [];			// [array] Array of garage Panel instances.
-	currentGarage	= null;			// [Panel|null] Garage currently hovered over.
+	garages       = [];           // [array] Array of garage Panel instances.
+	currentGarage = null;         // [Element|null] Garage currently hovered over.
 	// Miscellaneous variables
-	display			= null;			// [JestDisplay] object for displaying content(s).
+	display       = null;         // [JestDisplay] object for displaying content(s).
+	lastPointer   = null;         // [object|null] Latest viewport mouse coordinates.
 
 	//--------------------------------
 	// Constructor
 	//--------------------------------
 	// Construct the Crate with a Panel.
-	// * client		- [object] Application client that this piece belongs to.
-	// * name		- [string] Value of tool name.
+	// * client  - [object] Application client that this piece belongs to.
+	// * name    - [string] Value of tool name.
 	constructor( client, name ) {
 		super( client, name ); // call parent constructor
 	}
@@ -31,22 +32,22 @@ class JestToolCrate extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build( name='tool-crate', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-crate' ];
+		const defaultClasses = [ 'tool-crate' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 		// Tool is empty by default.
-		this.jot( 'mode', 'empty' );	// tool is idle to start
+		this.jot( 'mode', 'empty' ); // tool is idle to start
 		// --------------------------------
 		// Create Canvas In Crate [object]
 		// --------------------------------
 		// Add a canvas to the crate for tile display.
-		const display	= new JestDisplay( this.client );
-		display.build();			// build the display panel
-		this.display	= display;	// cross-reference
+		const display = new JestDisplay( this.client );
+		display.build();          // build the display panel
+		this.display  = display;  // cross-reference
 		this.panel.addPanel( 'display', display.panel );
 		// Hide by default.
 		this.hide();
@@ -140,16 +141,18 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Finalize drop: leave element where it is
 		this.hide(); // hide the crate
-		this.panel.el.style.cursor		= 'grab';	// set cursor to default
-		this.panel.el.style.zIndex		= '';		// reset z-index
-		//this.panel.el.innerHTML		= '';		// empty content
+		this.panel.el.style.cursor = 'grab';  // set cursor to default
+		this.panel.el.style.zIndex = '';      // reset z-index
+		//this.panel.el.innerHTML  = '';      // empty content
+		// Clear the remembered pointer after dragging finishes.
+		this.lastPointer = null;
 		//-------------------------
 		// Reset Mode & Listener(s)
 		//-------------------------
 		// Tear down all listener(s).
-		this.removeTargetListeners();	// remove target events
-		this.removeGlobalListeners();	// remove window events
-		this.jot( 'mode', 'empty' );	// change mode
+		this.removeTargetListeners();  // remove target events
+		this.removeGlobalListeners();  // remove window events
+		this.jot( 'mode', 'empty' );   // change mode
 		// Add mousedown event (begin lifting).
 		this.panel.register( 'mousedown', 'lift', e=>this.lift(e), 'dom' );
 	}
@@ -234,6 +237,9 @@ class JestToolCrate extends JestTool {
 
 	// Begin dragging the crate.
 	beginDrag( globalX, globalY, offsetX, offsetY ) {
+		//-------------------------
+		// Gatekeep Depending on Mode
+		//-------------------------
 		//console.log( 'begin crate drag' );
 		// Mode / enableability requirement
 		const enabled	= this.skim( 'enabled' );
@@ -242,16 +248,28 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Compute Location
 		//-------------------------
-		// Update offset(s)
-		this.offsetX	= offsetX; // update offset of click x pos
-		this.offsetY	= offsetY; // update offset of click y pos
+		// Update both coordinate offsets.
+		this.offsetX   = offsetX; // update offset of click x pos
+		this.offsetY   = offsetY; // update offset of click y pos
+		//--------------------------------
+		// Remember Current Pointer Position
+		//--------------------------------
+		// Convert the supplied page coordinates back into viewport coordinates so
+		// the crate can be repositioned if its grid changes before the mouse moves.
+		this.lastPointer = {
+			clientX : globalX - window.scrollX,
+			clientY : globalY - window.scrollY
+			};
+		//--------------------------------
+		// Absolute Position Panel Element
+		//--------------------------------
 		// Ensure element is absolute positioned.
-		const elStyle	= window.getComputedStyle( this.panel.el );
+		const elStyle  = window.getComputedStyle( this.panel.el );
 		if ( elStyle.position!=='absolute' )
 			this.panel.el.style.position = 'absolute';
 		// Move crate to mouse location.
-		const left		= globalX - offsetX - parseFloat(elStyle.borderLeftWidth);
-		const top		= globalY - offsetY - parseFloat(elStyle.borderTopWidth);
+		const left     = globalX - offsetX - parseFloat(elStyle.borderLeftWidth);
+		const top      = globalY - offsetY - parseFloat(elStyle.borderTopWidth);
 		this.panel.move( top, left );
 		//-------------------------
 		// Change Style(s)
@@ -261,13 +279,13 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Event Handler(s)
 		//-------------------------
-		// Add global listeners for move & drop
+		// Add global listeners for move & drop.
 		this.panel.register( 'mousemove', 'dragging', e=>this.move(e), 'window' );
 		this.panel.register( jsos.mouseUps, 'dragged', e=>this.drop(e), 'window' );
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------
-		// Notify start
+		// Notify start.
 		this.emit( 'dragStart', null, this );
 	}
 
@@ -277,12 +295,21 @@ class JestToolCrate extends JestTool {
 	// * e	- [object] MouseEvent event listener data.
 	move( e ) {
 		//console.log( 'moving crate' );
-		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		// Mode / enableability requirement.
+		const enabled  = this.skim( 'enabled' );
+		const mode     = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
-		e.preventDefault();		// prevent default actions underneath
-		e.stopPropagation();	// stop bubbling upward
+		e.preventDefault();  // prevent default actions underneath
+		e.stopPropagation(); // stop bubbling upward
+		//--------------------------------
+		// Remember Current Pointer Position
+		//--------------------------------
+		// Preserve the latest pointer location so zoom changes can immediately
+		// reposition the crate without waiting for another mousemove event.
+		this.lastPointer = {
+			clientX : e.clientX,
+			clientY : e.clientY
+			};
 		//-------------------------
 		// Check If Inside Garage
 		//-------------------------
@@ -321,33 +348,34 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Calculate page absolute position so crate follows mouse.
 		let px, py; // new coordinates
-		const units = this.client.config.tileGrid;
+		// Use this crate's current display-space grid size.
+		const units = this.anchor.getUnitsZoomed();
 		// Snap x & y to grid if inside garage.
 		if ( this.currentGarage!==null ) {
 			// Snap inside the garage’s bounding box
-			const el	= this.currentGarage;
-			const gRect	= el.getBoundingClientRect();
+			const el    = this.currentGarage;
+			const gRect = el.getBoundingClientRect();
 			// borderLeft & borderTop (in pixels) for this element
-			const borderLeft	= el.clientLeft;
-			const borderTop		= el.clientTop;
+			const borderLeft = el.clientLeft;
+			const borderTop  = el.clientTop;
 			// “rawX” = distance from left edge of garage to cursor
-			const rawX	= e.clientX - (gRect.left + borderLeft);
-			const rawY	= e.clientY - (gRect.top  + borderTop);
+			const rawX  = e.clientX - (gRect.left + borderLeft);
+			const rawY  = e.clientY - (gRect.top  + borderTop);
 			// Round that local coordinate to nearest tile
-			const tileX	= Math.round( rawX/units );
-			const tileY	= Math.round( rawY/units );
+			const tileX = Math.round( rawX/units );
+			const tileY = Math.round( rawY/units );
 			// Convert back to page coords by adding gRect.left/top
-			px	= gRect.left + borderLeft + tileX * units;
-			py	= gRect.top  + borderTop  + tileY * units;
+			px = gRect.left + borderLeft + tileX * units;
+			py = gRect.top  + borderTop  + tileY * units;
 		}
 		else { // Free-move: follow the cursor (no snapping)
-			px	= e.clientX - this.offsetX;
-			py	= e.clientY - this.offsetY;
+			px = e.clientX - this.offsetX;
+			py = e.clientY - this.offsetY;
 		}
 		// Update element position
 		this.anchor.move( px, py );	// update anchor coordinates to track motion
 		// Offset px & py to compensate, visually, for border.
-		const elStyle	= window.getComputedStyle( this.panel.el );
+		const elStyle = window.getComputedStyle( this.panel.el );
 		px -= parseFloat( elStyle.borderLeftWidth );
 		py -= parseFloat( elStyle.borderTopWidth );
 		this.panel.move( py+window.scrollY, px+window.scrollX ); // crate visual
@@ -358,40 +386,96 @@ class JestToolCrate extends JestTool {
 		this.emit( 'dragMove', null, { px, py } );
 	}
 
+	//--------------------------------
+	// Refresh Crate Position
+	//--------------------------------
+	// Recalculate the crate position using the last known mouse coordinates.
+	// This allows live zoom changes to update snapping without requiring the
+	// physical mouse to move again.
+	// RETURNS: [boolean] `true` when refreshed else `false`.
+	refreshPosition() {
+		//--------------------------------
+		// Validate Current Drag State
+		//--------------------------------
+		// Require a remembered pointer position and an active drag.
+		if ( !this.lastPointer )
+			return false; // nothing to refresh
+
+		if ( this.skim('mode')!=='dragging' )
+			return false; // crate is not being carried
+
+		//--------------------------------
+		// Reprocess Current Pointer
+		//--------------------------------
+		// Reuse move() so garage detection, snapping, borders, anchors, and
+		// visual positioning all follow the same calculation path.
+		this.move({
+			clientX : this.lastPointer.clientX,
+			clientY : this.lastPointer.clientY,
+			// Supply the MouseEvent methods used by move().
+			preventDefault()  {},
+			stopPropagation() {}
+			});
+
+		return true; // success
+	}
+
 	//-------------------------
 	// Internal: Drop (mouseup)
 	//-------------------------
 	// Drop the crate & emit an event about location / garage information.
 	// * e	- [object] MouseEvent event listener data.
 	drop( e ) {
+		//--------------------------------
+		// Validate Argument(s)
+		//--------------------------------
 		//console.warn( 'dropping crate' );
 		// Validate argument(s).
 		if ( !e ) {
 			console.warn( '[Crate] Cannot Drop: arg 1 must be [object] of type MouseEvent.' );
 			return;
 		}
+
+		//--------------------------------
+		// Ensure Valid Mode (Gatekeep)
+		//--------------------------------
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
-		e.preventDefault();		// prevent default actions underneath
-		e.stopPropagation();	// stop bubbling upward
-		// Calculate local (x,y) within garage if found
-		let localPos	= null;
+
+		//--------------------------------
+		// Block Domino DOM Action(s)
+		//--------------------------------
+		e.preventDefault();   // prevent default actions underneath
+		e.stopPropagation();  // stop bubbling upward
+
+		//--------------------------------
+		// Calculate Garage-Local Position
+		//--------------------------------
+		// Calculate the pointer position within the garage's content area.
+		let localPos = null;
+
 		if ( this.currentGarage!==null ) {
-			// Inside drop(e):
-			const pageX		= e.pageX;
-			const pageY		= e.pageY;
-			// Suppose `this.currentGarage` is the <div> or <canvas> you dropped into:
-			const rect		= this.currentGarage.getBoundingClientRect();
-			const elemDocX	= rect.left + window.scrollX;
-			const elemDocY	= rect.top  + window.scrollY;
-			localPos	= {
-				x:	pageX - elemDocX,
-				y:	pageY - elemDocY
+			// Get the garage's viewport-relative boundary.
+			const rect = this.currentGarage.getBoundingClientRect();
+
+			// Exclude the garage border so dropping and visual snapping use the
+			// exact same local coordinate origin.
+			const borderLeft = this.currentGarage.clientLeft;
+			const borderTop  = this.currentGarage.clientTop;
+
+			// Convert the mouse from viewport coordinates into garage-local pixels.
+			localPos = {
+				x : e.clientX - rect.left - borderLeft,
+				y : e.clientY - rect.top  - borderTop
 				};
 		}
-		const pos	= { x: this.anchor.x, y: this.anchor.y };
+		//const pos = { x: this.anchor.x, y: this.anchor.y };
+
+		//--------------------------------
+		// Emit Drop Crate Event & Reset
+		//--------------------------------
 		// Emit drop event with garage and local position (or null if none)
 		this.emit( 'dropped', null, this.currentGarage, localPos );
 		this.reset(); // reset the crate

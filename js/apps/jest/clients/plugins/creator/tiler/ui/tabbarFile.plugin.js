@@ -115,8 +115,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					// Toggle View-Specific Parts
 					//--------------------------------
 					// Hide previous view's history panel from the sidebar menu.
-					prevView.history?.hide();			// hide history
-					this.sidebar.refit( 'history' );	// refit history
+					prevView.history?.hide();        // hide history
+					this.sidebar.refit( 'history' ); // refit history
 				}
 
 				// --------------------------------
@@ -129,7 +129,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 				// Determine if workspace is set.
 				if ( !workspace || !workspace.el ) {
 					console.warn( 'Canvas is not set or invalid' );
-					return;
+					return; // abort
 				}
 
 				// Check for an active view.
@@ -138,8 +138,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					// Resize Canvases
 					//--------------------------------
 					// Resize canvases to match new active target's viewport.
-					workspace.resize( nextView.anchor.width, nextView.anchor.height );
-					sketchpad.resize( nextView.anchor.width, nextView.anchor.height );
+					const bounds = nextView.anchor.getZoomed();
+					workspace.resize( bounds.display.w, bounds.display.h );
+					sketchpad.resize( bounds.display.w, bounds.display.h );
 
 					//--------------------------------
 					// Switch Active File In Cabinet
@@ -153,13 +154,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 							this.soundboard.playSound( 'jest_tab', 'mp3', 1.05 );
 						default: break;
 					}
-					
+
 					//--------------------------------
 					// Toggle View-Specific Parts
 					//--------------------------------
 					// Switch the active history menu.
-					nextView.history.show();			// show history
-					this.sidebar.refit( 'history' );	// refit history
+					nextView.history.show();         // show history
+					this.sidebar.refit( 'history' ); // refit history
 				}
 				else {
 					// --------------------------------
@@ -167,10 +168,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					// --------------------------------
 					// Shrink gameboard to invisible.
 					workspace.resize( 0, 0 );
-					// Clear the canvas with a black screen.
 					// Clear the canvas contents.
-					const ctx	= workspace.el.getContext( '2d' );
-					ctx.clearRect( 0, 0, workspace.el.width, workspace.el.height );
+					workspace.clear();
 				}
 				return true; // success
 			}

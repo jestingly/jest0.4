@@ -17,9 +17,9 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 	// --------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
+	// * client - [object] Application client that this piece belongs to.
 	constructor( client ) {
-		super( client );		// call parent constructor
+		super( client ); // call parent constructor
 	}
 
 	//-------------------------
@@ -27,8 +27,8 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build ( name='file-view-editor-painter-jani', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];

@@ -79,20 +79,21 @@ JestAppsRegistry.AppJestAnimator =
 			// Set & Get Quick-Refs
 			// --------------------------------
 			// Get the jani editing canvas
-			const gameboard	= this.gameboard;	// get gameboard reference
+			const gameboard	= this.gameboard;   // get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
+			canvas.el.style.imageRendering = 'pixelated'; // pixel art canvas
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			const toolbar	= this.toolbar;
 			// Get the file menu.
-			const filemenu	= this.filemenu;	// get ref
+			const filemenu	= this.filemenu;    // get ref
 
 			// --------------------------------
 			// Animation Handler [object]
 			// --------------------------------
 			// Assign the gameboard canvas to the animator for animation rendering
-			const animator	= this.animator;	// access ref
-			animator.canvas	= canvas;			// animator canvas is workspace canvas
+			const animator	= this.animator;    // access ref
+			animator.canvas	= canvas;           // animator canvas is workspace canvas
 
 			// --------------------------------
 			// Plugin Animator UI Hook(s)

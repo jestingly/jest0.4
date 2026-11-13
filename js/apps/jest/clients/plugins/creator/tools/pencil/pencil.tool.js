@@ -257,21 +257,22 @@ class JestToolPencil extends JestTool {
 		// Validate Mode & Enablement
 		//--------------------------------
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || (mode!=='idle' && mode!=='shiftlining') ) return;
 
 		//-------------------------
 		// Get Click Position
 		//-------------------------
 		// Determine if left, or right-clicked.
-		const isRightClick	= ( e.button === 2 );
-		const isLeftClick	= ( e.button === 0 );
-		this._mouseButton	= e.button;
-		// Calculate click position in tile units.
-		const units	= this.anchor.units;
-		const x		= Math.floor( e.offsetX / units );
-		const y		= Math.floor( e.offsetY / units );
+		const isRightClick = ( e.button === 2 );
+		const isLeftClick  = ( e.button === 0 );
+		this._mouseButton  = e.button;
+		// Calculate click position in tile units
+		const click = this.target.mousePos( e );
+		const units = this.anchor.units;
+		const x     = Math.floor( click.x / units );
+		const y     = Math.floor( click.y / units );
 
 		//--------------------------------
 		// SHIFT+CLICK INTERCEPT → LINE DRAW MODE

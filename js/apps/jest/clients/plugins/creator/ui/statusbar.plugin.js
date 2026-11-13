@@ -35,7 +35,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				() => {
 					let message = 'Welcome to <b>Tileshop</b>';
 					message += ' by <strong>JEST®</strong>';
-					message += ' • Copyright© 2025';
+					message += ' • Copyright© 2026';
 					message += ' • All Rights Reserved.';
 					statusbar.cite( message );
 				});
@@ -48,7 +48,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				name       : 'copyright',
 				tag        : 'div',
 				classes    : [ 'jest-copyright' ],
-				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.4</strong>. All rights reserved.'
+				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.42</strong>. All rights reserved.'
 				});
 
 			// --------------------------------

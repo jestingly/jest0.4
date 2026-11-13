@@ -1614,15 +1614,30 @@ class OSElement extends OSEventTarget {
 	//-----------------------------
 	// Positioning DOM element.
 	//-----------------------------
-	// Get the relative position of a mouse click event.
-	// RETURNS: [void]
-	// * event	- event [object] sent through mouse event.
+	// Convert a mouse event into the element's local pixel coordinates.
+	// Canvas positions are returned in backing pixels, regardless of CSS zoom.
+	// RETURNS: [object] { x, y } local coordinates.
+	// * event - [MouseEvent] Pointer event to convert.
 	mousePos( event ) {
-		// Get the bounding rect.
+		// Measure the element as it is currently displayed.
 		const rect = this.el.getBoundingClientRect();
+
+		// Start with CSS-pixel coordinates inside the displayed element.
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+
+		// Non-canvas elements keep their existing CSS-pixel coordinates.
+		if ( !(this.el instanceof HTMLCanvasElement) )
+			return { x, y };
+
+		// Avoid division by zero for a hidden or not-yet-sized canvas.
+		if ( rect.width===0 || rect.height===0 )
+			return { x: 0, y: 0 };
+
+		// Convert displayed CSS pixels to the canvas backing-store pixels.
 		return {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top
+			x : x * this.el.width  / rect.width,
+			y : y * this.el.height / rect.height
 			};
 	}
 
@@ -1755,35 +1770,79 @@ class ElementCanvas extends OSElement {
 	// --------------------------------
 	// Rendering Method(s)
 	// --------------------------------
-	// Render an image into the display.
-	// RETURNS: [void].
-	// * canvas	- [object] ElementCanvas object to render inside the display.
-	// clear	- [bool] Whether to clear area first.
-	// resize	- [bool] Whether to resize the canvas to match the sw,sh.
-	// dx,dy	- [number] Coordinates of location on destination canvas to draw.
-	// sx,sy	- [number] Coordinates of location on source canvas to clip.
-	// sw,sh	- [number] Width and height dimensions of source canvas to clip.
-	draw( canvas, clear=false, resize=false, dx=0, dy=0, sx=0, sy=0, sw=null, sh=null ) {
-		// Set auto dimension(s) if not supplied.
-		const w   = sw ?? canvas.el.width;
-		const h   = sh ?? canvas.el.height;
-		// Get tooldrop canvas context & clear it.
-		const ctx = this.el.getContext( '2d' );
-		// Clear area if requested.
-		if ( clear )
-			ctx.clearRect( 0, 0, w, h );
-		// Resize crate to show contents if requested.
-		if ( resize )
-			this.resize( w, h );
+	// Render a canvas into this canvas.
+	// RETURNS: [boolean] `true` on success else `false` on fail.
+	// * canvas	- [ElementCanvas] Source canvas to render.
+	//   clear	- [bool] Whether to clear the destination area first.
+	//   resize	- [bool] Whether to resize this canvas to the destination size.
+	//   dx,dy	- [number] Destination coordinates.
+	//   sx,sy	- [number] Source crop coordinates.
+	//   sw,sh	- [number] Source crop dimensions.
+	//   dw,dh	- [number] Destination dimensions used to scale the source.
+	draw( canvas, clear=false, resize=false,
+		  dx=0, dy=0, sx=0, sy=0,
+		  sw=null, sh=null, dw=null, dh=null ) {
+		//--------------------------------
+		// Resolve Source Dimension(s)
+		//--------------------------------
+		// Use the complete source canvas when no crop size was supplied.
+		const sourceWidth  = sw ?? canvas.el.width;
+		const sourceHeight = sh ?? canvas.el.height;
 
-		// Draw the selected tile on the dragdrop crate canvas.
+		//--------------------------------
+		// Resolve Destination Dimension(s)
+		//--------------------------------
+		// Preserve the original 1:1 drawing behavior unless explicit
+		// destination dimensions were supplied by the caller.
+		const destinationWidth  = dw ?? sourceWidth;
+		const destinationHeight = dh ?? sourceHeight;
+
+		//--------------------------------
+		// Resize Destination Canvas
+		//--------------------------------
+		// Resize before obtaining and configuring the drawing context because
+		// changing canvas dimensions resets all context rendering properties.
+		if ( resize )
+			this.resize( destinationWidth, destinationHeight );
+
+		//--------------------------------
+		// Configure Pixel Rendering
+		//--------------------------------
+		// Access the destination canvas drawing context.
+		const ctx = this.el.getContext( '2d' );
+
+		// Disable interpolation so scaled pixels retain sharp edges.
+		ctx.imageSmoothingEnabled = false;
+
+		//--------------------------------
+		// Clear Destination Area
+		//--------------------------------
+		// Clear the complete destination drawing region when requested.
+		if ( clear )
+			ctx.clearRect(
+				dx,
+				dy,
+				destinationWidth,
+				destinationHeight
+				);
+
+		//--------------------------------
+		// Draw and Scale Canvas
+		//--------------------------------
+		// Copy the requested source region into the destination region.
 		ctx.drawImage(
-			canvas.el,			// image contents being copied
-			sx,    sy,			// source crop x,y
-			w,     h,			// source W x H
-			dx,    dy,			// destination x,y
-			w,     h			// destination W x H
+			canvas.el,
+			sx,
+			sy,
+			sourceWidth,
+			sourceHeight,
+			dx,
+			dy,
+			destinationWidth,
+			destinationHeight
 			);
+
+		return true; // success
 	}
 
 	//--------------------------------
@@ -2290,34 +2349,38 @@ console.log( 'jestAlert: js/mediacore/context/Anchor.js loaded' );
 // Calculates an [object] location through a stack of nested [objects].
 class Anchor extends OSCallback {
 	// Object properties
-	//canvas		= null;			// [object] ElementCanvas (for visual testing).
-	_color		= null;			// [string] Hex value, stores debugging color view. Set using this.debugging().
-	_alpha		= null;			// [int] Value, stores transparency as a value 0-100.
+	//canvas     = null;       // [object] ElementCanvas (for visual testing).
+	_color     = null;       // [string] Hex value, stores debugging color view. Set using this.debugging().
+	_alpha     = null;       // [int] Value, stores transparency as a value 0-100.
 	// Declare properties
-	_parent		= null;			// Parent Anchor [object].
-	x			= null;			// [int] value of X coordinate of the [object] relative to parent.
-	y			= null;			// [int] value of Y coordinate of the [object] relative to parent.
-	z			= null;			// [int] value of Z coordinate of the [object] relative to parent.
-	width		= null;			// [int] value of width of the [object] (minimum = 1).
-	height		= null;			// [int] value of height of the [object] (minimum = 1).
-	units		= null;			// [int] value of grid (x,y) & width/height should conform to (defaults to 1px).
+	_parent    = null;       // Parent Anchor [object].
+	x          = null;       // [int] value of X coordinate of the [object] relative to parent.
+	y          = null;       // [int] value of Y coordinate of the [object] relative to parent.
+	z          = null;       // [int] value of Z coordinate of the [object] relative to parent.
+	width      = null;       // [int] value of width of the [object] (minimum = 1).
+	height     = null;       // [int] value of height of the [object] (minimum = 1).
+	// View-local display and coordinate measurements.
+	units      = null;       // [int] value of grid (x,y) & width/height should conform to (defaults to 1px).
+	zoom       = 1;          // [number] Display zoom for this file view.
+	minZoom    = 0.25;       // [number] Minimum display zoom.
+	maxZoom    = 4;          // [number] Maximum display zoom.
 
 	//-------------------------
 	// Instantiation
 	//-------------------------
 	// Initializes the object.
-	// * x			- [int] value of horizontal offset relative to parent(s)
-	// * y			- [int] value of vertical offset relative to parent(s)
-	// * z			- [int] value of z index relative to parent(s)
-	//   width		- [int] value of custom width span of anchor
-	//   height		- [int] value of custom height span of anchor
-	//   units		- [int] Value of anchor grid size (defaults to 1px).
+	// * x       - [int] value of horizontal offset relative to parent(s)
+	// * y       - [int] value of vertical offset relative to parent(s)
+	// * z       - [int] value of z index relative to parent(s)
+	//   width   - [int] value of custom width span of anchor
+	//   height  - [int] value of custom height span of anchor
+	//   units   - [int] Value of anchor grid size (defaults to 1px).
 	constructor( x=0, y=0, z=0, width=1, height=1, units=1 ) {
-		super();						// Call parent constructor
-		this.move( x, y, z );			// Move the anchor point coordinates
-		this.graticulate( units );		// Set the units the anchor is measured in
-		this.resize( width, height );	// Set the anchor point WxH span
-		this.show( null );				// By default, anchors are hidden
+		super();                       // Call parent constructor
+		this.move( x, y, z );          // Move the anchor point coordinates
+		this.graticulate( units );     // Set the units the anchor is measured in
+		this.resize( width, height );  // Set the anchor point WxH span
+		this.show( null );             // By default, anchors are hidden
 	}
 
 	//-------------------------
@@ -2325,18 +2388,91 @@ class Anchor extends OSCallback {
 	//-------------------------
 	// Create a visual color/alpha to display anchor rectangle in the 'inspector' mode.
 	// RETURNS: [void].
-	// color	- [string] Hex color (e.g. '#000') to enable debugging square, or [null] to turn off.
-	// alpha	- [int] Value of opacity 0-100 (defaults to 80%).
+	// color   - [string] Hex color (e.g. '#000') to enable debugging square, or [null] to turn off.
+	// alpha   - [int] Value of opacity 0-100 (defaults to 80%).
 	show( color=null, alpha=80 ) {
 		// Validate the hex code
 		if ( /^#([0-9A-Fa-f]{3}){1,2}$/.test(color) || color===null )
-			this._color	= color;	// store debuggin color
+			this._color	= color;  // store debuggin color
 		else {
 			console.warn( `Invalid argument for color given. Debugging visual for anchor is turned off.` );
-			this._color	= null;		// turn off
+			this._color	= null;   // turn off
 		}
 		// Set the alpha/opacity
 		this._alpha	= jsos.prove(alpha,'int') ? Math.max(0,Math.min(100,alpha)) : 80;
+	}
+
+	//-------------------------
+	// Public Methods
+	//-------------------------
+	// Get the unit size.
+	// RETURNS: [number] Unit size.
+	getUnits() {
+		// Return raw units number value.
+		return Number( this.units );
+	}
+
+	// Return this anchor's logical bounds and zoomed display measurements.
+	// RETURNS: [object] Logical bounds plus derived display-space values.
+	getZoomed() {
+		// Keep raw geometry separate from derived display geometry.
+		return {
+			logical : this.getBounds(),
+			display : {
+				units  : Number(this.units)  * this.zoom,
+				x      : Number(this.x)      * this.zoom,
+				y      : Number(this.y)      * this.zoom,
+				width  : Number(this.width)  * this.zoom,
+				height : Number(this.height) * this.zoom
+				}
+			};
+	}
+
+	// Set this anchor's display zoom.
+	// RETURNS: [number|false] Applied zoom, or `false` if invalid.
+	// * value - [number] Requested zoom multiplier.
+	setZoom( value ) {
+		// Validate the requested zoom.
+		const requested = Number( value );
+		if ( !Number.isFinite(requested) ) return false;
+
+		// Clamp zoom to the supported range.
+		this.zoom = Math.min(
+			this.maxZoom,
+			Math.max( this.minZoom, requested )
+			);
+
+		// Tell the view or renderer to update its display.
+		this.emit( 'zoom', null, this.zoom );
+
+		return this.zoom;
+	}
+
+	//--------------------------------
+	// Set View Zoom
+	//--------------------------------
+	// Change this view's display zoom without resizing its canvas data.
+	// RETURNS: [number|false] Applied zoom, or `false` if invalid.
+	// * value - [number] Requested zoom multiplier.
+	setZoom( value ) {
+		// Validate the requested zoom.
+		const requested = Number( value );
+		if ( !Number.isFinite(requested) ) return false;
+
+		// Keep zoom within the supported range.
+		this.zoom =
+			Math.min(
+				this.maxZoom,
+				Math.max( this.minZoom, requested )
+				);
+
+		// Apply the new display size.
+		if ( !this.applyZoom() ) return false;
+
+		// Emit event
+		this.emit( 'zoom', null, zoom );
+
+		return this.zoom; // applied zoom
 	}
 
 	//-------------------------
@@ -2346,9 +2482,10 @@ class Anchor extends OSCallback {
 	// RETURNS: [void].
 	// * anchor	- [object] Anchor serving as the baseline nested [object] (for relative x & y).
 	setParent( anchor ) {
+		// Validate argument(s).
 		if ( !(anchor instanceof Anchor) ) {
 			console.warn( `Parent of anchor must be of type [object] Anchor.` );
-			return;
+			return; // abort
 		}
 		// Set parent
 		this._parent = anchor;
@@ -2363,16 +2500,16 @@ class Anchor extends OSCallback {
 	// * y	- [int] value of vertical offset relative to parent(s)
 	// * z	- [int] value of z index relative to parent(s)
 	move( x, y, z=null ) {
-		this.x		= x;	// [int] Horizontal offset
-		this.y		= y;	// [int] Vertical offset
-		this.z		= z===null ? this.z : z; // [int] Z index offset
+		this.x  = x;  // [int] Horizontal offset
+		this.y  = y;  // [int] Vertical offset
+		this.z  = z===null ? this.z : z; // [int] Z index offset
 	}
 
 	// Raise or lower the z-value of the [object].
 	// RETURNS: [void].
 	// * z	- [int] value of z index relative to parent(s)
 	setZ( z ) {
-		this.z		= z;	// [int] Z index offset
+		this.z  = z;  // [int] Z index offset
 	}
 
 	//-------------------------
@@ -2385,18 +2522,23 @@ class Anchor extends OSCallback {
 		// Validate argument(s)
 		if ( !jsos.prove(size,'int') || size<1 ) {
 			console.warn( `Attempted to set forbidden grid size, resorting to default.` );
-			size	= 1;		// default grid width/height
+			size   = 1;     // default grid width/height
 		}
 		// Continue to setup the grid
-		this.units	= size;		// set grid square of level
+		this.units = size;  // set grid square of level
 		// Emit event
 		this.emit( 'graticulate', null, size );
 		return true; // success
 	}
+
 	// Move the anchor point [object].
 	// RETURNS: [object] of location & dimensions.
 	getBounds() {
-		return { x: this.x, y: this.y, w: this.width, h: this.height };
+		return {
+			units: this.units,
+			x: this.x, y: this.y,
+			w: this.width, h: this.height
+			};
 	}
 
 	//-------------------------
@@ -7658,29 +7800,29 @@ console.log( 'jestAlert: js/apps/jest/components/JestWorldling.js loaded' );
 // Represents an [object] inside the game world.
 class JestWorldling extends JestSavable {
 	// Object propert(ies)
-	_remote			= false;		// [bool] Whether object is serverside (false) or local (true)
+	_remote  = false;      // [bool] Whether object is serverside (false) or local (true)
 	// World data
-	_status			= 0;			// Value of worldling [object] status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
-	_level			= null;			// [string] Value of level filename (e.g. level1).
-	_view			= null;			// [object] AnimationView depicting visual
-	_lens			= {};			// [object] of Camera report information.
+	_status  = 0;         // Value of worldling [object] status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
+	_level   = null;      // [string] Value of level filename (e.g. level1).
+	_view    = null;      // [object] AnimationView depicting visual
+	_lens    = {};        // [object] of Camera report information.
 	// Movement propert(ies)
-	focus			= null;			// [object] Anchor used to focus the graphical visual location (x,y).
+	focus    = null;      // [object] Anchor used to focus the graphical visual location (x,y).
 
 	// --------------------------------
 	// Constructor
 	// --------------------------------
 	// Initializes the the worldling [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
-	// * remote		- [bool] whether object is serverside (false) or local (true)
-	// * name		- [string] Value of user username (e.g. 'Antago').
+	// * client  - [object] Application client that this piece belongs to.
+	// * remote  - [bool] whether object is serverside (false) or local (true)
+	// * name    - [string] Value of user username (e.g. 'Antago').
 	constructor( client, remote, name ) {
 		// Call parent constructor
-		super( client, name );	// construct the parent
-		this.status		= 0;	// set default status "creating"
+		super( client, name ); // construct the parent
+		this.status  = 0;      // set default status "creating"
 		// Set remote value
-		this._remote	= remote===true;
+		this._remote = remote===true;
 		// --------------------------------
 		// Attach [object] to Gameboard
 		// --------------------------------
@@ -7710,10 +7852,10 @@ class JestWorldling extends JestSavable {
 		// --------------------------------
 		// Create focal anchor [object] for animation rendering in viewport camera
 		// NOTE: Focus is in 1px units because it is relative to viewport canvas, not level grid.
-		const focus		= new Anchor();			// create focal point
-		focus.move( 0, 0 );						// move focal point to a default position
-		this.focus		= focus;				// store anchor as property
-		this.focus.resize( 16, 16 );			// [object] size (e.g. 32x32)
+		const focus = new Anchor();      // create focal point
+		focus.move( 0, 0 );              // move focal point to a default position
+		this.focus  = focus;             // store anchor as property
+		this.focus.resize( 16, 16 );     // [object] size (e.g. 32x32)
 		return true; // successfully setup
 	}
 
@@ -7728,18 +7870,18 @@ class JestWorldling extends JestSavable {
 	// --------------------------------
 	// Central worldling render loop.
 	// RETURNS: [bool] whether render succeeded or not.
-	// * elapsedTime	- how much time has passed since the ticker started.
-	// * tickDelay		- how much time between each tick (ie. 60ms)
-	// * tickCount		- how many ticks have occurred
+	// * elapsedTime  - how much time has passed since the ticker started.
+	// * tickDelay    - how much time between each tick (ie. 60ms)
+	// * tickCount    - how many ticks have occurred
 	// RETURNS: [void].
 	render( { elapsedTime, tickDelay, tickCount } ) {
 	}
 
 	// Central worldling timeout loop.
 	// RETURNS: [bool] whether pulse rendered or not.
-	// * elapsedTime	- how much time has passed since the ticker started.
-	// * tickDelay		- how much time between each tick (ie. 60ms)
-	// * tickCount		- how many ticks have occurred
+	// * elapsedTime  - how much time has passed since the ticker started.
+	// * tickDelay    - how much time between each tick (ie. 60ms)
+	// * tickCount    - how many ticks have occurred
 	// RETURNS: [void].
 	pulse( { elapsedTime, tickDelay, tickCount } ) {
 		// Refocus the animation
@@ -7773,7 +7915,7 @@ class JestWorldling extends JestSavable {
 	}
 	// Set the [object] gameboard index.
 	// RETURNS: [index] on the gameboard; -1 if not added.
-	// * val	- [int] value of index in gameboard.worldlings [array]
+	// * val - [int] value of index in gameboard.worldlings [array]
 	set index( val ) {
 		this._index = val; // change index value
 	}
@@ -7784,15 +7926,15 @@ class JestWorldling extends JestSavable {
 	}
 	// Set the [object] gameboard status.
 	// RETURNS: [index] on the gameboard; -1 if not added.
-	// * val	- [int] value of status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
+	// * val - [int] value of status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
 	set status( val ) {
 		// Check if object is disposed
 		if ( this._status===3 ) return; // already trashed
 		// Validate value.
-		val	= Math.max( val, 0 );	// confine to max 3
-		val	= Math.min( val, 3 );	// confine to min 0
+		val	= Math.max( val, 0 );  // confine to max 3
+		val	= Math.min( val, 3 );  // confine to min 0
 		// Change the status.
-		this._status = val;			// update status
+		this._status = val;        // update status
 	}
 
 	// --------------------------------
@@ -7802,13 +7944,13 @@ class JestWorldling extends JestSavable {
 	// RETURNS: [object] JestLevel or [...] on fail.
 	get level() {
 		// Get the user level [string] value
-		const name		= this._level ?? null; // get current value
+		const name  = this._level ?? null; // get current value
 		if ( !jsos.prove(name,'string') ) {
 			console.error( `Cannot get user level using a non-[string].` );
 			return false;
 		}
 		// Get level [object] or this._level [...] value
-		const level		= this.client.gameboard.levels?.[name] ?? null;
+		const level = this.client.gameboard.levels?.[name] ?? null;
 		return level; // return level value
 	}
 
@@ -7822,20 +7964,20 @@ class JestWorldling extends JestSavable {
 			return; // abort
 		}
 		// Get level [object] or throw error
-		const level		= this.client.gameboard.levels?.[name] ?? null;
+		const level = this.client.gameboard.levels?.[name] ?? null;
 		if ( !(level instanceof JestLevel) ) {
 			console.error( `[Worldling] Level could not be located: ${name}` );
 			return; // abort
 		}
-		this._level		= name; // change level
+		this._level = name; // change level
 	}
 
 	// Refocus the worldling focal point (animation anchor)
 	// and update the worldling's position information
 	refocus() {
 		// Get worldling anchor definitions
-		const lens	= this.client.camera.getScreenPositionReport( this );
-		this._lens	= lens;
+		const lens = this.client.camera.getScreenPositionReport( this );
+		this._lens = lens;
 		//console.log( this.name );
 		//console.log( lens );
 		// Move focus to destination
@@ -7874,7 +8016,7 @@ class JestWorldling extends JestSavable {
 			console.error( `AnimationView could not be set.` );
 			return;
 		}
-		this._view	= view; // change view
+		this._view = view; // change view
 	}
 
 	// --------------------------------
@@ -7882,8 +8024,8 @@ class JestWorldling extends JestSavable {
 	// --------------------------------
 	// Check if the [object] is onwall.
 	// RETURNS: [boolean] `true` if yes, else `false` if not.
-	// * anchor			- [object] Anchor (units must match tileGrid).
-	// * testX, testY	- [int] Level (x,y) coordinates in the tileset.
+	// * anchor        - [object] Anchor (units must match tileGrid).
+	// * testX, testY  - [int] Level (x,y) coordinates in the tileset.
 	onwall( anchor, testX, testY ) {
 		// Validate anchor
 		const tileGrid	= this.client.config.tileGrid;
@@ -7893,19 +8035,19 @@ class JestWorldling extends JestSavable {
 		}
 
 		// Calculate if user is actually hitting a wall
-		const width		= anchor.width;			// use anchor width
-		const height	= anchor.height;		// use anchor height
-		const left		= Math.floor( anchor.globalX + testX );
-		const right		= Math.floor( anchor.globalX + width + testX );
-		const top		= Math.floor( anchor.globalY + testY );
-		const bottom	= Math.floor( anchor.globalY + height + testY );
+		const width   = anchor.width;    // use anchor width
+		const height  = anchor.height;   // use anchor height
+		const left    = Math.floor( anchor.globalX + testX );
+		const right   = Math.floor( anchor.globalX + width + testX );
+		const top     = Math.floor( anchor.globalY + testY );
+		const bottom  = Math.floor( anchor.globalY + height + testY );
 
-		// DETERMINE IF block detected
+		// Determine whether any corner of the collider overlaps a blocking tile.
 		return (
-			this.level.getTileTypes(left,top).has('BLOCK')		||
-			this.level.getTileTypes(right,top).has('BLOCK')		||
-			this.level.getTileTypes(left,bottom).has('BLOCK')	||
-			this.level.getTileTypes(right,bottom).has('BLOCK')
+			this.level.isPointType( left, top, 'BLOCK' )      ||
+			this.level.isPointType( right, top, 'BLOCK' )     ||
+			this.level.isPointType( left, bottom, 'BLOCK' )   ||
+			this.level.isPointType( right, bottom, 'BLOCK' )
 			);
 	}
 }
@@ -8049,29 +8191,29 @@ console.log( 'jestAlert: js/apps/jest/components/parse/JestParserLevel.js loaded
 class JestParserLevel extends JestGamepiece {
 	// Static class properties
 	// Keywords: [object] Set array of acceptable keyword(s).
-	static keywords			= new Set();
-	static keywordParsers	= {};	// { keywordName : (ctx, lineArray, indexRef, resultObj) => newIndex }
-	static keywordEncoders	= {};	// { keywordName : (ctx, dataObjArray) => stringLines[] }
+	static keywords        = new Set();
+	static keywordParsers  = {};   // { keywordName : (ctx, lineArray, indexRef, resultObj) => newIndex }
+	static keywordEncoders = {};   // { keywordName : (ctx, dataObjArray) => stringLines[] }
 	// Explicit filetype & versioning properties
-	version					= 'JESTNW02';		// Level file version
+	version          = 'JESTNW02'; // Level file version
 	// Tileset scanline reading / handling definition(s)
-	charset					= null;				// [string] Default tile decoding order.
-	tileWrap				= 16;				// after 16 tiles, the indices wrap
-	tileBlock				= null;				// how many tiles in the wrapping block
-	tilesetWidth			= 2048;				// width of tileset in pixels
-	tilesetHeight			= 512;				// height of tileset in pixels
-	tilesetRows				= null;				// 128 tiles per row
-	tilesetColumns			= null;				// 32 tiles per column
-	totalTiles				= null;				// 4096 total tiles
+	charset          = null;       // [string] Default tile decoding order.
+	tileWrap         = 16;         // after 16 tiles, the indices wrap
+	tileBlock        = null;       // how many tiles in the wrapping block
+	tilesetWidth     = 2048;       // width of tileset in pixels
+	tilesetHeight    = 512;        // height of tileset in pixels
+	tilesetRows      = null;       // 128 tiles per row
+	tilesetColumns   = null;       // 32 tiles per column
+	totalTiles       = null;       // 4096 total tiles
 
 	//-------------------------
 	// Constructor
 	//-------------------------
 	// Initializes the parser.
 	// RETURNS: [void] Nothing.
-	// * client		- client [object] that this piece belongs to.
-	// * options	- [object] Optional configuration parameters.
-	//   tileOrder	- [string] Custom tile decoding order.
+	// * client    - client [object] that this piece belongs to.
+	// * options   - [object] Optional configuration parameters.
+	//   tileOrder - [string] Custom tile decoding order.
 	constructor( client, options={} ) {
 		super( client ); // call parent constructor
 		// Accept custom tileOrder parse algorithm
@@ -8293,7 +8435,7 @@ class JestParserTiledefs extends JestGamepiece {
 				// Look for a new type declaration (any uppercase word)
 				if ( /^[A-Z]+$/.test(line) ) {
 					currentType			= line;
-					console.log( `${currentType}END` );
+					//console.log( `${currentType}END` );
 					defs[currentType]	= [];
 					types.push( currentType );
 				}
@@ -12451,7 +12593,6 @@ class JestMouseFollower extends JestElement {
 	// Monitor pointer entry, movement, and exit through the element event system.
 	// RETURNS: [void].
 	registerWatchEvents() {
-		console.log('reg');
 		// Register all pointer events under this follower's unique key.
 		this.watchElement.register(
 			['mouseenter','mousemove','mouseleave','wheel'],
@@ -12466,7 +12607,6 @@ class JestMouseFollower extends JestElement {
 	// Remove pointer callbacks previously registered on the watched element.
 	// RETURNS: [void].
 	unregisterWatchEvents() {
-		console.log('unreg');
 		// A watched element is optional for visual-only followers.
 		this.watchElement?.unregister(
 			['mouseenter','mousemove','mouseleave','wheel'],
@@ -23675,124 +23815,15 @@ class JestFileLevel extends JestFileImage {
 		// Create New Level [object]
 		//--------------------------------
 		// Call parent to begin opening the file.
-		await super.openFile( fileInfo );	// pass file info to parent
-		const stem		= this.stem;		// Use filename "stem" as shorthand for filename.
-		// Create a new level [object] with filename stem.
-		const level		= new JestLevel( this.client, stem );
-		await level.setup(); // setup new [object]
-		// Create variables that will be loaded in.
-		let layer = [{
-			id      : 0,
-			name    : 'Ground',
-			visible : true,
-			locked  : false,
-			board   : null
-			}];
-		let regions		= {};
-		console.log( JestParserLevel.keywords );
-
-		//--------------------------------
-		// Build Empty Level
-		//--------------------------------
-		// Create empty level if no file opened.
-		if ( fileInfo.network==='none' ) {
-			console.log( 'No File Data Supplied: Generating level using empty file data...' );
-			// Choose base generic tile @ index (0,0)
-			const baseTile		= { ts: 0, tx: 0, ty: 0 };
-			// level is your JestLevel instance
-			const levelGrid		= this.client.config.levelGrid; // level WxH
-			const board			= this.client.grapher.createMatrix( levelGrid, levelGrid, baseTile );
-			layer[0].board		= board; // add board to base layer
-			// Dynamically assign regions via parser keyword registration
-			for ( const keyword of JestParserLevel.keywords ) {
-				const key		= keyword.toLowerCase();
-				if ( key==='board' || key==='layer' ) continue;
-				regions[key]	= []; // empty region (by default)
-			}
-		}
-		//--------------------------------
-		// Generate Level From File Data
-		//--------------------------------
-		else {
-			console.log( 'File Data Supplied: Generating level using file data...' );
-			// Attempt to get the file record.
-			const secretary		= this.client.secretary;	// secretary [object]
-			const transmitter	= this.client.transmitter;	// transmitter [object]
-			const record		= secretary.getRecord( fileInfo.address, 'local' );
-	        if ( !record )
-	            throw new Error( 'Level file record not found.' );
-
-			// Remove record from secretary & transmitter cache.
-			secretary.removeRecord( fileInfo.address, 'local' );
-			transmitter.removeFromCache( fileInfo.address, true );
-
-			//--------------------------------
-	        // Normalize Level Format
-	        //--------------------------------
-			// Get tile board data from the read file.
-			console.log( record );
-            // Convert legacy board into a single layer.
-	        if ( record.version==='GLEVNW01' )
-				layer[0].board = record.board; // add board to base layer
-			else if ( record.version==='JESTNW02' )
-            	layer = record.layers;
-        	else throw new Error( `Unsupported level version: ${record.version}` );
-
-			//--------------------------------
-			// Debug Parsed Layer Records
-			//--------------------------------
-			// Verify that the parser supplied layer definitions
-			// before converting them into JestLevelLayer objects.
-			console.log( '[JEST Layers] Version:', record.version );
-			console.log( '[JEST Layers] Parsed layers:', record.layers );
-			console.log( '[JEST Layers] Selected layer records:', layer );
-
-	        //--------------------------------
-	        // Load Other Keyword Regions
-	        //--------------------------------
-			// Dynamically assign regions via parser keyword registration
-			for ( const keyword of JestParserLevel.keywords ) {
-				const key		= keyword.toLowerCase();
-				if ( key==='board' || key==='layer' ) continue;
-				regions[key]	= record[key] ?? [];
-			}
-		}
-		console.log( regions );
-
-		//--------------------------------
-	    // Create Level Layers
-	    //--------------------------------
-		// Iterate each layer & add to level.
-	    for ( const record of layer ) {
-	        await level.addLayer(
-				record.name,
-				{
-		            id      : record.id,
-		            visible : record.visible,
-		            locked  : record.locked,
-		            tilemap : record.board
-	        	});
-	    }
-
-		//--------------------------------
-		// Render Tilemap Into Level
-		//--------------------------------
-		console.log( `Converted "${stem}" successfully into level [object]!` );
-		// Load-in retrieved or generated board data & render its bitmap in the level [object].
-		console.log( `Rendering "${stem}" level data into level [object]...` );
-		// Set new level as this file [object] context.
-		try {
-			level.render(); // populates level layer tilemaps using blit()
-		}
-		catch ( err ) {
-			console.error( 'Could not render level using supplied board data.' );
-		}
+		await super.openFile( fileInfo );
+		 // Render the level file.
+		const data = await this.client.renderLevelData( fileInfo );
 
 		//--------------------------------
 		// Finish & Set Context
 		//--------------------------------
 		// Set the level context.
-		this.setContext( level );
+		this.setContext( data.level );
 
 		//-----------------------------
 		// Emit Various Event(s)
@@ -23800,8 +23831,10 @@ class JestFileLevel extends JestFileImage {
 		// Emit a load file event with data [objects].
 		this.emit(
 			'openFile', null,
-			{ layers: level.getLayers(), ...regions }
-			);
+			{
+			layers: data.level.getLayers(),
+			...data.regions
+			});
 		return true; // success
 	}
 
@@ -25121,9 +25154,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileView.js l
 // This class frames a file in a viewable format using a canvas inside a panel.
 class JestFileView extends JestTool {
 	// Object propert(ies)
-	canvas			= null;			// [object] ElementCanvas for drawing.
+	canvas       = null;     // [object] ElementCanvas for drawing.
 	// Reference propert(ies)
-	file			= null;			// [object] JestFile being viewed.
+	file         = null;     // [object] JestFile being viewed.
 
 	// --------------------------------
 	// Constructor
@@ -25132,7 +25165,7 @@ class JestFileView extends JestTool {
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
-		super( client );			// call parent constructor
+		super( client ); // call parent constructor
 	}
 
 	//-------------------------
@@ -25155,14 +25188,16 @@ class JestFileView extends JestTool {
 	build( name='file-view', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'file-view' ];
+		const defaultClasses = [ 'file-view' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 		// --------------------------------
 		// Create Drawing [objects]
 		// --------------------------------
 		// Create the level rendering [canvas]
-		const canvas	= new ElementCanvas();
-		this.canvas		= canvas;
+		const canvas = new ElementCanvas();
+		this.canvas  = canvas;
+		// Pixelate the canvas for pixel art.
+		canvas.el.style.imageRendering = 'pixelated';
 		//this.panel.addPanel( 'canvas', canvas ); // add canvas to element
 		// Add canvas to palette element
 		this.panel.el.appendChild( canvas.el );
@@ -25176,13 +25211,82 @@ class JestFileView extends JestTool {
 	// Resize the canvas element.
 	// NOTE: This is a callback method.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * width		- [int] Value of custom width span of canvas.
-	// * height		- [int] Value of custom height span of canvas.
+	// * width   - [int] Value of custom width span of canvas.
+	// * height  - [int] Value of custom height span of canvas.
 	resize( width, height ) {
+		// Get real dimensions (after zoom).
+		const bounds = this.anchor.getZoomed();
 		// Update canvas dimensions
 		if ( this.canvas )
-			this.canvas.resize( width, height );
-		return true;	// success
+			this.canvas.resize( bounds.display.w, bounds.display.h );
+		// Reapply display zoom after the backing canvas is resized.
+		//this.applyZoom();
+		return true; // success
+	}
+
+	//--------------------------------
+	// Apply View Zoom
+	//--------------------------------
+	// Set the canvas's displayed size while preserving its backing dimensions.
+	// RETURNS: [boolean] `true` on success else `false`.
+	applyZoom() {
+		// Resolve the visible canvas element.
+		const canvas = this.canvas?.el;
+		if ( !canvas ) return false;
+
+		// Scale only its CSS dimensions; canvas.width and canvas.height
+		// remain the unzoomed coordinate space used by drawing operations.
+		canvas.style.width          = `${canvas.width * this.zoom}px`;
+		canvas.style.height         = `${canvas.height * this.zoom}px`;
+		canvas.style.maxWidth       = 'none';
+		canvas.style.maxHeight      = 'none';
+		canvas.style.imageRendering = 'pixelated';
+		return true; // success
+	}
+
+	//--------------------------------
+	// Get Canvas Pixel Position
+	//--------------------------------
+	// Convert a pointer event into unzoomed canvas pixel coordinates.
+	// RETURNS: [object|null] Pixel position, or `null` if unavailable.
+	// * event - [PointerEvent|MouseEvent] Pointer event over this view.
+	getCanvasPosition( event ) {
+		// Resolve the canvas and its displayed bounds.
+		const canvas = this.canvas?.el;
+		const rect   = canvas?.getBoundingClientRect();
+		if ( !canvas || !rect || !rect.width || !rect.height ) return null;
+
+		// Convert from displayed CSS pixels to the canvas backing pixels.
+		// Leave coordinates unclamped so tools can continue a drag outside
+		// the canvas when their existing behavior allows it.
+		return {
+			x: (event.clientX - rect.left) * canvas.width / rect.width,
+			y: (event.clientY - rect.top) * canvas.height / rect.height
+			};
+	}
+
+	//--------------------------------
+	// Get Canvas Grid Position
+	//--------------------------------
+	// Convert a pointer event into this view's grid coordinates.
+	// RETURNS: [object|null] Grid position, or `null` if unavailable.
+	// * event - [PointerEvent|MouseEvent] Pointer event over this view.
+	getCanvasGridPosition( event ) {
+		// Resolve the unzoomed canvas position.
+		const position = this.getCanvasPosition( event );
+		if ( !position ) return null; // fail
+
+		// Validate the view's unzoomed tile measurement.
+		const bounds   = this.anchor.getZoomed();
+		const units    = bounds.display.units;
+		if ( !Number.isFinite(units) || units<=0 )
+			return null; // fail
+
+		// Convert canvas pixels into local grid coordinates.
+		return {
+			x: Math.floor( position.x / units ),
+			y: Math.floor( position.y / units )
+			};
 	}
 
 	// --------------------------------
@@ -25190,15 +25294,15 @@ class JestFileView extends JestTool {
 	// --------------------------------
 	// Opens the file and triggers its view/render logic.
 	// RETURNS: [void].
-	// * file		- [object] JestFile being viewed.
+	// * file  - [object] JestFile being viewed.
 	openFile( file ) {
 		// Set the file context.
-		this.setFile( file );		// set the JestFile instance
+		this.setFile( file );  // set the JestFile instance
 		// Check if file is set.
 		if ( !this.file )
 			throw new Error( 'No file set for this view.' );
-		this.initView();			// Perform visual setup
-		this.renderFile();			// Load file data into view
+		this.initView();       // Perform visual setup
+		this.renderFile();     // Load file data into view
 	}
 
 	//-------------------------
@@ -25206,7 +25310,7 @@ class JestFileView extends JestTool {
 	//-------------------------
 	// Set the file instance being viewed.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * file		- JestFile [object] being viewed in context.
+	// * file  - JestFile [object] being viewed in context.
 	setFile( file ) {
 		// Validate argument.
 		if ( !(file instanceof JestFile) ) {
@@ -25215,7 +25319,7 @@ class JestFileView extends JestTool {
 			return false; // fail
 		}
 		// Set the file.
-		this.file	= file;
+		this.file = file;
 	}
 
 	// Set the file instance being viewed.
@@ -25231,9 +25335,11 @@ class JestFileView extends JestTool {
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void].
 	initView() {
-		// Re-apply grid layout to the anchor using tile size config.
-		const tileGrid = this.client.config.tileGrid;
-		this.anchor.graticulate( tileGrid ); // set grid size
+		// Keep the tile measurement on this view instead of making tools
+		// retrieve it directly from the global configuration.
+		const units = Number( this.client.config.tileGrid );
+		// Set the anchor's grid to the unzoomed tile size.
+		this.anchor.graticulate( units ); // set grid size
 	}
 
 	// --------------------------------
@@ -25665,7 +25771,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
-		super( client );		// call parent constructor
+		super( client ); // call parent constructor
 	}
 
 	//-------------------------
@@ -25706,11 +25812,17 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {
-		super.initView(); // call parent method
-		// Resize to level size.
-		const tileGrid	= this.client.config.tileGrid;
-		const levelGrid	= this.client.config.levelGrid;
-		this.anchor.resize( levelGrid*tileGrid, levelGrid*tileGrid );
+		// Initialize the base view and its tile measurement.
+		super.initView();
+		//-------------------------
+		// Configure Level Measurements
+		//-------------------------
+		// Graticulate to match the application configuration tile grid.
+		const units     = this.client.config.tileGrid;
+		this.anchor.graticulate( units ); // set tile grid
+		// Size the backing canvas in unzoomed level pixels.
+		const levelGrid = this.client.config.levelGrid;
+		this.anchor.resize( levelGrid*units, levelGrid*units );
 	}
 
 	//-------------------------
@@ -25768,18 +25880,16 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Retrieve the level represented by this file.
 		const level      = this.file.context;
 		// Retrieve the destination canvas.
-		const destCanvas = this.canvas.el;
-		// Obtain the destination drawing context.
-		const ctx        = destCanvas.getContext( '2d' );
+		const destCanvas = this.canvas;
 
 		// Validate the required rendering objects.
-		if ( !level || !ctx ) return false;
+		if ( !level ) return false;
 
 		//--------------------------------
 		// Clear Previous Preview
 		//--------------------------------
 		// Remove the previous composite before rebuilding.
-		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height );
+		destCanvas.clear();
 
 		//--------------------------------
 		// Composite Visible Layers
@@ -25790,19 +25900,14 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 			if ( !layer.visible ) continue; // skip
 
 			// Retrieve this layer's rendered canvas.
-			const sourceCanvas = layer.canvas?.el;
+			const sourceCanvas = layer.canvas;
 			// Skip layers without an initialized canvas.
 			if ( !sourceCanvas ) continue; // skip
 
 			// Draw the layer over the existing composite.
-			ctx.drawImage(
-				sourceCanvas,
-				0, 0,
-				sourceCanvas.width,
-				sourceCanvas.height,
-				0, 0,
-				destCanvas.width,
-				destCanvas.height
+			destCanvas.draw(
+				sourceCanvas, false, false, 0, 0, 0, 0,
+				null, null, destCanvas.width, destCanvas.height
 				);
 		}
 
@@ -25894,6 +25999,12 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// RETURNS: [void]
 	initView() {
 		super.initView(); // call parent method
+		//-------------------------
+		// Configure Level Measurements
+		//-------------------------
+		// Graticulate to match the application configuration tile grid.
+		const units  = this.client.config.tileGrid;
+		this.anchor.graticulate( units ); // set tile grid
 		// Resize to level size.
 		const width  = this.file.context.image.file.el.width;
 		const height = this.file.context.image.file.el.height;
@@ -28442,17 +28553,17 @@ class JestUser extends JestPlayer {
 		}
 
 		// Capture current user x & y coordinates
-		const userX		= this.anchor.x;
-		const userY		= this.anchor.y;
+		const userX = this.anchor.x;
+		const userY = this.anchor.y;
 
 		// Calculate new x & y
-		const newX		= userX + forceX/tileGrid; //dx;
-		const newY		= userY + forceY/tileGrid; //dy;
+		const newX  = userX + forceX/tileGrid; //dx;
+		const newY  = userY + forceY/tileGrid; //dy;
 
 		// Move the user anchor.
-		const move		= this.client.camera.checkUserPosition( newX, newY );
-		this.level		= move.level;			// set level [string] name
-		super.move( false, move.x, move.y );	// delegate movement to parent
+		const move  = this.client.camera.checkUserPosition( newX, newY );
+		this.level  = move.level; // set level [string] name
+		super.move( false, move.x, move.y ); // delegate movement to parent
 	}
 }
 
@@ -28585,6 +28696,8 @@ class JestGameboard extends JestSavable {
 			console.warn( `removeLevel: Level "${name}" not found.` );
 			return false; // no level removed
 		}
+		// Destroy the level & its child layers before removing the reference.
+		existing.destroy?.();
 		// Remove level
 		delete this.levels[name];
 		return true; // success
@@ -28995,57 +29108,62 @@ class JestOverworld extends JestSavable {
 
 	// Gets only the levels that are visible within the viewport.
 	// RETURNS: [array] Visible level canvases with cropped sections.
-	// * camera		- [object] JestCamera controlling the viewport.
+	// * camera   - [object] JestCamera controlling the viewport.
 	getSnapshot() {
 		// Retrieve padded view rectangle from camera.
-		const paddedRect	= this.client.camera.getPaddedViewRect();
+		const paddedRect    = this.client.camera.getPaddedViewRect();
 		// Get level width/height.
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan     = this.client.config.levelSpan;
 		// Build the bounds
-		const minX			= paddedRect.x;
-		const minY			= paddedRect.y;
-		const maxX			= paddedRect.x + paddedRect.width;
-		const maxY			= paddedRect.y + paddedRect.height;
+		const minX          = paddedRect.x;
+		const minY          = paddedRect.y;
+		const maxX          = paddedRect.x + paddedRect.width;
+		const maxY          = paddedRect.y + paddedRect.height;
 		// Convert world-space bounds to level grid indices
-		let minLevelX		= Math.floor( minX/levelSpan );
-		let maxLevelX		= Math.ceil( maxX/levelSpan ) - 1;
-		let minLevelY		= Math.floor( minY/levelSpan );
-		let maxLevelY		= Math.ceil( maxY/levelSpan ) - 1;
+		let minLevelX       = Math.floor( minX/levelSpan );
+		let maxLevelX       = Math.ceil( maxX/levelSpan ) - 1;
+		let minLevelY       = Math.floor( minY/levelSpan );
+		let maxLevelY       = Math.ceil( maxY/levelSpan ) - 1;
 		// Begin return data [array]
-		let visibleSections	= [];
+		let visibleSections = [];
 		// Iterate only over levels inside the visible range
 		for ( let gridY=minLevelY; gridY<=maxLevelY; gridY++ ) {
 			for ( let gridX=minLevelX; gridX<=maxLevelX; gridX++ ) {
-				const level			= this.getLevelAtXY( gridX, gridY );
+				const level         = this.getLevelAtXY( gridX, gridY );
 				if ( !level ) continue;
 				// Compute the level's world-space rectangle.
-				const levelWorldX	= gridX * levelSpan;
-				const levelWorldY	= gridY * levelSpan;
+				const levelWorldX   = gridX * levelSpan;
+				const levelWorldY   = gridY * levelSpan;
 				// Find the intersection between this level and the padded camera view.
-				const interLeft		= Math.max( levelWorldX, minX );
-				const interTop		= Math.max( levelWorldY, minY );
-				const interRight	= Math.min( levelWorldX+levelSpan, maxX );
-				const interBottom	= Math.min( levelWorldY+levelSpan, maxY );
-				const interWidth	= interRight - interLeft;
-				const interHeight	= interBottom - interTop;
+				const interLeft     = Math.max( levelWorldX, minX );
+				const interTop      = Math.max( levelWorldY, minY );
+				const interRight    = Math.min( levelWorldX+levelSpan, maxX );
+				const interBottom   = Math.min( levelWorldY+levelSpan, maxY );
+				const interWidth    = interRight - interLeft;
+				const interHeight   = interBottom - interTop;
 				if ( interWidth<=0 || interHeight<=0 ) continue; // No visible area
 				// Compute the visible portion of the level
-				let sx				= interLeft - levelWorldX;
-				let sy				= interTop - levelWorldY;
-				let sWidth			= interWidth;
-				let sHeight			= interHeight;
+				let sx              = interLeft - levelWorldX;
+				let sy              = interTop - levelWorldY;
+				let sWidth          = interWidth;
+				let sHeight         = interHeight;
 				// Destination rectangle on the screen.
-				const screenPos		= this.client.camera.globalToScreen( interLeft, interTop );
-				const dx			= screenPos.x;
-				const dy			= screenPos.y;
-				const dWidth		= interWidth;
-				const dHeight		= interHeight;
-				// Generate more return data [object]
-				visibleSections.push({
-					canvas: level.canvas.el, // The level's canvas element.
-					sx, sy, sWidth, sHeight, // Source rect in level space.
-					dx, dy, dWidth, dHeight  // Destination rect in screen space.
-					});
+				const screenPos     = this.client.camera.globalToScreen( interLeft, interTop );
+				const dx            = screenPos.x;
+				const dy            = screenPos.y;
+				const dWidth        = interWidth;
+				const dHeight       = interHeight;
+				// Add each visible layer canvas in the level's draw order.
+				for ( const layer of level.getLayers() ) {
+					// Skip hidden layers and layers without a rendered canvas.
+					if ( !layer.visible || !layer.canvas?.el ) continue;
+					// Add this layer's cropped canvas to the snapshot.
+					visibleSections.push({
+						canvas: layer.canvas.el, // The layer's canvas element.
+						sx, sy, sWidth, sHeight, // Source rect in level space.
+						dx, dy, dWidth, dHeight  // Destination rect in screen space.
+						});
+				}
 			}
 		}
 		// Return snapshot specification [array] data
@@ -29054,8 +29172,8 @@ class JestOverworld extends JestSavable {
 
 	// Render the visible snapshot of the map user is in.
 	// RETURNS: [bool] `true` on success, else `false`.
-	// * ctx			- [objet] HTML Canvas element 2d context.
-	// * snapshot		- [object] Data of snapshot to render (use getSnapshot() to obtain this data).
+	// * ctx       - [objet] HTML Canvas element 2d context.
+	// * snapshot  - [object] Data of snapshot to render (use getSnapshot() to obtain this data).
 	renderVisibleLevels( ctx, snapshot ) {
 		// Iterate each specification & snapshot
 		snapshot.forEach(
@@ -29424,31 +29542,30 @@ console.log( 'jestAlert: js/apps/jest/components/level/JestLevelLayer.js loaded'
 // Represents a single tile layer belonging to a level.
 // Manages tile data, visibility, locking, and rendering.
 //-------------------------------------------------------
-class JestLevelLayer extends JestSavable {
+class JestLevelLayer extends JestMatrix {
 	// Layer properties
-	id				= null;				// Unique layer identifier
-	name			= null;				// Display name
-	level			= null;				// Parent JestLevel reference
-	visible			= true;				// Whether layer is rendered
-	locked			= false;			// Whether layer can be edited
+	id          = null;        // Unique layer identifier
+	name        = null;        // Display name
+	level       = null;        // Parent JestLevel reference
+	visible     = true;        // Whether layer is rendered
+	locked      = false;       // Whether layer can be edited
 	// Object properties
-	canvas			= null;				// [ElementCanvas] object
-	stamp			= null;				// [ElementCanvas] object used for tile stamping
-	overworld		= null;				// [object] JestOverworld reference level is within.
+	canvas      = null;        // [ElementCanvas] object
+	stamp       = null;        // [ElementCanvas] object used for tile stamping
+	overworld   = null;        // [object] JestOverworld reference level is within.
 	// Level parts
-	tilemap			= null; 			// 2D [array] Raw tile map of level.
-	chunks			= null;				// [array] Tile map of level compressed into chunks.
-	tiledefs		= null;				// [object] Tiledefs aligned to specific tile indices.
+	tilemap     = null;        // 2D [array] Raw tile map of level.
+	chunks      = null;        // [array] Tile map of level compressed into chunks.
+	tiledefs    = null;        // [object] Tiledefs aligned to specific tile indices.
 
 	// --------------------------------
 	// Constructor
 	// --------------------------------
 	// Construct the [object].
-	// * client		- [object] Application client creating the object.
-	// * name		- [string] Value of level name (e.g. 'level1').
-	constructor( client, name ) {
+	// * client  - [object] Application client creating the object.
+	constructor( client ) {
 		// Call the parent object constructor
-		super( client, name );	// construct the parent
+		super( client ); // construct the parent
 		this.jot( 'status', 'constructed' ); // set status
 	}
 
@@ -29546,10 +29663,10 @@ class JestLevelLayer extends JestSavable {
 	// * tiles		- Ordered 2D [array] of tile tileset indices.
 	buildTileTypes( tiles ) {
 		// Gather variable(s)
-		let tileset		= this.client.gameboard.getTileset( 'pics1' );
-		const levelGrid	= this.client.config.levelGrid;
+		let tileset     = this.client.gameboard.getTileset( 'pics1' );
+		const levelGrid = this.client.config.levelGrid;
 		// Initialize a 2D array of Sets
-		const levelTileTypes	=
+		const levelTileTypes    =
 			Array.from(
 				{ length: levelGrid },
 				() => Array.from( { length: levelGrid }, () => new Set() )
@@ -29558,11 +29675,12 @@ class JestLevelLayer extends JestSavable {
 		for ( let y=0; y<levelGrid; y++ ) {
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Get tile @ coordinate (x,y).
-				const tile		= tiles[y][x];
-				if ( !tile ) continue; // skip transparent tile
+				// Read this cell safely when the layer map is sparse.
+				const tile = tiles?.[y]?.[x];
+				if ( !tile ) continue; // skip empty tile
 				// Get tile code (b64 string).
-				const tileCode	= tile.c ?? this.client.parsers.level.encodeTile( tile.tx, tile.ty );
-				const tileTypes	= tileset.tiledefs.getTypesByCode( tileCode ); // Get types
+				const tileCode  = tile.c ?? this.client.parsers.level.encodeTile( tile.tx, tile.ty );
+				const tileTypes = tileset.tiledefs.getTypesByCode( tileCode ); // Get types
 				if ( tileTypes.size>0 )
 					levelTileTypes[y][x] = tileTypes; // Store types
 			}
@@ -29575,7 +29693,10 @@ class JestLevelLayer extends JestSavable {
 	// RETURNS: [Set] of types, or empty Set if none exist.
 	// * x, y	- [int] Tile coordinates in the tileset.
 	getTileTypes( x, y ) {
-		return this.tiledefs[y]?.[x] || new Set();
+		// Return no types until this layer has built its tile definitions.
+		if ( !this.tiledefs ) return new Set();
+		// An empty or out-of-range cell has no tile types.
+		return this.tiledefs[y]?.[x] ?? new Set();
 	}
 
 	// --------------------------------
@@ -29600,33 +29721,34 @@ class JestLevelLayer extends JestSavable {
 
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * tiles		- Ordered 2D [array] of tile tileset indices.
+	// * tiles  - Ordered 2D [array] of tile tileset indices.
 	render( tiles ) {
 		// Generate list of tile
-		//const tiles		= this.genLevel();
+		//const tile   = { ts:0, tx:0, ty:0 };
+		//const tiles  = this.genLevel tile );
 		//console.log( tiles );
 		// Iterate tiles & map local tiledefs
 		/*for ( let y=0; y<tiles.length; y++ ) {
 			for ( let x=0; x<tiles[y].length; x++ ) {
-				const tile	= tiles[y][x];
+				const tile = tiles?.[y]?.[x];
 				if ( !tile ) continue;
 				foreach
 			}
 		}*/
 		// Gatekeep the method with mode-check.
-		const status	= this.skim( 'status' );
+		const status  = this.skim( 'status' );
 		if ( status!=='empty' && status!=='rendered' ) return false;
 		this.jot( 'status', 'rendering' ); // set status
 		// Collect all known tile-types on board.
-		this.tilemap	= tiles;		// store tiles 2D [array]
+		this.tilemap  = tiles;		// store tiles 2D [array]
 		this.buildTileTypes( tiles );	// store tile def types
 		// Organize tile types into chunks for blitting.
-		const chunks	= this.encodeRawLevelToChunks( tiles );
-		this.chunks		= chunks; // save chunks
+		const chunks  = this.encodeRawLevelToChunks( tiles );
+		this.chunks   = chunks; // save chunks
 		//console.log( tilemap );
 		// Get canvas contexts & clear it.
 		if ( this.canvas?.el ) {
-			const ctx	= this.canvas.el.getContext( '2d' );
+			const ctx = this.canvas.el.getContext( '2d' );
 			ctx.clearRect( 0, 0, this.canvas.el.width, this.canvas.el.height );
 		}
 		this.blit( chunks ); // render level bitmap
@@ -29642,10 +29764,10 @@ class JestLevelLayer extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	/*resize() {
 		// Update canvas dimensions
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan = this.client.config.levelSpan;
 		if ( this.canvas )
 			this.canvas.resize( levelSpan, levelSpan );
-		return true;	// success
+		return true; // success
 	}*/
 
 	//-------------------------
@@ -29713,25 +29835,24 @@ class JestLevelLayer extends JestSavable {
 
 	// Generate a level of tiles.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	genLevel() {
+	genLevel( fillTile=null ) {
 		// Validate level width/height
-		const tiles			= [];		// [array] of tiles
-		const levelGrid		= this.client.config.levelGrid;
+		const tiles        = []; // [array] of tiles
+		const levelGrid    = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
-			const row		= [];
+			const row      = [];
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create tile & add to row
-				const tile	= { ts:0, tx:0, ty:0 };
-				row.push( tile );
+				row.push( fillTile ? { ...fillTile } : null );
 			}
 			tiles.push( row );
 		}
 		// Return the generated tiles
 		return tiles;
 		/*// Encode the raw level into chunks.
-		const chunks	= this.encodeRawLevelToChunks( tiles );
+		const chunks = this.encodeRawLevelToChunks( tiles );
 		// Set tiles
-		this.chunks		= chunks;*/
+		this.chunks  = chunks;*/
 	}
 
 	// Encodes raw 2D [array] of tiles to level chunks [array]
@@ -29740,29 +29861,29 @@ class JestLevelLayer extends JestSavable {
 	encodeRawLevelToChunks( tiles ) {
 		if ( !tiles || !tiles.length ) return false
 		// Group positions by tileId
-		const chunks		= {};
-		const visited		= new Set();
-		const levelGrid		= this.client.config.levelGrid;
+		const chunks    = {};
+		const visited   = new Set();
+		const levelGrid = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create a [string] keyname.
-				let key			= `${x},${y}`;
+				let key = `${x},${y}`;
 				// Skip already processed tiles
-				if ( visited.has(key) || !tiles[y][x] ) continue;
+				if ( visited.has(key) || !tiles?.[y]?.[x] ) continue;
 				// Treat each tile as a single 1x1 matrix
-				let matrix		= [[ tiles[y][x] ]];
+				let matrix = [[ tiles?.[y]?.[x] ]];
 				// Encode the matrix
-				const matrixID	= this.encodeMatrixID( matrix );
+				const matrixID = this.encodeMatrixID( matrix );
 				// Find all matching tiles in the grid
 				for ( let yy=0; yy<levelGrid; yy++ ) {
 					for ( let xx=0; xx<levelGrid; xx++ ) {
-						let matchKey		= `${xx},${yy}`;
-						if ( !visited.has(matchKey) && this.sameTile(tiles[y][x],tiles[yy][xx]) ) {
+						let matchKey = `${xx},${yy}`;
+						if ( !visited.has(matchKey) && this.sameTile(tiles?.[y]?.[x],tiles?.[yy]?.[xx]) ) {
 							// Store position as a hex string
-							const posHex	= this.encodePosition( { x: xx, y: yy } );
+							const posHex = this.encodePosition( { x: xx, y: yy } );
 							if ( !chunks[matrixID] )
 								chunks[matrixID] = "";
-							chunks[matrixID]	+= posHex;
+							chunks[matrixID]    += posHex;
 							visited.add( matchKey );
 						}
 					}
@@ -30256,6 +30377,7 @@ class JestLevel extends JestSavable {
 		super( client, name );	// construct the parent
 		this.jot( 'status', 'constructed' ); // set status
 		this.resetCloudBinding();	// initialize cloud meta data
+		console.log( `Level ${this.name} constructed.` );
 	}
 
 	//-------------------------
@@ -30371,8 +30493,8 @@ class JestLevel extends JestSavable {
 	//-------------------------
 	// Creates and registers a new layer.
 	// RETURNS: [JestLevelLayer] Created layer.
-	//   name		- [string] value of layer name.
-	//   options	- [object] of layer options.
+	//   name      - [string] value of layer name.
+	//   options   - [object] of layer options.
 	async addLayer( name='Layer', options={} ) {
 		// Create a new layer.
 		const layer   = new JestLevelLayer( this.client, name );
@@ -30752,6 +30874,25 @@ class JestLevel extends JestSavable {
 		if ( this.activeLayerId===null )
 			this.activeLayerId = layer.id;
 		return layer; // return layer [object] ref
+	}
+
+	//--------------------------------
+	// Check Tile Types Across Layers
+	//--------------------------------
+	// Check whether any layer has any requested type at this tile.
+	// RETURNS: [boolean] `true` if any requested type matches.
+	// * x, y  - [int] Exact board tile coordinates.
+	// * types - [string|string[]] One or more tile types to check.
+	isPointType( x, y, types ) {
+		// Normalize a single type so both input forms use the same check.
+		const requestedTypes = Array.isArray(types) ? types : [types];
+		const layers = this?.getLayers?.() ?? [];
+		// Read the tile types once per layer and stop at the first match.
+		return layers.some(
+			layer => {
+				const tileTypes = layer?.getTileTypes( x, y );
+				return requestedTypes.some( type => tileTypes?.has(type) );
+			});
 	}
 }
 
@@ -31143,19 +31284,19 @@ class JestCamera extends JestMatrix {
 		const { width: userWidth, height: userHeight } = this.client.user.anchor;
 		// Get level neighbors (only N, E, S, W)
 		const limits = {
-			n:	overworld.matrix[levelY - 1]?.[levelX] || null,
-			e:	overworld.matrix[levelY]?.[levelX + 1] || null,
-			s:	overworld.matrix[levelY + 1]?.[levelX] || null,
-			w:	overworld.matrix[levelY]?.[levelX - 1] || null
+			n: overworld.matrix[levelY - 1]?.[levelX] || null,
+			e: overworld.matrix[levelY]?.[levelX + 1] || null,
+			s: overworld.matrix[levelY + 1]?.[levelX] || null,
+			w: overworld.matrix[levelY]?.[levelX - 1] || null
 			};
 
 		// User movement boundaries
-		const bleedX	= 0;
-		const bleedY	= 0;
-		const minX		= limits.w ? -bleedX : 0;
-		const maxX		= limits.e ? levelWidth - bleedX : levelWidth - 1;
-		const minY		= limits.n ? -bleedY : 0;
-		const maxY		= limits.s ? levelHeight - bleedY : levelHeight - 2;
+		const bleedX = 0;
+		const bleedY = 0;
+		const minX   = limits.w ? -bleedX : 0;
+		const maxX   = limits.e ? levelWidth - bleedX : levelWidth - 1;
+		const minY   = limits.n ? -bleedY : 0;
+		const maxY   = limits.s ? levelHeight - bleedY : levelHeight - 2;
 
 		// Instantiate dynamic variables to calculate new position
 		let newX = x, newY = y, newLevelX = levelX, newLevelY = levelY;
@@ -31163,12 +31304,12 @@ class JestCamera extends JestMatrix {
 		const overshootX = x<minX ? minX-x : x>maxX ? x-maxX : 0;
 		const overshootY = y<minY ? minY-y : y>maxY ? y-maxY : 0;
 		// Handle transitions
-		if ( x<minX && limits.w )		{ newLevelX--; newX = levelWidth - bleedX - (minX-x); }
-		else if ( x>maxX && limits.e )	{ newLevelX++; newX = x-maxX; }
+		if ( x<minX && limits.w )      { newLevelX--; newX = levelWidth - bleedX - (minX-x); }
+		else if ( x>maxX && limits.e ) { newLevelX++; newX = x-maxX; }
 		else newX = Math.max( minX, Math.min(maxX,x) );
 
-		if ( y<minY && limits.n )		{ newLevelY--; newY = levelHeight - bleedY - (minY-y); }
-		else if ( y>maxY && limits.s )	{ newLevelY++; newY = y-maxY; }
+		if ( y<minY && limits.n )      { newLevelY--; newY = levelHeight - bleedY - (minY-y); }
+		else if ( y>maxY && limits.s ) { newLevelY++; newY = y-maxY; }
 		else newY = Math.max( minY, Math.min(maxY,y) );
 
 		// Get new level or stay in the current one
@@ -31185,15 +31326,15 @@ class JestCamera extends JestMatrix {
 	// is centered, clamped to the world boundaries.
 	update() {
 		// Get user & viewport info
-		const { userGlobalX, userGlobalY }		= this.getUserLocation();
-		const { viewportWidth, viewportHeight }	= this.getViewport();
-		const { globalWidth, globalHeight }		= this.getGlobalDimensions();
+		const { userGlobalX, userGlobalY }      = this.getUserLocation();
+		const { viewportWidth, viewportHeight } = this.getViewport();
+		const { globalWidth, globalHeight }     = this.getGlobalDimensions();
 		// Center the camera on the user:
-		let camX	= userGlobalX - (viewportWidth/2);
-		let camY	= userGlobalY - (viewportHeight/2);
+		let camX = userGlobalX - (viewportWidth/2);
+		let camY = userGlobalY - (viewportHeight/2);
 		// Clamp to world bounds:
-		camX		= Math.max( 0, Math.min(camX,globalWidth-viewportWidth) );
-		camY		= Math.max( 0, Math.min(camY,globalHeight-viewportHeight) );
+		camX     = Math.max( 0, Math.min(camX,globalWidth-viewportWidth) );
+		camY     = Math.max( 0, Math.min(camY,globalHeight-viewportHeight) );
 		this.anchor.move( Math.round(camX), Math.round(camY) );
 	}
 }
@@ -32465,15 +32606,15 @@ Jest.prototype.urlFileinfo = function( url ) {
 // Convert raw file components into a normalized FileInfo [object].
 // RETURNS: [object]
 // 		{
-// 			extension,	// file extension (e.g. "txt")
-// 			stem,		// filename without extension (e.g. "pics1")
-// 			filename,	// filename with extension (e.g. "pics1.png")
-// 			path,		// file path
-// 			file,
-// 			handle,
-// 			data,
-// 			network,	// 'local', 'remote', 'none'
-// 			address		// full address
+// 		extension,	// file extension (e.g. "txt")
+// 		stem,		// filename without extension (e.g. "pics1")
+// 		filename,	// filename with extension (e.g. "pics1.png")
+// 		path,		// file path
+// 		file,
+// 		handle,
+// 		data,
+// 		network,	// 'local', 'remote', 'none'
+// 		address		// full address
 // 		}
 // * path		- [string] URL or local file path
 // * file		- [object|null] File reference (optional)
@@ -33028,8 +33169,8 @@ class JestWebsocket extends OSCallback {
 		//-------------------------
 		// Setup Data For Connection
 		//-------------------------
-		await this.disconnect();		// disconnect existing connection
-		this.trying			= true;		// trying to connect
+		await this.disconnect();  // disconnect existing connection
+		this.trying = true;       // trying to connect
 		//-------------------------
 		// Attempt to Connect
 		//-------------------------
@@ -33037,23 +33178,23 @@ class JestWebsocket extends OSCallback {
 		try {
 			// Attempt to open a connection to the WebSocket server
 			console.log( `[JESTWebsocket] Connecting to [${this.url}]...` );
-			this.ws				= new WebSocket( `${this.url}` );
+			this.ws           = new WebSocket( `${this.url}` );
 			// Successfully connected
-			this.ws.onopen		= () => this.open();
+			this.ws.onopen    = () => this.open();
 			// Handle incoming message from server
-			this.ws.onmessage	= (e) => this.message( JSON.parse(e.data) );
+			this.ws.onmessage = e => this.message( JSON.parse(e.data) );
 			// A non-fatal error occurred with the socket
-			this.ws.onerror		= (err) => this.error( err );
+			this.ws.onerror   = err => this.error( err );
 			// Socket closed (server down, lost connection, etc.)
-			this.ws.onclose		= (e) => this.close( e );
+			this.ws.onclose   = e => this.close( e );
 			return true; // connection made
 		}
 		catch ( err ) {
 			// If creating the WebSocket throws (very rare), log it
 			console.error( "[JESTWebsocket] Unexpected exception during connection:", err );
 			// Failed to connect
-			this.trying		= false;	// not trying to connect
-			return false;				// connection failed
+			this.trying     = false;  // not trying to connect
+			return false;             // connection failed
 		}
 	}
 
@@ -33510,10 +33651,10 @@ console.log( 'jestAlert: js/apps/jest/components/online/auth/JestLogin.js loaded
 //-----------------------------
 class JestLogin extends JestElement {
 	// Object properties
-	logged   = false;      // [bool] whether user is logged in or not.
-	username = null;       // [object|null] Logged-in user (or null)
-	modals   = {};         // [object] JestModal instance
-	parts    = {};         // [object] Login parts.
+	logged    = false;      // [bool] whether user is logged in or not.
+	username  = null;       // [object|null] Logged-in user (or null)
+	modals    = {};         // [object] JestModal instance
+	parts     = {};         // [object] Login parts.
 
 	//-------------------------
 	// Constructor
@@ -34910,18 +35051,10 @@ JestAppsRegistry.AppJestPlay =
 			// --------------------------------
 			// Create Level [objects]
 			// --------------------------------
-			const levels		= {};
-			for ( let i=0; i<levelNames.length; i++ ) {
-				// Render level13
-				const name		= levelNames[i];
-				const level		= new JestLevel( this, name );
-				this.gameboard.addLevel( name, level ); // store ref in gameboard
-				await level.setup();
-				const record	= this.secretary.getRecord( name );
-				level.render( record.board ); // render the level bitmap
-				levels[name]	= level;
-			}
+			// Load every test level using the board or layers from its file version.
+			const levels = await this.loadLevels( levelNames );
 			console.log( levels );
+
 			// Assume levels have been created as in original code
 			// Now create the giant map:
 			//this.createGiantMap(levelNames, levels);
@@ -34937,21 +35070,21 @@ JestAppsRegistry.AppJestPlay =
 					}
 				}
 			}*/
-			overworld.addLevel( levels['level39.nw'], 0, 0 );		// MoD?
-			overworld.addLevel( levels['level16.nw'], 1, 0 );		// supernick
-			overworld.addLevel( levels['level18.nw'], 2, 0 );		// church?
-			overworld.addLevel( levels['level14.nw'], 0, 1 );		// vangel
-			overworld.addLevel( levels['level13.nw'], 1, 1 );		// zol pub
-			overworld.addLevel( levels['level17.nw'], 2, 1 );		// fox den
-			overworld.addLevel( levels['level38.nw'], 0, 2 );		// angel clan
-			overworld.addLevel( levels['level9.nw'], 1, 2 );		// taylor richards
-			overworld.addLevel( levels['level10.nw'], 3, 2 );		// master-li fields
+			overworld.addLevel( levels['level39.nw'], 0, 0 );  // MoD?
+			overworld.addLevel( levels['level16.nw'], 1, 0 );  // supernick
+			overworld.addLevel( levels['level18.nw'], 2, 0 );  // church?
+			overworld.addLevel( levels['level14.nw'], 0, 1 );  // vangel
+			overworld.addLevel( levels['level13.nw'], 1, 1 );  // zol pub
+			overworld.addLevel( levels['level17.nw'], 2, 1 );  // fox den
+			overworld.addLevel( levels['level38.nw'], 0, 2 );  // angel clan
+			overworld.addLevel( levels['level9.nw'],  1, 2 );  // taylor richards
+			overworld.addLevel( levels['level10.nw'], 3, 2 );  // master-li fields
 
 			// --------------------------------
 			// Create the server connect [object]
 			// --------------------------------
-			const online	= new JestOnline( this );	// server interactor
-			this.online		= online;
+			const online = new JestOnline( this );	// server interactor
+			this.online  = online;
 			// Add online mode events.
 			online.register(
 				'selfJoin', 'selfJoin',
@@ -34977,14 +35110,14 @@ JestAppsRegistry.AppJestPlay =
 			// --------------------------------
 			// Create the user [object]
 			// --------------------------------
-			const user		= new JestUser( this, 0 ); // user character
+			const user   = new JestUser( this, 0 ); // user character
 			await user.setup();
 				/*.catch(
 					( err ) => {
 						console.warn( 'user did not setup properly. Application [should quit].' );
 					});*/
-			this.user		= user;
-			user.level		= /*'destinyg_b3';//*/ 'level13.nw';
+			this.user    = user;
+			user.level   = /*'destinyg_b3';//*/ 'level13.nw';
 			user.anchor.move( 10, 5 );
 
 			// --------------------------------
@@ -34995,7 +35128,7 @@ JestAppsRegistry.AppJestPlay =
 					e => {
 						// Update gameboard drawing
 						this.draw( e );
-					} );
+					});
 
 			// --------------------------------
 			// Setup Debugging
@@ -35036,25 +35169,58 @@ JestAppsRegistry.AppJestPlay =
 		// --------------------------------
 		// Drawing
 		// --------------------------------
+		// Load test levels and register them with the gameboard.
+		// RETURNS: [object] Levels keyed by their requested filenames.
+		// * filenames - [array] Remote level filenames already loaded by Secretary.
+		async loadLevels( filenames ) {
+			// Store each ready level under the key existing game code expects.
+			const levels = {};
+			// Prepare each level through the shared level loader.
+			for ( const filename of filenames ) {
+				// Resolve the remote file metadata required by renderLevelData().
+				const fileInfo = this.getFileInfo( filename, null, null, null, 'remote' );
+				// Stop if the filename did not resolve to file information.
+				if ( !fileInfo )
+					throw new Error( `Could not resolve file information for "${filename}".` );
+
+				// Build the JestLevel, its layers, and its rendered layer canvases.
+				const prepared = await this.renderLevelData( fileInfo );
+				// The shared loader returns null when rendering fails.
+				if ( !prepared?.level )
+					throw new Error( `Could not prepare level "${filename}".` );
+
+				// Register the ready level for gameplay and overworld lookup.
+				const level = prepared.level;
+				this.gameboard.addLevel( filename, level );
+				levels[filename] = level;
+			}
+
+			// Return all loaded levels to the caller.
+			return levels; // [object]
+		}
+
+		// --------------------------------
+		// Drawing
+		// --------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
 		draw( e ) {
 			// Clear the canvas with a black screen
-			const canvas	= this.gameboard.display.getCanvas( 'world' );
+			const canvas    = this.gameboard.display.getCanvas( 'world' );
 			// Determine if canvas is set
 			if ( !canvas || !canvas.el ) {
 				console.warn( 'Canvas is not set or invalid' );
 				return;
 			}
-			const ctx		= canvas.el.getContext( '2d' );
+			const ctx       = canvas.el.getContext( '2d' );
 			// Update camera view rendering data
 			this.camera.update();
 			//ctx.fillStyle = "green";
 			ctx.clearRect( 0, 0, canvas.el.width, canvas.el.height );
 			// Draw level onto canvas
-			const overworld	= this.gameboard.overworlds.map1;
-			const snapshot	= overworld.getSnapshot();
+			const overworld = this.gameboard.overworlds.map1;
+			const snapshot  = overworld.getSnapshot();
 			overworld.renderVisibleLevels( ctx, snapshot );
 			/*ctx.fillStyle = "#FF00FF";
 			ctx.fillRect( 0, 0, this.canvas.el.width, this.canvas.el.height );*/
@@ -35076,8 +35242,8 @@ JestAppsRegistry.AppJestPlay =
 			// Sort by Y depth — lower Y = in front (higher Z)
 			views.sort(
 				(a,b) => {
-					const ay	= Math.round( a.globalY );
-					const by	= Math.round( b.globalY );
+					const ay = Math.round( a.globalY );
+					const by = Math.round( b.globalY );
 					return ay - by;
 				});
 			//console.log( `${view.globalX},${view.globalY}` );
@@ -35090,8 +35256,7 @@ JestAppsRegistry.AppJestPlay =
 				this.inspector.update( e );
 		}
 
-		// File: giantMap.js
-		// Creates a giant map canvas from individual level canvases arranged in a 4x5 grid,
+		/*// Creates a giant map canvas from individual level canvases arranged in a 4x5 grid,
 		// then opens the resulting image in a new window.
 		// *levelNames	- [array] of level names.
 		// *levels		- [object] where each key is a level name and its value is the level object containing a canvas.
@@ -35141,7 +35306,7 @@ JestAppsRegistry.AppJestPlay =
 			document.body.appendChild(downloadLink);				// File: giantMap.js, line 56, char #1
 			downloadLink.click();									// File: giantMap.js, line 57, char #1
 			document.body.removeChild(downloadLink);				// File: giantMap.js, line 58, char #1
-		}
+		}*/
 
 		// --------------------------------
 		// Online Mode Handling
@@ -36067,22 +36232,23 @@ class JestCreator extends Jest {
 		// Setup Gameboard [object]
 		// --------------------------------
 		this.gameboard.display.addCanvas( 'workspace' ); // create gameboard canvas
-		const canvas		= this.gameboard.display.getCanvas( 'workspace' );
-		canvas.resize( 0, 0 );			// set default board width & height
+		this.gameboard.display.addCanvas( 'sketchpad' ); // create sketchpad canvas
+		const canvas = this.gameboard.display.getCanvas( 'workspace' );
+		canvas.resize( 0, 0 );          // set default board width & height
 
 		// --------------------------------
 		// Animation Handler [object]
 		// --------------------------------
 		// Assign the gameboard canvas to the animator for animation rendering
-		this.animator.canvas = canvas;	// Animator canvas is the world "screen"
+		this.animator.canvas = canvas;  // Animator canvas is the world "screen"
 
 		// --------------------------------
 		// Create File Menu [object]
 		// --------------------------------
 		// Create the file menu.
-		const filemenu		= new JestFileMenu( this );
-		this.filemenu		= filemenu;	// store ref
-		filemenu.build();				// build menu DOM
+		const filemenu = new JestFileMenu( this );
+		this.filemenu  = filemenu;      // store ref
+		filemenu.build();               // build menu DOM
 		// Create a brand logo inside the system bar.
 		//filemenu.setTitle( this.name );
 		filemenu.panel.createPanel({
@@ -36635,6 +36801,12 @@ JestAppsRegistry.AppJestTiler =
 			const toolbar	= this.toolbar;
 			// Get the file menu.
 			const filemenu	= this.filemenu;	// get ref
+
+			//-------------------------
+			// Initiate App-Level Settings
+			//-------------------------
+			// Initiate the tiler app as having settings.
+			client.settings.tiler = {};
 
 			// --------------------------------
 			// Plugin Tiler UI Hook(s)
@@ -37227,13 +37399,13 @@ JestAppsRegistry.AppJestTiler =
 			// Begin the report.
 			let report	= {
 				// Active level info.
-				levelView:				null,
-				level:					null,
-				levelViewKey:			null,
+				levelView      : null,
+				level          : null,
+				levelViewKey   : null,
 				// Active tileset info.
-				tilesetView:			null,
-				tileset:				null,
-				tilesetViewKey:			null
+				tilesetView    : null,
+				tileset        : null,
+				tilesetViewKey : null
 				};
 
 			//--------------------------------
@@ -37243,9 +37415,9 @@ JestAppsRegistry.AppJestTiler =
 			const levelView = this.tabbarFile[property];
 			// Populate the level information when a valid view exists.
 			if ( levelView ) {
-				report.levelView		= levelView;
-				report.level			= levelView.file.context;
-				report.levelViewKey		= levelView.skey;
+				report.levelView      = levelView;
+				report.level          = levelView.file.context;
+				report.levelViewKey   = levelView.skey;
 			}
 
 			//--------------------------------
@@ -37255,9 +37427,9 @@ JestAppsRegistry.AppJestTiler =
 			const tilesetView = this.tabbarTileset[property];
 			// Populate the tileset information when a valid view exists.
 			if ( tilesetView ) {
-				report.tilesetView		= tilesetView;
-				report.tileset			= tilesetView.file.context;
-				report.tilesetViewKey	= tilesetView.skey;
+				report.tilesetView    = tilesetView;
+				report.tileset        = tilesetView.file.context;
+				report.tilesetViewKey = tilesetView.skey;
 			}
 			// Return the requested application state.
 			return report;
@@ -37465,10 +37637,11 @@ JestAppsRegistry.AppJestTiler =
 			// Determine if editor canvas is set.
 			const editor     = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
-				console.warn( 'Editor canvas is not set or invalid' );
+				console.warn( 'Workspace canvas is not set or invalid' );
 				return; // abort
 			}
 			const editorCtx  = editor.el.getContext( '2d' );
+
 			// Determine if palette canvas is set.
 			const palette    = this.gameboard.display.getCanvas( 'palette' );
 			if ( !palette || !palette.el ) {
@@ -37476,8 +37649,19 @@ JestAppsRegistry.AppJestTiler =
 				return; // abort
 			}
 			const paletteCtx = palette.el.getContext( '2d' );
+
+			// Determine if sketchpad canvas is set.
+			const sketch     = this.gameboard.display.getCanvas( 'sketchpad' );
+			if ( !sketch || !sketch.el ) {
+				console.warn( 'Sketchpad canvas is not set or invalid' );
+				return; // abort
+			}
+			const sketchCtx  = sketch.el.getContext( '2d' );
+
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null, e, state, enabled, mode, editorCtx, paletteCtx );
+			this.emit( 'predraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 
 			// --------------------------------
 			// Draw Depending Upon Mode
@@ -37534,8 +37718,12 @@ JestAppsRegistry.AppJestTiler =
 				default: break; // no mode to draw
 			}
 			// Emit post-draw hooks.
-			this.emit( 'draw', null, e, state, enabled, mode, editorCtx, paletteCtx );
-			this.emit( 'postdraw', null, e, state, enabled, mode, editorCtx, paletteCtx );
+			this.emit( 'draw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
+			this.emit( 'postdraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 		}
 
 		//--------------------------------
@@ -37657,7 +37845,7 @@ JestAppsRegistry.AppJestAnimator =
 		editor			= null;				// [object] Panel container for editing arena (board & sidebar).
 		board			= null;				// [JestElement] Board for editing the jani.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
-		
+
 		// --------------------------------
 		// Constructor
 		// --------------------------------
@@ -38353,21 +38541,25 @@ JestAppsRegistry.AppJestAnimator =
 			// Check If Canvas Is Available
 			// --------------------------------
 			// Determine if editor canvas is set.
-			const editor	= this.gameboard.display.getCanvas( 'workspace' );
+			const editor    = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
-				console.warn( 'Editor canvas is not set or invalid' );
+				console.warn( 'workspace canvas is not set or invalid' );
 				return;
 			}
-			const ctx		= editor.el.getContext( '2d' );
-			// Determine if palette canvas is set.
-			/*const palette	= this.gameboard.display.getCanvas( 'palette' );
-			if ( !palette || !palette.el ) {
-				console.warn( 'Palette canvas is not set or invalid' );
-				return;
+			const editorCtx = editor.el.getContext( '2d' );
+
+			// Determine if sketchpad canvas is set.
+			const sketch    = this.gameboard.display.getCanvas( 'sketchpad' );
+			if ( !sketch || !sketch.el ) {
+				console.warn( 'Sketchpad canvas is not set or invalid' );
+				return; // abort
 			}
-			const paletteCtx	= palette.el.getContext( '2d' );*/
+			const sketchCtx = sketch.el.getContext( '2d' );
+
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null, e, state, enabled, mode, ctx );
+			this.emit( 'predraw', null,
+				e, state, enabled, mode,
+				editorCtx, sketchCtx );
 
 			// --------------------------------
 			// Draw Depending Upon Mode
@@ -38505,8 +38697,12 @@ JestAppsRegistry.AppJestAnimator =
 			// Emit Final Event(s)
 			// --------------------------------
 			// Emit post-draw hooks.
-			this.emit( 'draw', null, e, state, enabled, mode, ctx );
-			this.emit( 'postdraw', null, e, state, enabled, mode, ctx );
+			this.emit( 'draw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
+			this.emit( 'postdraw', null,
+				e, state, enabled, mode,
+				editorCtx, paletteCtx, sketchCtx );
 		}
 	};
 // Make JestAnimator globally accessible for plugins
@@ -38585,6 +38781,128 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/loaders/level
 
 		// Extend the client class.
 		extend: function( Klass, proto ) {
+			// Render a level's loaded data into a level [object].
+			// RETURNS: {level,record,regions} | null.
+			// * fileInfo - File information [object].
+			proto.renderLevelData = async function( fileInfo ) {
+				// Create a new level [object] with filename stem.
+				const level = new JestLevel( this, fileInfo.filename );
+				await level.setup(); // setup new [object]
+				// Create variables that will be loaded in.
+				let layers  =
+					[{
+					id      : 0,
+					name    : 'Ground',
+					visible : true,
+					locked  : false,
+					board   : null
+					}];
+				let regions = {};
+				console.log( JestParserLevel.keywords );
+
+				// Keep the parsed record available to both branches & the return value.
+				let record  = null; // default empty record
+
+				//--------------------------------
+				// Build Empty Level
+				//--------------------------------
+				// Create empty level if no file opened.
+				if ( fileInfo.network==='none' ) {
+					console.log( 'No File Data Supplied: Generating level using empty file data...' );
+					// Choose base generic tile @ index (0,0)
+					const baseTile   = { ts: 0, tx: 0, ty: 0 };
+					// level is your JestLevel instance
+					const levelGrid  = this.config.levelGrid; // level WxH
+					const board      = this.grapher.createMatrix( levelGrid, levelGrid, baseTile );
+					layers[0].board  = board; // add board to base layer
+					// Dynamically assign regions via parser keyword registration
+					for ( const keyword of JestParserLevel.keywords ) {
+						const key    = keyword.toLowerCase();
+						if ( key==='board' || key==='layer' ) continue;
+						regions[key] = []; // empty region (by default)
+					}
+				}
+				//--------------------------------
+				// Generate Level From File Data
+				//--------------------------------
+				else {
+					console.log( 'File Data Supplied: Generating level using file data...' );
+					// Attempt to get the file record.
+					const secretary   = this.secretary;	  // secretary [object]
+					const transmitter = this.transmitter; // transmitter [object]
+					const record      = secretary.getRecord( fileInfo.address, fileInfo.network );
+			        if ( !record )
+			            throw new Error( 'Level file record not found.' );
+
+					// Remove record from secretary & transmitter cache.
+					secretary.removeRecord( fileInfo.address, fileInfo.network );
+					transmitter.removeFromCache( fileInfo.address, true );
+
+					//--------------------------------
+			        // Normalize Level Format
+			        //--------------------------------
+					// Get tile board data from the read file.
+					console.log( record );
+		            // Convert legacy board into a single layer.
+			        if ( record.version==='GLEVNW01' )
+						layers[0].board = record.board; // add board to base layer
+					else if ( record.version==='JESTNW02' )
+		            	layers = record.layers;
+		        	else throw new Error( `Unsupported level version: ${record.version}` );
+
+					//--------------------------------
+					// Debug Parsed Layer Records
+					//--------------------------------
+					// Verify that the parser supplied layer definitions
+					// before converting them into JestLevelLayer objects.
+					console.log( '[JEST Layers] Version:', record.version );
+					console.log( '[JEST Layers] Parsed layers:', record.layers );
+					console.log( '[JEST Layers] Selected layer records:', layers );
+
+			        //--------------------------------
+			        // Load Other Keyword Regions
+			        //--------------------------------
+					// Dynamically assign regions via parser keyword registration
+					for ( const keyword of JestParserLevel.keywords ) {
+						const key    = keyword.toLowerCase();
+						if ( key==='board' || key==='layer' ) continue;
+						regions[key] = record[key] ?? [];
+					}
+				}
+				console.log( regions );
+
+				//--------------------------------
+			    // Create Level Layers
+			    //--------------------------------
+				// Iterate each layer & add to level.
+				for ( const layer of layers ) {
+			        await level.addLayer(
+						layer.name,
+						{
+			            id      : layer.id,
+			            visible : layer.visible,
+			            locked  : layer.locked,
+			            tilemap : layer.board
+			        	});
+			    }
+
+				//--------------------------------
+				// Render Tilemap Into Level
+				//--------------------------------
+				console.log( `Converted "${fileInfo.stem}" successfully into level [object]!` );
+				// Load-in retrieved or generated board data & render its bitmap in the level [object].
+				console.log( `Rendering "${fileInfo.stem}" level data into level [object]...` );
+				// Set new level as this file [object] context.
+				try {
+					level.render(); // populates level layer tilemaps using blit()
+					return { level, regions, record }; // successfully rendered
+				}
+				catch ( err ) {
+					console.error( 'Could not render level using supplied board data.' );
+					return null; // failed to render
+				}
+			};
+
 			// Add level load method.
 			// RETURNS: [bool] success.
 			// * fileInfo	- File information [object].
@@ -38762,52 +39080,57 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/jest/parsers/json.
 	else console.error( 'json.plugin.js load error: Jest.use() not found' );
 })( window );
 
-/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/options.plugin.js --- */
+/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/system.plugin.js --- */
 //-------------------------------------------------------
 // JEST ® All Rights Reserved
 // Antago (God of Gravity), author of Graal2001 & Destiny
 // Copyright ® 1999-2026
 //-------------------------------------------------------
-console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.plugin.js loaded' );
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/system.plugin.js loaded' );
 
 //-------------------------
-// Options Plugin
+// System Plugin
 //-------------------------
-// Add options for handling audio, history, etc.
+// Add system for handling audio, history, etc.
 (function( window ) {
 	//--------------------------------
 	// Plugin Metadata
 	//--------------------------------
-	const type		= 'settings';
-	const subtype	= 'options';
+	const type    = 'settings';
+	const subtype = 'system';
 
 	//--------------------------------
 	// Plugin Definition
 	//--------------------------------
-	const plugin = {
+	const plugin  = {
 		//--------------------------------
 		// Initialize Plugin
 		//--------------------------------
 		// Called once when plugin is registered.
 		// * client - [object] reference to JestCreator
 		init: function( client ) {
-			// Keep the crosshair enabled by default unless the user changed it.
-			client.settings.crosshair ??= true;
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace   = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad   = client.gameboard.display.getCanvas( 'sketchpad' );
 
 			//-------------------------
 			// Create Control Panel
 			//-------------------------
 			// Generate a "form" inside the sidebar.
-			const optsPanel = new JestForm( client );      // create DOM Panel element [object].
-			optsPanel.build( 'options', ['app-options'] ); // build the form
+			const systemPanel = new JestForm( client );      // create DOM Panel element [object].
+			systemPanel.build( 'system', ['app-system'] );   // build the form
 
 			//-------------------------
 			// Mute Sounds Button
 			//-------------------------
 			// Create the "SFX" mute option (as a checkbox).
-			const inputMute = new JestInputCheckbox( client, 'mute', null, false, 'Mute' );
-			inputMute.build( `input-mute` );               // build field
-			optsPanel.addField( 'mute', inputMute );       // add field to form
+			const inputMute   = new JestInputCheckbox( client, 'mute', null, false, 'Mute' );
+			inputMute.build( `input-mute` );                 // build field
+			systemPanel.addField( 'mute', inputMute );       // add field to form
 			inputMute.showLabel(); // show the label
 
 			// Register an event when "sounds" are toggled.
@@ -38816,7 +39139,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 				enable => {
 					// Turn on/off all sounds.
 					client.soundboard.mute = enable; // toggle sound
-					//client.jot( 'optsSounds', enable );
 				});
 			let toggle = false; // sounds not muted, by default
 			inputMute.setChecked( toggle );
@@ -38830,7 +39152,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 			inputVolume.setMax( 100 );
 			inputVolume.setStep( 1 );
 			inputVolume.build( 'input-volume' );
-			optsPanel.addField( 'volume', inputVolume );
+			systemPanel.addField( 'volume', inputVolume );
 			inputVolume.showLabel();
 
 			// Register an event when "sound" volume is modified.
@@ -38851,7 +39173,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 			inputHistory.setMax( 30 );
 			inputHistory.setStep( 1 );
 			inputHistory.build( 'input-history' );
-			optsPanel.addField( 'history', inputHistory );
+			systemPanel.addField( 'history', inputHistory );
 			inputHistory.showLabel();
 
 			// Register an event when "history limit" modified.
@@ -38885,12 +39207,92 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 			inputHistory.setValue( 15 );
 
 			//-------------------------
+			// Add to Sidebar
+			//-------------------------
+			// Add the curator panel to the sidebar.
+			client.sidebar.addDisableExclusion( subtype ); // prevent forced collapse
+			client.sidebar.addSection( subtype, 'System', systemPanel.panel, {}, systemPanel );
+			client.sidebar.refit( subtype ); // resize to fit contents
+		},
+
+		//--------------------------------
+		// New Method(s) In Creator Application
+		//--------------------------------
+		extend: function( Klass, proto ) { }
+	};
+
+	//--------------------------------
+	// Register With Creator Application
+	//--------------------------------
+	if ( window.JestCreator && typeof window.JestCreator.use==='function' )
+		window.JestCreator.use( type, plugin );
+	else console.error( 'system.plugin.js load error: JestCreator.use() not found' );
+})( window );
+
+/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/tiler/editor.plugin.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/editor.plugin.js loaded' );
+
+//-------------------------
+// Editor Options Plugin
+//-------------------------
+// Add editor options for the tile application level editor.
+(function( window ) {
+	//--------------------------------
+	// Plugin Metadata
+	//--------------------------------
+	const type    = 'settings';
+	const subtype = 'editor';
+
+	//--------------------------------
+	// Plugin Definition
+	//--------------------------------
+	const plugin  = {
+		//--------------------------------
+		// Initialize Plugin
+		//--------------------------------
+		// Called once when plugin is registered.
+		// * client - [object] reference to JestTiler
+		init: function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
+			// Get the level view & its dimensional information.
+			const state     = client.getState();  // get app state
+			const levelView = state.levelView;    // get open tab level file
+			const bounds    = levelView.anchor.getZoomed(); // get active level rect info
+
+			//-------------------------
+			// Auto-Configure Option(s)
+			//-------------------------
+			// Initiate the tiler as having editor settings.
+			client.settings.tiler.editor = { grid:0, crosshair:false };
+			// Keep the crosshair enabled by default unless the user changed it.
+			client.settings.tiler.editor.crosshair ??= true;
+
+			//-------------------------
+			// Create Control Panel
+			//-------------------------
+			// Generate a "form" inside the sidebar.
+			const optsPanel = new JestForm( client );      // create DOM Panel element [object].
+			optsPanel.build( 'editor', ['app-editor'] ); // build the form
+
+			//-------------------------
 			// Crosshair Toggle Button
 			//-------------------------
 			// Create the workspace crosshair option.
 			const inputCrosshair =
 				new JestInputCheckbox(
-					client, 'crosshair', null, client.settings.crosshair, 'Crosshair' );
+					client, 'crosshair', null, client.settings.tiler.editor.crosshair, 'Crosshair'
+					);
 			inputCrosshair.build( 'input-crosshair' );
 			optsPanel.addField( 'crosshair', inputCrosshair );
 			inputCrosshair.showLabel();
@@ -38899,29 +39301,43 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 			inputCrosshair.register(
 				'change', 'toggleCrosshair',
 				enable => {
-					client.settings.crosshair = enable;
+					client.settings.tiler.editor.crosshair = enable;
 				});
 
 			// Track the pointer over the workspace through Jest's element events.
-			const workspace = client.gameboard.display.getCanvas( 'workspace' );
 			const crosshairFollower = new JestMouseFollower( client );
-			crosshairFollower.setWatchElement( workspace, client.config.tileGrid );
+			crosshairFollower.setWatchElement( workspace, bounds.display.units );
 			crosshairFollower.enable();
+
+			//-------------------------
+			// Tab Change Event
+			//-------------------------
+			// Update the crosshair grid when the active tileset tab changes.
+			/*client.tabbarFile.register(
+				'tabChange', 'editorCrosshairGrid',
+				() => {
+					// Read the newly active tileset view.
+					crosshairFollower.setGridUnits( client.getState()?.levelView.tilePixels );
+				});*/
 
 			// Draw the row and column highlights after the workspace is rendered.
 			client.register(
 				'draw', 'gridCrosshair',
 				( e, state, enabled, mode, editorCtx ) => {
 					// Draw only while the editor is rendering an open level.
-					if ( mode!=='running' || !client.settings.crosshair || !state.levelView )
-						return;
+					if ( mode!=='running'
+						 || !client.settings.tiler.editor.crosshair
+						 || !state.levelView )
+						return; // abort
 
 					// Read the latest pointer tile; null means it left the workspace.
 					const position = crosshairFollower.getWatchPosition();
 					if ( !position ) return;
 
 					// Convert the hovered tile into workspace pixel coordinates.
-					const units = client.config.tileGrid;
+					const levelView = state.levelView; // get open tab level file
+					const bounds    = levelView.anchor.getZoomed(); // get active level rect info
+					const units = bounds.display.units;
 					const x     = position.tileX * units;
 					const y     = position.tileY * units;
 
@@ -38951,11 +39367,120 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 				});
 
 			//-------------------------
+			// Grid Toggle Button
+			//-------------------------
+			// Store the grid spacing in tile units; zero means no grid.
+			client.settings.tiler.editor.grid ??= 0;
+
+			// Create the grid spacing slider.
+			const maxGrid = Math.floor( client.config.levelGrid / 2 );
+			const inputGrid =
+				new JestInputRange(
+					client, 'grid', null,
+					client.settings.tiler.editor.grid, 'Grid'
+					);
+			inputGrid.setMin( 0 );
+			inputGrid.setMax( maxGrid );
+			inputGrid.setStep( 1 );
+			inputGrid.build( 'input-grid' );
+			optsPanel.addField( 'grid', inputGrid );
+			inputGrid.showLabel();
+
+			// Store the selected grid spacing as a number of tile units.
+			inputGrid.register(
+				'change', 'toggleGrid',
+				value => {
+					client.settings.tiler.editor.grid = Number( value );
+				});
+
+			// Draw the grid over the workspace after it has been rendered.
+			client.register(
+				'draw', 'gridGrid',
+				( e, state, enabled, mode, editorCtx, paletteCtx, sketchCtx ) => {
+					// Draw only while the editor is rendering an open level.
+					if ( mode!=='running' || !state.levelView ) return;
+					const levelView = state.levelView; // get open tab level file
+					const bounds    = levelView.anchor.getZoomed(); // get active level rect info
+
+					// Skip zero or invalid spacing values.
+					const grid   = Number( client.settings.tiler.editor.grid );
+					if ( !Number.isInteger(grid) || grid<1 ) return;
+
+					// Convert tile spacing and level size into workspace pixels.
+					const units  = bounds.display.units;
+					const limit  = client.config.levelGrid;
+					const width  = workspace.el.width;
+					const height = workspace.el.height;
+
+					// Clear the previous frame's grid.
+					sketchCtx.clearRect( 0, 0, width, height );
+
+					// Draw opaque one-pixel strips so intersections stay uniform.
+					sketchCtx.save();
+					sketchCtx.globalAlpha = 1;
+					sketchCtx.fillStyle   = 'rgba( 0, 0, 0, 1 )';
+
+					// Add vertical and horizontal strips at each tile interval.
+					for ( let tile=0; tile<=limit; tile+=grid ) {
+						const position    = tile * units;
+						sketchCtx.fillRect( position, 0, 1, height );
+						sketchCtx.fillRect( 0, position, width, 1 );
+					}
+
+					// Restore the sketch context before compositing it.
+					sketchCtx.restore();
+
+					// Composite the complete grid with transparency.
+					editorCtx.save();
+					editorCtx.globalAlpha *= 0.3;
+					editorCtx.drawImage( sketchpad.el, 0, 0 );
+					editorCtx.restore();
+				});
+
+			//-------------------------
+			// Editor Options Keyboard Command(s)
+			//-------------------------
+			// Register comma and period for grid spacing control.
+			client.io.registerShortcut( ',', 'gridSizeDown' );
+			client.io.registerShortcut( '.', 'gridSizeUp' );
+
+			// Change the grid spacing through the editor slider.
+			client.io.register(
+				'keyboardShortcut', 'gridResizeCommand',
+				command => {
+					// Ignore shortcuts while the user is typing.
+					if ( client.io.isTypingInInput() ) return;
+
+					// Ignore commands unrelated to grid spacing.
+					if ( !['gridSizeUp','gridSizeDown'].includes(command) )
+						return; // abort
+
+					// Get the grid slider from the editor options form.
+					const form  = client.sidebar.getSection(subtype)?.getContents();
+					const field = form?.getField( 'grid' );
+					if ( !field ) return;
+
+					// Read the current spacing and slider limits.
+					const value = Number( field.getValue() ?? 0 );
+					const min   = Number( field.getMin() ?? 0 );
+					const max   = Number( field.getMax() ?? maxGrid );
+
+					// Increase or decrease by one, allowing zero to turn it off.
+					const nextValue =
+						command==='gridSizeUp' ?
+							Math.min( value+1, max ) :
+							Math.max( value-1, min );
+
+					// Update the slider; its change handler updates grid setting.
+					field.setValue( nextValue );
+				});
+
+			//-------------------------
 			// Add to Sidebar
 			//-------------------------
 			// Add the curator panel to the sidebar.
 			client.sidebar.addDisableExclusion( subtype ); // prevent forced collapse
-			client.sidebar.addSection( subtype, 'Options', optsPanel.panel, {}, optsPanel );
+			client.sidebar.addSection( subtype, 'Editor', optsPanel.panel, {}, optsPanel );
 			client.sidebar.refit( subtype ); // resize to fit contents
 		},
 
@@ -38968,9 +39493,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/options.p
 	//--------------------------------
 	// Register With Creator Application
 	//--------------------------------
-	if ( window.JestCreator && typeof window.JestCreator.use==='function' )
-		window.JestCreator.use( type, plugin );
-	else console.error( 'options.plugin.js load error: JestCreator.use() not found' );
+	if ( window.JestTiler && typeof window.JestTiler.use==='function' )
+		window.JestTiler.use( type, plugin );
+	else console.error( 'editor.plugin.js load error: JestTiler.use() not found' );
 })( window );
 
 /* --- BEGIN js/apps/jest/clients/plugins/creator/methods/painter.plugin.js --- */
@@ -40084,7 +40609,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				name       : 'copyright',
 				tag        : 'div',
 				classes    : [ 'jest-copyright' ],
-				text       : 'Copyright <b>©</b> 2025 <strong>JEST®</strong>. All rights reserved.'
+				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.4</strong>. All rights reserved.'
 				});
 
 			// --------------------------------
@@ -40379,26 +40904,33 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					// Toggle View-Specific Parts
 					//--------------------------------
 					// Hide previous view's history panel from the sidebar menu.
-					prevView.history?.hide();			// hide history
-					this.sidebar.refit( 'history' );	// refit history
+					prevView.history?.hide();        // hide history
+					this.sidebar.refit( 'history' ); // refit history
 				}
 
 				// --------------------------------
 				// Resize Gameboard Canvas to Match File Dimensions
 				// --------------------------------
 				// Attempt to get the canvas.
-				const canvas	= this.gameboard.display.getCanvas( 'workspace' );
+				const workspace	= this.gameboard.display.getCanvas( 'workspace' );
+				const sketchpad	= this.gameboard.display.getCanvas( 'sketchpad' );
 
-				// Determine if canvas is set.
-				if ( !canvas || !canvas.el ) {
+				// Determine if workspace is set.
+				if ( !workspace || !workspace.el ) {
 					console.warn( 'Canvas is not set or invalid' );
-					return;
+					return; // abort
 				}
 
 				// Check for an active view.
 				if ( nextView!==null ) {
-					// Resize a gameboard canvas to match new active target's viewport.
-					canvas.resize( nextView.anchor.width, nextView.anchor.height );
+					//--------------------------------
+					// Resize Canvases
+					//--------------------------------
+					// Resize canvases to match new active target's viewport.
+					const bounds = nextView.anchor.getZoomed();
+					workspace.resize( bounds.display.w, bounds.display.h );
+					sketchpad.resize( bounds.display.w, bounds.display.h );
+
 					//--------------------------------
 					// Switch Active File In Cabinet
 					//--------------------------------
@@ -40411,23 +40943,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 							this.soundboard.playSound( 'jest_tab', 'mp3', 1.05 );
 						default: break;
 					}
+
 					//--------------------------------
 					// Toggle View-Specific Parts
 					//--------------------------------
 					// Switch the active history menu.
-					nextView.history.show();			// show history
-					this.sidebar.refit( 'history' );	// refit history
+					nextView.history.show();         // show history
+					this.sidebar.refit( 'history' ); // refit history
 				}
 				else {
 					// --------------------------------
 					// Check If Canvas Is Available
 					// --------------------------------
 					// Shrink gameboard to invisible.
-					canvas.resize( 0, 0 );
-					// Clear the canvas with a black screen.
+					workspace.resize( 0, 0 );
 					// Clear the canvas contents.
-					const ctx	= canvas.el.getContext( '2d' );
-					ctx.clearRect( 0, 0, canvas.el.width, canvas.el.height );
+					workspace.clear();
 				}
 				return true; // success
 			}
@@ -40461,32 +40992,34 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 			// Create Sidebar Tileset Tabbar [object]
 			// --------------------------------
 			// Create the tileset tabbar.
-			const tabbarTileset		= new JestTabbar( client );
-			client.tabbarTileset	= tabbarTileset; // set tabbar
+			const tabbarTileset  = new JestTabbar( client );
+			client.tabbarTileset = tabbarTileset; // set tabbar
 			tabbarTileset.build();
 
 			// Add a palette menu to the sidebar.
 			client.sidebar.addDisableExclusion( 'palette' ); // prevent forced collapse
-			const section	= client.sidebar.addSection( 'palette', 'Palette', null, {} );
+			const section  = client.sidebar.addSection( 'palette', 'Palette', null, {} );
 			// Add tabbar to client interface.
 			//section.addItem( 'tileset', tabbarTileset.panel );
 			client.sidebar.refit( 'palette' );
 
 			// Create event for when tab is changed, to switch level.
 			tabbarTileset.register(
-				'tabChange', 'changeTileset', view=>client.tabbarTilesetChange(view) );
+				'tabChange', 'changeTileset',
+				view=>client.tabbarTilesetChange(view)
+				);
 
 			// Create & add the palette panel to the sidebar.
 			client.gameboard.display.addCanvas( 'palette' ); // create gameboard palette canvas
-			const palette	= client.gameboard.display.getCanvas( 'palette' );
-			client.palette	= palette;			// store palette
-			client.palette.addClass( 'block' );	// canvas style is "display:block"
+			const palette  = client.gameboard.display.getCanvas( 'palette' );
+			client.palette = palette;           // store palette
+			client.palette.addClass( 'block' ); // canvas style is "display:block"
 			section.addItem( 'canvas', palette );
 
 			/*//-----------------------------
 			// Configure to View
 			//-----------------------------
-			button.skey		= view.skey; // match button skey to view
+			button.skey = view.skey; // match button skey to view
 			// Create event to update tabbar button filename when changed.
 			view.file.register( 'stemChange', 'tabbar', file=>client.renameButton(button,file) );
 			// Make new view the active tab.
@@ -40510,7 +41043,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 				// Resize Gameboard Canvas to Match Level Dimensions
 				// --------------------------------
 				// Attempt to get the canvas.
-				const canvas	= this.gameboard.display.getCanvas( 'palette' );
+				const canvas = this.gameboard.display.getCanvas( 'palette' );
 				// Check for an active view.
 				if ( this.tabbarTileset.activeView!==null ) {
 					// Resize a gameboard canvas to match new active target's viewport.
@@ -40637,13 +41170,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			// Wire global login/logout events
 			client.login.register(
 				'loggedIn', 'accountActionLoggedIn',
-				user => {
+				username => {
 					// --------------------------------
 					// Send User "Logged In" Notification
 					// --------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
-						text     : `Successfully logged in as ${user.username}!`,
+						text     : `Successfully logged in as ${username}!`,
 						icon     : `${this.config.root}/images/icons/sm_profile.png`,
 						duration : 4000,
 						//persistent: true,
@@ -43820,28 +44353,31 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/marq
 // This class frames an [object] that serves as a base usable tool.
 class JestToolMarquee extends JestTool {
 	// Object propert(ies)
-	target		= null;			// [object] ElementCanvas for drawing.
-	tracer		= null;			// [object] Anchor used for active tracing.
+	target        = null;       // [object] ElementCanvas for drawing.
+	tracer        = null;       // [object] Anchor used for active tracing.
 	// New Selection Region Stack
-	multiselect	= true;			// [bool] Whether multiselection is possible (add/subtract).
-	rects 		= [];			// List of all additive and subtractive selections
-	bounds		= null;			// [object] of total rect(s) boundaries.
-	mask		= null;			// 2d [array] of mask using add/subtract rect(s).
+	multiselect = true;         // [bool] Whether multiselection is possible (add/subtract).
+	rects         = [];         // List of all additive and subtractive selections
+	bounds        = null;       // [object] of total rect(s) boundaries.
+	mask          = null;       // 2d [array] of mask using add/subtract rect(s).
 	// Miscellaneous variables
-	contents	= null;			// [...] Contents of the marquee
+	contents      = null;       // [...] Contents of the marquee
 	// Measurement propert(ies)
-	clickX		= null;			// [number] Click start x location of selection.
-	clickY		= null;			// [number] Click start y location of selection.
-	originX		= null;			// [number] Far left x location of active selection.
-	originY		= null;			// [number] Far top y location of active selection.
-	dragStartX	= null;			// [number] Far left x origin of a new drag.
-	dragStartY	= null;			// [number] Far top y origin of a new drag selection.
-	grabOffsetX	= 0;			// [number] Grab x offset from selection top-left while dragging.
-	grabOffsetY	= 0;			// [number] Grab y offset from selection top-left while dragging.
-	layerId		= null;			// [int] Z value of layer index / id.
+	clickX        = null;       // [number] Click start x location of selection.
+	clickY        = null;       // [number] Click start y location of selection.
+	originX       = null;       // [number] Far left x location of active selection.
+	originY       = null;       // [number] Far top y location of active selection.
+	dragStartX    = null;       // [number] Far left x origin of a new drag.
+	dragStartY    = null;       // [number] Far top y origin of a new drag selection.
+	grabOffsetX   = 0;          // [number] Grab x offset from selection top-left while dragging.
+	grabOffsetY   = 0;          // [number] Grab y offset from selection top-left while dragging.
+	layerId       = null;       // [int] Z value of layer index / id.
 	// Boolean flags
-	moved		= false;		// [bool] Whether the marquee has been moved during selection.
-	lastState	= null;			// history save state
+	moved         = false;      // [bool] Whether the marquee has been moved during selection.
+	lastState     = null;       // history save state	// Transform state
+	// Transform capabilities.
+	transform     = null;       // Immutable source kept until the floating selection is dropped.
+	transformDrag = null;       // Current handle drag and its starting bounds.
 
 	// --------------------------------
 	// Constructor
@@ -43986,6 +44522,9 @@ class JestToolMarquee extends JestTool {
 		this.layerId	= null;			// capture layer id
 		this.mask		= null;			// reset mask
 		this.contents	= null;			// reset contents to [null]
+		// Reset the transform controls.
+		this.transform  = null;
+		this.transformDrag = null;
 		//-------------------------
 		// Remove Event Listener(s)
 		//-------------------------
@@ -43996,7 +44535,13 @@ class JestToolMarquee extends JestTool {
 		// Add Event Listener(s)
 		//-------------------------
 		// Create the mouse click event for selection start.
-		this.target.register( 'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
+		this.target.register(
+			'mousedown', 'selectStart',
+			e=>this.checkClick(e), 'dom' );
+		// Update the cursor when the pointer moves over the canvas.
+		this.target.register(
+			'mousemove', 'transformCursor',
+			e=>this.updateTransformCursor(e), 'dom' );
 		//-------------------------
 		// Emit Reset Event
 		//-------------------------
@@ -44062,6 +44607,26 @@ class JestToolMarquee extends JestTool {
 		const restart  = !( add || sub );
 		// Check if click is inside an active selection.
 		let inside     = this.isClickInsideSelection( e );
+
+		//-------------------------
+		// Capture Existing State
+		//-------------------------
+		// Let an unmodified click on a transform handle start resizing.
+		// Shift & Alt keep their existing add/subtract selection behavior.
+		if ( ['selected','floating'].includes(mode) && !add && !sub ) {
+			const handle = this.getTransformHandle( e );
+			if ( handle ) {
+				// Capture the state before lifting a selected marquee.
+				this.lastState = this.getSelectionState();
+				// Lift an ordinary selection so it has a floating tile matrix.
+				if ( mode==='selected' ) {
+					this.jot( 'mode', 'floating' );
+					this.emit( 'floated', null, this );
+				}
+				// The floating operation updates contents synchronously.
+				return this.startTransformSelection( e, handle );
+			}
+		}
 
 		//-------------------------
 		// Capture Existing State
@@ -44295,22 +44860,22 @@ class JestToolMarquee extends JestTool {
 		//-------------------------
 		// Require the marquee to contain substance
 		const { x, y, w, h } = this.tracer.getBounds();
-		const units		= this.anchor.units;
+		const units  = this.anchor.units;
 
 		// ------------------------------
 		// Compute rect & preserve action
 		// ------------------------------
 		// Get keyboard modifiers.
-		const mod		= this.getModifiers( e );
+		const mod    = this.getModifiers( e );
 		// Reset the marquee tool for new selection.
-		const isAdd		= mod.shift;
-		const isSub		= mod.alt;
-		const isNew		= !( isAdd || isSub );
-		const action	= isAdd ? 'add'		// ⌘ Shift = additive
+		const isAdd  = mod.shift;
+		const isSub  = mod.alt;
+		const isNew  = !( isAdd || isSub );
+		const action = isAdd ? 'add'		// ⌘ Shift = additive
 							: isSub ? 'sub'	// ⌥ Option = subtractive
 							: 'replace';	// no modifier = replace
 		// Compute rectangle
-		const rect		= this.createRect( x, y, w, h, action );
+		const rect   = this.createRect( x, y, w, h, action );
 
 		//-------------------------
 		// Abort zero-area drags
@@ -44516,16 +45081,17 @@ class JestToolMarquee extends JestTool {
 		//-------------------------
 		// Setup Computation Vars
 		//-------------------------
-		// Setup grid dims in tiles.
-		const units	= this.anchor.units;
-		const cols	= this.target.width  / units;
-		const rows	= this.target.height / units;
+		// Setup grid dimensions in tiles.
+		const units = this.anchor.units;
+		const cols  = this.target.width  / units;
+		const rows  = this.target.height / units;
 
 		//-------------------------
 		// Find total bounding box
 		//-------------------------
 		// Bounding rectangle
-		let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+		let minX =  Infinity, minY =  Infinity,
+		    maxX = -Infinity, maxY = -Infinity;
 		// Apply each rect in order.
 		for ( const rect of this.rects ) {
 			const sx = rect.x;
@@ -44570,8 +45136,8 @@ class JestToolMarquee extends JestTool {
 					const ty = sy + y;
 					if ( tx<0 || ty<0 || tx>=maskW || ty>=maskH ) continue;
 					if ( rect.type==='sub' )
-						mask[ty][tx]  = false;	// subtract rect
-					else mask[ty][tx] = true;	// add or replace
+						mask[ty][tx]  = false; // subtract rect
+					else mask[ty][tx] = true;  // add or replace
 				}
 			}
 		};
@@ -44580,9 +45146,9 @@ class JestToolMarquee extends JestTool {
 		// Store output
 		//-------------------------
 		// Store the mask in the tool properties.
-		this.mask	= mask;
+		this.mask   = mask;
 		// Final bounding rect of selection area
-		this.bounds	= {
+		this.bounds = {
 			x: minX,
 			y: minY,
 			w: maskW,
@@ -44595,9 +45161,9 @@ class JestToolMarquee extends JestTool {
 		// Try to collapse to a single rect if mask is solid
 		const simpleRect = this.tightRectFromMask( mask, minX, minY );
 		if ( simpleRect ) {
-			this.rects	= [ simpleRect ];
-			this.mask	= [ ...Array(simpleRect.h) ].map( ()=>Array(simpleRect.w).fill(true) );
-			this.bounds	= {
+			this.rects  = [ simpleRect ];
+			this.mask   = [ ...Array(simpleRect.h) ].map( ()=>Array(simpleRect.w).fill(true) );
+			this.bounds = {
 				x: simpleRect.x,
 				y: simpleRect.y,
 				w: simpleRect.w,
@@ -44616,27 +45182,27 @@ class JestToolMarquee extends JestTool {
 	tightRectFromMask( mask, ox=0, oy=0 ) {
 		// Validate input
 		if ( !Array.isArray(mask) || !mask.length || !mask[0].length ) return null;
-		const h		= mask.length;
-		const w		= mask[0].length;
+		const h	   = mask.length;
+		const w    = mask[0].length;
 
 		// Ensure all rows are same width
 		for ( let y=0; y<h; y++ )
 			if ( mask[y].length!==w ) return null;
 
 		// Find top row with at least one true
-		let top		= 0;
+		let top    = 0;
 		while ( top<h && !mask[top].some(Boolean) ) top++;
 
 		// Find bottom row with at least one true
-		let bottom	= h - 1;
+		let bottom = h - 1;
 		while ( bottom>=0 && !mask[bottom].some(Boolean) ) bottom--;
 
 		// Bail if fully empty
 		if ( top>bottom ) return null;
 
 		// Find leftmost and rightmost cols with any true
-		let left	= 0;
-		let right	= w - 1;
+		let left   = 0;
+		let right  = w - 1;
 		while ( left<w && mask.every(row=>!row[left]) ) left++;
 		while ( right>=0 && mask.every(row=>!row[right]) ) right--;
 
@@ -44650,10 +45216,10 @@ class JestToolMarquee extends JestTool {
 
 		// Return cropped solid rect
 		return {
-			x	: ox + left,
-			y	: oy + top,
-			w	: right - left + 1,
-			h	: bottom - top + 1,
+			x : ox + left,
+			y : oy + top,
+			w : right - left + 1,
+			h : bottom - top + 1,
 			type : 'add'
 			};
 	}
@@ -44683,16 +45249,16 @@ class JestToolMarquee extends JestTool {
 		// Calculate Measurements
 		//-------------------------
 		// Store original anchor position at drag start
-		this.dragStartX = this.anchor.x;
-		this.dragStartY = this.anchor.y;
+		this.dragStartX  = this.anchor.x;
+		this.dragStartY  = this.anchor.y;
 		// Grab the current anchor bounds in grid units
-		const boxX	= this.anchor.x;
-		const boxY	= this.anchor.y;
-		const boxW	= this.anchor.width;
-		const boxH	= this.anchor.height;
+		const boxX = this.anchor.x;
+		const boxY = this.anchor.y;
+		const boxW = this.anchor.width;
+		const boxH = this.anchor.height;
 		// Calculate offset from the top-left corner
-		this.grabOffsetX	= tx - boxX;
-		this.grabOffsetY	= ty - boxY;
+		this.grabOffsetX = tx - boxX;
+		this.grabOffsetY = ty - boxY;
 
 		//-------------------------
 		// Add Event Listener(s)
@@ -44705,7 +45271,7 @@ class JestToolMarquee extends JestTool {
 		// Modifier: Duplicate Selection
 		// -----------------------------
 		// Get key modifiers.
-		const mod	= this.getModifiers( e );
+		const mod = this.getModifiers( e );
 		// If user holds Alt/Option while dragging, emit 'duplicate'.
 		if ( mod.duplicate )
 			this.emit( 'duplicate', null, this );
@@ -44721,25 +45287,25 @@ class JestToolMarquee extends JestTool {
 		// Require the tool to be available.
 		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled   = this.skim( 'enabled' );
+		const mode      = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
 
 		//-------------------------
 		// Convert Coordinates to Grid
 		//-------------------------
 		// Convert to tile coords
-		const mouse		= this.target.mousePos( e );
-		let tileX		= Math.floor( mouse.x/this.anchor.units );
-		let tileY		= Math.floor( mouse.y/this.anchor.units );
+		const mouse     = this.target.mousePos( e );
+		let tileX       = Math.floor( mouse.x/this.anchor.units );
+		let tileY       = Math.floor( mouse.y/this.anchor.units );
 		// Compute new top-left of the anchor so the relative offset remains
-		tileX			= tileX - this.grabOffsetX;
-		tileY			= tileY - this.grabOffsetY;
+		tileX           = tileX - this.grabOffsetX;
+		tileY           = tileY - this.grabOffsetY;
 		// Clamp so the entire box stays within [0..target.width) × [0..target.height)
 		/*const maxCols = this.target.width;
-		const maxRows 	= this.target.height;
-		const boxW		= this.anchor.width;
-		const boxH		= this.anchor.height;*/
+		const maxRows   = this.target.height;
+		const boxW      = this.anchor.width;
+		const boxH      = this.anchor.height;*/
 
 		//-------------------------
 		// Check Modifiers (Alt/Opt/Ctrl/Cmd)
@@ -44748,17 +45314,17 @@ class JestToolMarquee extends JestTool {
 		const mod		= this.getModifiers( e );
 		// Axis lock modifier.
 		if ( mod.shift ) {
-			const dx	= Math.abs( tileX - this.dragStartX );
-			const dy	= Math.abs( tileY - this.dragStartY );
+			const dx    = Math.abs( tileX - this.dragStartX );
+			const dy    = Math.abs( tileY - this.dragStartY );
 			if ( dx>dy )
-				tileY	= this.dragStartY; // lock Y
-			else tileX	= this.dragStartX; // lock X
+				tileY   = this.dragStartY; // lock Y
+			else tileX  = this.dragStartX; // lock X
 		}
 
 		// Finally, move the anchor to the new position
 		if ( tileX!==this.anchor.x || tileY!==this.anchor.y ) {
-			this.anchor.move( tileX, tileY );		// move the anchor
-			this.bounds	= this.anchor.getBounds();	// update live bounds
+			this.anchor.move( tileX, tileY );      // move the anchor
+			this.bounds = this.anchor.getBounds(); // update live bounds
 		}
 	}
 
@@ -44770,8 +45336,8 @@ class JestToolMarquee extends JestTool {
 		// Mode Gatekeep & Handling
 		//-------------------------
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
 		// Switch to "floating" (floated selection).
 		this.jot( 'mode', 'floating' );
@@ -44841,28 +45407,28 @@ class JestToolMarquee extends JestTool {
 	// Adjusts width, height, startX/startY based on modifier flags.
 	applyModifiersToRect( mod, clickX, clickY, tileX, tileY, tw, th ) {
 		// Calculate bounds before moving anchor
-		let startX	= Math.min( clickX, tileX );
-		let startY	= Math.min( clickY, tileY );
+		let startX = Math.min( clickX, tileX );
+		let startY = Math.min( clickY, tileY );
 
 		// Calculate span using comparing mousemove vs. original-click coordinates.
-		let endX	= Math.max( clickX, tileX );
-		let endY	= Math.max( clickY, tileY );
+		let endX   = Math.max( clickX, tileX );
+		let endY   = Math.max( clickY, tileY );
 
 		// Subtract start coordinate from end coordinate to get dimensions.
-		let width	= endX - startX;
-		let height	= endY - startY;
+		let width  = endX - startX;
+		let height = endY - startY;
 
 		// Clamp to bounds
-		startX		= Math.min( Math.max(0,startX), tw-1 );
-		startY		= Math.min( Math.max(0,startY), th-1 );
+		startX     = Math.min( Math.max(0,startX), tw-1 );
+		startY     = Math.min( Math.max(0,startY), th-1 );
 
 		// Clamp end point
-		endX		= Math.min( Math.max(0,endX), tw );
-		endY		= Math.min( Math.max(0,endY), th );
+		endX       = Math.min( Math.max(0,endX), tw );
+		endY       = Math.min( Math.max(0,endY), th );
 
 		// Recompute width/height after clamping
-		width		= endX - startX;
-		height		= endY - startY;
+		width      = endX - startX;
+		height     = endY - startY;
 
 		// -----------------------------
 		// Modifier: Force Square Mode
@@ -44906,27 +45472,32 @@ class JestToolMarquee extends JestTool {
 		const mode = this.skim( 'mode' );
 		// Log the active marquee selection state.
 		return {
-			mode	 	: ['selecting','dragging'].includes(mode)
-							? (mode==='dragging' ? 'floating' : 'selected') : mode,
-			rects		: structuredClone( this.rects ),
-			bounds  	: this.bounds ? structuredClone(this.bounds) : null,
-			layerId     : this.layerId, // level layer id / z-index
-			mask		: this.mask ? structuredClone(this.mask) : null,
-			contents	:
+			mode      : ['selecting','dragging','transforming'].includes(mode)
+							? (mode==='selecting' ? 'selected' : 'floating')
+							: mode,
+			rects     : structuredClone( this.rects ),
+			bounds    : this.bounds ? structuredClone(this.bounds) : null,
+			layerId   : this.layerId, // level layer id / z-index
+			mask      : this.mask ? structuredClone(this.mask) : null,
+			contents  :
 				this.contents ?
 					{
 					...this.contents,
-					matrix : this.contents.matrix ? structuredClone(this.contents.matrix) : null
-					} : null,
-			anchor		: {
+					matrix: this.contents.matrix ? structuredClone(this.contents.matrix) : null
+					}
+					: null,
+			anchor    : {
 				x: this.anchor.x,
 				y: this.anchor.y,
 				w: this.anchor.width,
 				h: this.anchor.height
-				}
+				},
+			transform :
+				this.transform
+					? structuredClone(this.transform)
+					: null
 		};
 	}
-
 
 	// Restore a previously captured marquee state.
 	// Does NOT emit floated/dropped events.
@@ -44937,34 +45508,301 @@ class JestToolMarquee extends JestTool {
 		this.removeGlobalListeners();
 
 		// Restore or clear the selection.
-		this.rects		= state ? structuredClone(state.rects) : [];
-		this.bounds		= state?.bounds ? structuredClone(state.bounds) : null;
-		this.layerId	= state?.layerId ?? null;
-		this.mask		= state?.mask ? structuredClone(state.mask) : null;
-		this.contents	=
+		this.rects    = state ? structuredClone(state.rects) : [];
+		this.bounds   = state?.bounds ? structuredClone(state.bounds) : null;
+		this.layerId  = state?.layerId ?? null;
+		this.mask     = state?.mask ? structuredClone(state.mask) : null;
+		this.contents =
 			state?.contents ? {
 				...state.contents,
 				matrix : state.contents.matrix ? structuredClone(state.contents.matrix) : null
 				} : null;
 
 		// Restore anchor position & size.
-		const anchor	= state?.anchor ?? { x:0, y:0, w:0, h:0 };
+		const anchor  = state?.anchor ?? { x:0, y:0, w:0, h:0 };
 		this.anchor.move( anchor.x, anchor.y );
 		this.anchor.resize( anchor.w, anchor.h );
 
 		// Reset temporary tracer.
-		this.tracer.move( 0, 0 );	// move selection
-		this.tracer.resize( 0, 0 );	// resize selection
+		this.tracer.move( 0, 0 );    // move selection
+		this.tracer.resize( 0, 0 );  // resize selection
 
 		// Restore mode without invoking board operations.
 		this.jot( 'mode', state?.mode ?? 'empty' );
 
-		// Restore the mouse listener when enabled.
-		if ( this.skim('enabled') )
-			this.target.register( 'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
+		// Create the mouse click event for selection start.
+		this.target.register(
+			'mousedown', 'selectStart',
+			e=>this.checkClick(e), 'dom'
+			);
+		// Update the cursor when the pointer moves over the canvas.
+		this.target.register(
+			'mousemove', 'transformCursor',
+			e=>this.updateTransformCursor(e), 'dom'
+			);
 		// Emit event saying selection is restored.
 		this.emit( 'selectionRestored', null, this );
 		return true;
+	}
+
+	// -----------------------------
+	// Transform Method(s)
+	// -----------------------------
+	// Find which resize handle, if any, was clicked.
+	// RETURNS: [string|null] Handle name: nw, n, ne, e, se, s, sw or w.
+	// * e - Mouse event in workspace coordinates.
+	getTransformHandle( e ) {
+		// A valid selection is required before handles can be hit-tested.
+		if ( !this.bounds || !this.mask ) return null;
+
+		// Convert marquee bounds from tile coordinates into canvas coordinates.
+		const units   = this.anchor.units;
+		const left    = this.bounds.x * units;
+		const top     = this.bounds.y * units;
+		const right   = (this.bounds.x+this.bounds.w) * units;
+		const bottom  = (this.bounds.y+this.bounds.h) * units;
+		const midX    = (left+right) / 2;
+		const midY    = (top+bottom) / 2;
+
+		// Get the mouse position in the same canvas coordinate space.
+		const mouse   = this.target.mousePos( e );
+
+		// Keep handles in a consistent clickable size in canvas pixels.
+		const hitSize = 9;
+
+		// Test corners before sides so a corner hit wins where zones meet.
+		const handles = [
+			{ name:'nw', x:left,  y:top    },
+			{ name:'ne', x:right, y:top    },
+			{ name:'se', x:right, y:bottom },
+			{ name:'sw', x:left,  y:bottom },
+			{ name:'n',  x:midX,  y:top    },
+			{ name:'e',  x:right, y:midY   },
+			{ name:'s',  x:midX,  y:bottom },
+			{ name:'w',  x:left,  y:midY   }
+			];
+
+		// Return the first handle whose hit area contains the click.
+		const handle =
+			handles.find(
+				item =>
+					Math.abs(mouse.x-item.x)<=hitSize &&
+					Math.abs(mouse.y-item.y)<=hitSize
+				);
+		return handle?.name ?? null;
+	}
+
+	// Resample a tile matrix to new dimensions using nearest-neighbor tile selection.
+	// Expansion repeats source tiles; reduction chooses representative source tiles.
+	// RETURNS: [array] New matrix with the requested width and height.
+	// * matrix	- Original 2D tile or mask matrix.
+	// * width	- [int] Requested output width in tiles.
+	// * height	- [int] Requested output height in tiles.
+	resampleMatrix( matrix, width, height ) {
+		// Reject malformed or empty inputs before calculating source coordinates.
+		if ( !Array.isArray(matrix) || !matrix.length || !matrix[0]?.length )
+			return [];
+
+		// Measure the original matrix.
+		const sourceHeight = matrix.length;
+		const sourceWidth  = matrix[0].length;
+
+		// Build every output cell directly from the original source matrix.
+		const output = [];
+		for ( let y=0; y<height; y++ ) {
+			const sourceY  =
+				Math.min(
+					sourceHeight-1,
+					Math.floor( (y+0.5)*sourceHeight/height )
+					);
+			const row = [];
+
+			for ( let x=0; x<width; x++ ) {
+				const sourceX =
+					Math.min(
+						sourceWidth-1,
+						Math.floor( (x+0.5)*sourceWidth/width )
+						);
+				// Clone tile objects so the preview cannot mutate the source snapshot.
+				row.push( structuredClone(matrix[sourceY][sourceX]) );
+			}
+			// Push the row into the output.
+			output.push( row );
+		}
+
+		// Return resampled matrix.
+		return output;
+	}
+
+	// Begin resizing from one of the eight marquee handles.
+	// Keep the original tile matrix and mask for the full uncommitted transform.
+	// RETURNS: [boolean] True when the resize gesture starts.
+	// * e		- Mouse event that began the handle drag.
+	// * handle	- Handle name returned by getTransformHandle().
+	startTransformSelection( e, handle ) {
+		// Transforming requires a usable floating selection with tile contents.
+		if ( !this.usable() || !this.contents?.matrix || !this.mask )
+			return false; // abort
+
+		// Save one immutable source snapshot on the first transform gesture.
+		// Subsequent transforms use the same snapshot until the selection drops.
+		if ( !this.transform ) {
+			this.transform = {
+				matrix : structuredClone(this.contents.matrix),
+				mask   : structuredClone(this.mask)
+				};
+		}
+
+		// Record current bounds separately; each drag anchors against the visible box.
+		this.transformDrag = {
+			handle,
+			bounds : structuredClone(this.bounds)
+			};
+
+		// Capture the pre-drag state for the existing marquee history path.
+		this.lastState = this.getSelectionState();
+
+		// Mark the tool as transforming and attach drag listeners.
+		this.jot( 'mode', 'transforming' );
+		this.target.register(
+			'mousemove', 'transforming',
+			event=>this.updateTransformSelection(event), 'window' );
+		this.target.register(
+			jsos.mouseUps, 'transformEnd',
+			event=>this.endTransformSelection(event), 'window' );
+		return true; // success
+	}
+
+	// Update the floating selection preview from the immutable transform source.
+	// RETURNS: [void].
+	// * e - Mouse event while a handle is being dragged.
+	updateTransformSelection( e ) {
+		// Ignore movement if the drag ended or the tool became unavailable.
+		if ( !this.usable() || this.skim('mode')!=='transforming' )
+			return; // abort
+		if ( !this.transform || !this.transformDrag )
+			return; // abort
+
+		// Convert the mouse position to snapped tile-boundary coordinates.
+		const mouse  = this.target.mousePos( e );
+		const units  = this.anchor.units;
+		const tileX  = Math.round( mouse.x/units );
+		const tileY  = Math.round( mouse.y/units );
+		const cols   = this.target.width / units;
+		const rows   = this.target.height / units;
+
+		// Start with the bounds that were visible when this drag began.
+		const start  = this.transformDrag.bounds;
+		let left     = start.x;
+		let top      = start.y;
+		let right    = start.x + start.w;
+		let bottom   = start.y + start.h;
+		const handle = this.transformDrag.handle;
+
+		// Move only the edges controlled by the selected handle.
+		if ( handle.includes('w') )
+			left     = Math.max( 0, Math.min(tileX, right-1) );
+		if ( handle.includes('e') )
+			right    = Math.min( cols, Math.max(tileX, left+1) );
+		if ( handle.includes('n') )
+			top      = Math.max( 0, Math.min(tileY, bottom-1) );
+		if ( handle.includes('s') )
+			bottom   = Math.min( rows, Math.max(tileY, top+1) );
+
+		// Build the new tile-aligned bounds.
+		const bounds = {
+			x : left,
+			y : top,
+			w : right-left,
+			h : bottom-top
+			};
+
+		// Skip work when snapping leaves the visible bounds unchanged.
+		if ( JSON.stringify(bounds)===JSON.stringify(this.bounds) )
+			return; // abort
+
+		// Always resample from the original matrix and mask, never the last preview.
+		const matrix = this.resampleMatrix( this.transform.matrix, bounds.w, bounds.h );
+		const mask   = this.resampleMatrix( this.transform.mask, bounds.w, bounds.h );
+
+		// Update the floating selection's geometry and tile data together.
+		this.bounds  = bounds;
+		this.mask    = mask;
+		this.rects   = [ { ...bounds, type:'replace' } ];
+		this.contents.matrix = matrix;
+		this.contents.x  = bounds.x;
+		this.contents.y  = bounds.y;
+		this.contents.w  = bounds.w;
+		this.contents.h  = bounds.h;
+
+		// Keep the anchor aligned with the resized tile region.
+		this.anchor.move( bounds.x, bounds.y );
+		this.anchor.resize( bounds.w, bounds.h );
+
+		// Notify listeners to rebuild the preview stamp from the new matrix.
+		this.emit( 'transformPreview', null, this );
+	}
+
+	// Finish a handle drag while keeping the original transform source available.
+	// RETURNS: [void].
+	// * e - Mouse-up event ending the handle drag.
+	endTransformSelection( e ) {
+		// Only finish an active transform gesture.
+		if ( this.skim('mode')!=='transforming' ) return; // abort
+
+		// Return to floating mode; the user can resize again before dropping.
+		this.jot( 'mode', 'floating' );
+
+		// Remove the active drag listeners.
+		this.target.unregister( 'mousemove', 'transforming' );
+		this.target.unregister( jsos.mouseUps, 'transformEnd' );
+		this.transformDrag = null;
+
+		// Use the existing marquee history path for the completed resize.
+		this.emit( 'transformed', null, this );
+	}
+
+	// Update the canvas cursor to match the transform handle under the pointer.
+	// RETURNS: [void].
+	// * e - Mouse event used to identify the hovered transform handle.
+	updateTransformCursor( e=null ) {
+		// Require the canvas element before changing its cursor.
+		if ( !this.target?.el ) return;
+
+		// Use the canvas's normal cursor when the tool is disabled.
+		const canvas = this.target.el;
+		if ( !this.skim('enabled') ) {
+			canvas.style.cursor = '';
+			return; // abort
+		}
+
+		// Keep the active handle's cursor while its drag is in progress.
+		const mode = this.skim( 'mode' );
+		let handle = null;
+		if ( mode==='transforming' )
+			handle = this.transformDrag?.handle ?? null;
+		// Otherwise, detect a handle under the pointer.
+		else if ( e && ['selected','floating'].includes(mode) ) {
+			// Shift and Alt keep their existing selection behavior.
+			const mod  = this.getModifiers( e );
+			if ( !mod.shift && !mod.alt )
+				handle = this.getTransformHandle( e );
+		}
+
+		// Map each handle direction to the matching browser resize cursor.
+		const cursors  = {
+			nw : 'nwse-resize',
+			se : 'nwse-resize',
+			ne : 'nesw-resize',
+			sw : 'nesw-resize',
+			n  : 'ns-resize',
+			s  : 'ns-resize',
+			e  : 'ew-resize',
+			w  : 'ew-resize'
+			};
+
+		// An empty string restores the canvas's normal CSS cursor.
+		canvas.style.cursor = cursors[handle] ?? '';
 	}
 
 	//-------------------------
@@ -44978,7 +45816,12 @@ class JestToolMarquee extends JestTool {
 		// Remove mouse move listener(s).
 		this.target.unregister( 'mousemove', 'selecting' );
 		this.target.unregister( 'mousemove', 'dragging' );
+		// Remove the transform control listener(s).
+		this.target.unregister( 'mousemove', 'transforming' );
+		// Remove the transform cursor hover listener.
+		this.target.unregister( 'mousemove', 'transformCursor' );
 	}
+
 	// Remove window listener(s).
 	// RETURNS: [void].
 	removeGlobalListeners() {
@@ -44986,6 +45829,8 @@ class JestToolMarquee extends JestTool {
 		this.target.unregister( jsos.mouseUps, 'selected' );
 		// Remove window  event(s) for dragging release.
 		this.target.unregister( jsos.mouseUps, 'dragged' );
+		// Remove the transform control listener(s).
+		this.target.unregister( jsos.mouseUps, 'transformEnd' );
 	}
 }
 
@@ -45005,13 +45850,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 		// Initialize Tileset Marquee Tool
 		//--------------------------------
 		init: function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Get the tileset view & its dimensional information.
+			const tilesetView = client.getState().tilesetView;
+
+			// --------------------------------
+			// Create Marquee Tool [object]
+			// --------------------------------
 			// Instantiate marquee tool
-			const tool = new JestToolMarquee( client, subtype );
+			const tool   = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
+			// Match the marquee anchor to native tileset tile pixels.
+			tool.anchor.graticulate( tilesetView.anchor.units );
 			// Wire tool to grid and palette canvas
-			tool.anchor.graticulate( client.config.tileGrid );
 			const canvas = client.gameboard.display.getCanvas( 'palette' );
 			tool.setTarget( canvas );
 
@@ -45148,6 +46003,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 					// Affirm shortcut command is for "draw" tool.
 					if ( command===subtype )
 						client.toolbox.setTool( subtype );
+				});*/
+
+			//-------------------------
+			// Tab Change Event
+			//-------------------------
+			// Update the marquee grid when the active tileset tab changes.
+			/*client.tabbarFile.register(
+				'tabChange', 'tilesetMarqueeGrid',
+				() => {
+					// Read the newly active tileset view.
+					const tilesetView = client.getState().tilesetView;
+					// Keep the anchor in native tile pixels.
+					if ( tilesetView?.tilePixels )
+						tool.anchor.graticulate( tilesetView.tilePixels );
 				});*/
 
 			//-------------------------
@@ -45343,17 +46212,29 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: async function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
+			// Get the level view & its dimensional information.
+			const state     = client.getState();  // get app state
+			const levelView = state.levelView;    // get open tab level file
+			const bounds    = levelView.anchor.getZoomed(); // get active level rect info
+
 			// --------------------------------
 			// Create Marquee Tool [object]
 			// --------------------------------
 			// Add a marquee tool to the level canvas board.
-			const tool		= new JestToolMarquee( client, subtype );
+			const tool      = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
-			// Wire into the grid.
-			tool.anchor.graticulate( client.config.tileGrid );
-			const canvas	= client.gameboard.display.getCanvas( 'workspace' );
+			// Match the marquee anchor to native level tile pixels.
+			tool.anchor.graticulate( bounds.display.units );
+			const canvas    = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas ); // set target
 
 			// Simultaneous tools allowed:
@@ -45368,7 +46249,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Determine whether the tool can edit the active layer.
 			tool.register(
 				'blockCheck', 'marqueeBlocking',
-				( status ) => {
+				status => {
 					//--------------------------------
 					// Validate Level Availability
 					//--------------------------------
@@ -45461,7 +46342,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Create event for when tab is changed, to switch file.
 			client.tabbarFile.register(
 				'tabChange', 'levelMarqueeRefresh',
-				( view ) => {
+				view => {
 					// --------------------------------
 					// Get Current File State
 					// --------------------------------
@@ -45471,14 +46352,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// --------------------------------
 					// Reload Dropdown(s)
 					// --------------------------------
-					curator.flushVisibleCache();	// flush cache
-					curator.refreshOptions();		// refresh list
+					curator.flushVisibleCache();   // flush cache
+					curator.refreshOptions();      // refresh list
 
 					// --------------------------------
 					// Save / Restore Tab Selection(s)
 					// --------------------------------
 					// Remember curator dropdown.
 					if ( !s ) return tool.restoreSelectionState();
+
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the marquee grid to the newly active level view.
+					//tool.anchor.graticulate( s.levelView.tilePixels );
 
 					// --------------------------------
 					// Restore Marquee Selection
@@ -45506,8 +46393,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			curator.toolbar.buttons.remove.register( 'click', 'remove-object',
 				() => {
 					// Get selected ID and corresponding object
-					const id		= curator.selectBox.getValue();
-					const object	= curator.objects[id];
+					const id     = curator.selectBox.getValue();
+					const object = curator.objects[id];
 					if ( confirm(`Are you sure you want to remove item "${object.data.name}"?`) )
 						curator.removeObject( id );
 				});
@@ -45516,7 +46403,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Toolbar Functionality
 			//-------------------------
 			// Add "selector" tool (levelMarquee) button to toolbar.
-			const button	= client.toolbar.createButton( { name: subtype, text:  null /*'Marquee'*/ } );
+			const button = client.toolbar.createButton( { name: subtype, text:  null /*'Marquee'*/ } );
 			button.clicker.addAttribute( 'data-tooltip', 'Marquee' );
 			button.clicker.addAttribute( 'data-tooltip-keys', 'M' );
 			button.clicker.addElements([
@@ -45898,7 +46785,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						if ( bounds!==null && bounds.w>0 && bounds.h>0 ) {
 							// Grab bounds.
 							const { x, y, w, h } = bounds;
-							const units	= client.config.tileGrid;
+							const units	= tool.anchor.units;
 							let parsed	= message;
 							if ( message!=='' ) parsed += `  →  `;
 							parsed += `<strong>marquee</strong> (${x/units},${y/units})`;
@@ -46118,6 +47005,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						);
 				});
 
+			// Record each completed handle drag as one marquee history action.
+			tool.register(
+				'transformed', 'marqueeHistoryTransform',
+				( marquee ) => {
+					client.recordMarqueeHistory(
+						'marqueeMove', marquee.lastState,
+						marquee.getSelectionState(),
+						'Transform marquee.'
+						);
+				});
+
 			// Register marquee deselect callback for undo/redo.
 			tool.register(
 				'selectionCleared', 'marqueeHistoryDeselect',
@@ -46138,7 +47036,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// The finalized mask will be captured by the history event.
 			tool.register(
 				'maskFinalized', 'subtractEmptyTiles',
-				( marquee ) => {
+				marquee => {
 					//--------------------------------
 					// Resolve Original Selection Layer
 					//--------------------------------
@@ -46162,7 +47060,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					for ( let my=0; my<mask.length; my++ ) {
 						for ( let mx=0; mx<mask[my].length; mx++ ) {
 							// A manually excluded cell must stay excluded.
-							if ( !mask[my][mx] ) continue;
+							if ( !mask[my][mx] ) continue; // skip
 
 							// Determine the tile's absolute level coordinates.
 							const lx = x + mx;
@@ -46174,6 +47072,44 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 								mask[my][mx] = false;
 						}
 					}
+
+					//--------------------------------
+					// Tighten Bounds Around Included Tiles
+					//--------------------------------
+					// Find the outermost included cells in the refined mask.
+					let minX = mask[0]?.length ?? 0;
+					let minY = mask.length;
+					let maxX = -1;
+					let maxY = -1;
+
+					for ( let my=0; my<mask.length; my++ ) {
+						for ( let mx=0; mx<mask[my].length; mx++ ) {
+							if ( !mask[my][mx] ) continue; // skip empty or excluded tile
+							minX = Math.min( minX, mx );
+							minY = Math.min( minY, my );
+							maxX = Math.max( maxX, mx );
+							maxY = Math.max( maxY, my );
+						}
+					}
+
+					// Leave an empty mask for endDrawSelection() to reject.
+					if ( maxX<minX || maxY<minY ) return; // abort
+
+					//--------------------------------
+					// Crop Mask and Move Its Origin
+					//--------------------------------
+					// Preserve interior holes while removing empty outer rows and columns.
+					marquee.mask =
+						mask.slice( minY, maxY+1 )
+							.map( row => row.slice(minX,maxX+1) );
+
+					// Keep the cropped mask aligned with its original level position.
+					marquee.bounds = {
+						x : x + minX,
+						y : y + minY,
+						w : maxX - minX + 1,
+						h : maxY - minY + 1
+						};
 				});
 
 			//-------------------------
@@ -46222,6 +47158,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					client.soundboard.playSound( 'jest_unfloat', 'wav', 1.01 );
 					// Lay tile matrix onto level surface.
 					client.toolLevelMarqueeDropRegion( tool );
+				});
+
+			// Rebuild the floating canvas whenever a transform preview changes.
+			tool.register(
+				'transformPreview', 'refreshTransformStamp',
+				( marquee ) => {
+					// The current tileset creates the canvas used by the draw hook.
+					const tileset = client.getState().tilesetView?.file?.context;
+					if ( !tileset || !marquee.contents?.matrix )
+						return; // abort
+
+					// Rebuild from the preview matrix, which was resampled from
+					// the immutable source matrix by the tool.
+					marquee.contents.stamp =
+						tileset.createStamp( marquee.contents.matrix );
 				});
 
 			// Register event listener callback(s).
@@ -46617,30 +47568,31 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					const toolMode = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
 					if ( toolMode!=='selecting' && toolMode!=='selected'
-						 && toolMode!=='floating' && toolMode!=='dragging' ) return;
+						 && toolMode!=='floating' && toolMode!=='dragging'
+						 && toolMode!=='transforming' ) return;
 
 					 // -----------------------------
 					 // Validate Marquee Mask/Trace
 					 // -----------------------------
 					 // Get tile measurements.
-					 const units	= tool.anchor.units;
+					 const units  = tool.anchor.units;
 					 // Check if current marquee has either valid mask or traced rectangle.
-					 const bounds	= tool.anchor?.getBounds?.() ?? null;
-					 const mask		= tool.mask;
-					 const tracer	= tool.tracer;
-					 const trace	= tracer?.getBounds?.() ?? null;
+					 const bounds = tool.anchor?.getBounds?.() ?? null;
+					 const mask   = tool.mask;
+					 const tracer = tool.tracer;
+					 const trace  = tracer?.getBounds?.() ?? null;
 
-					 let masked	    = false;
-					 let traced	    = false;
+					 let masked	  = false;
+					 let traced   = false;
 
 					 // Validate mask area
 					 if ( bounds && bounds.w>0 && bounds.h>0
 						  && Array.isArray(mask) && mask.length>0 )
-					 	masked	= true;
+					 	masked    = true;
 
 					 // Validate traced area
 					 if ( trace && trace.w>0 && trace.h>0 )
-					 	traced	= true;
+					 	traced    = true;
 
 					 // Exit if nothing to process
 					 if ( !masked && !traced ) return;
@@ -46651,19 +47603,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// -------------------------------
 					if ( toolMode==='selected' || toolMode==='selecting' ) {
 						// Determine dashed outline.
-						const dashSpeed	= 0.5;
-						const offset	= ( e.tickCount*dashSpeed ) % 10;
+						const dashSpeed  = 0.5;
+						const offset     = ( e.tickCount*dashSpeed ) % 10;
 
 						// Check if a composite selection exists.
 						if ( masked ) {
 							// Calculate dimensions.
-							const cols	= tool.target.width  / units;
-							const rows	= tool.target.height / units;
+							const cols   = tool.target.width  / units;
+							const rows   = tool.target.height / units;
 
 							// Composite stroke style(s).
 							editorCtx.save();
 							editorCtx.globalCompositeOperation = 'difference';
-							const stroke	=
+							const stroke =
 								[{
 									color  : 'rgba( 255, 255, 255, 1 )',
 									weight : 1.5,
@@ -46685,12 +47637,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						// Check if a new selection is being traced.
 						if ( traced ) {
 							// Calculate dimensions.
-							const cols	= trace.w;	// trace region width
-							const rows	= trace.h;	// trace region height
+							const cols = trace.w;  // trace region width
+							const rows = trace.h;  // trace region height
 							// Composite stroke style(s).
 							editorCtx.save();
 							editorCtx.globalCompositeOperation = 'difference';
-							const stroke	=
+							const stroke =
 								[{
 									color  : 'rgba( 255, 255, 255, 1 )',
 									weight : 1.5,
@@ -46713,16 +47665,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					//------------------------------
 					// Tool Mode: Floating / Dragging
 					//------------------------------
-					else if ( (toolMode==='floating' || toolMode==='dragging')
-							   && masked ) {
+					else if ( (toolMode==='floating' || toolMode==='dragging'
+						    || toolMode==='transforming') && masked ) {
 						//--------------------------
 						// Draw Composite Region
 						//--------------------------
 						// Get stroke offset from tick count.
-						const offset	= e.tickCount % 20;
+						const offset = e.tickCount % 20;
 
 						// Composite stroke style(s).
-						const stroke	=
+						const stroke =
 							[
 								{
 									color  : 'rgba( 155, 0, 0, 0.5 )',
@@ -46800,6 +47752,52 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							null,               // no background fill
 							stroke, null, null  // outline only; stamp already drawn
 							);
+
+						// Show resize handles for a floating marquee.
+						if ( ['floating','transforming'].includes(toolMode) && bounds ) {
+							// Convert the tile bounds to editor canvas coordinates.
+							const left   = bounds.x * units;
+							const top    = bounds.y * units;
+							const right  = (bounds.x+bounds.w) * units;
+							const bottom = (bounds.y+bounds.h) * units;
+							const midX   = (left+right) / 2;
+							const midY   = (top+bottom) / 2;
+							const size   = 8;
+
+							// Place handles at the four corners and four side centers.
+							const handles = [
+								{ x:left,  y:top    },
+								{ x:midX,  y:top    },
+								{ x:right, y:top    },
+								{ x:right, y:midY   },
+								{ x:right, y:bottom },
+								{ x:midX,  y:bottom },
+								{ x:left,  y:bottom },
+								{ x:left,  y:midY   }
+								];
+
+							// Keep handle drawing isolated from the marquee outline style.
+							editorCtx.save();
+							editorCtx.lineWidth   = 1;
+							editorCtx.fillStyle   = '#ff0000';
+							editorCtx.strokeStyle = '#202020';
+
+							// Drag transform controls.
+							for ( const handle of handles ) {
+								editorCtx.fillRect(
+									handle.x-size/2,
+									handle.y-size/2,
+									size, size
+									);
+								editorCtx.strokeRect(
+									handle.x-size/2,
+									handle.y-size/2,
+									size, size
+									);
+							}
+							// Release the canvas.
+							editorCtx.restore();
+						}
 					}
 				});
 
@@ -46822,14 +47820,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						case "sign":
 						case "warp":
 							// Get all visible warp objects.
-							const units		= client.config.tileGrid;
-							const items		= curator.getVisibleObjects( type );
-							const selected	= curator.getSelectedObject();
+							const units     = tool.anchor.units;
+							const items     = curator.getVisibleObjects( type );
+							const selected  = curator.getSelectedObject();
 							for ( const item of items ) {
 								let { x, y, w=4, h=4 } = item.data;
-								let stroke			= 2;
-								const dashSpeed		= 0.5; // px per frame (try 0.5, 1, 2, etc.)
-								const offset		= (e.tickCount * dashSpeed) % 10;
+								let stroke      = 2;
+								const dashSpeed = 0.5; // px per frame (try 0.5, 1, 2, etc.)
+								const offset    = (e.tickCount * dashSpeed) % 10;
 								// Convert dimensions to tile-grid.
 								x *= units; // x coordinate on tile grid
 								y *= units; // y coordinate on tile grid
@@ -47296,7 +48294,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const { w, h }	= snapshot;
 				const level		= state.levelView.file.context;
 				// Calculate viewport visible level canvas center.
-				const units		= this.config.tileGrid;
+				const units		= tool.anchor.units;
 				const center	= this.getVisibleLevelCenter( units );
 				center.x -= Math.floor( w / 2 );
 				center.y -= Math.floor( h / 2 );
@@ -47329,23 +48327,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Check If Paste Possible
 				//--------------------------------
 				// Validate an active view is open.
-				const state			= this.getState();			// get current program state
+				const state       = this.getState();            // get current program state
 				// Convert the region to a stamp.
-				const levelView		= state.levelView;
-				const tilesetView	= state.tilesetView;
+				const levelView   = state.levelView;
+				const tilesetView = state.tilesetView;
 				if ( !levelView || !tilesetView ) return false; // no active level or tileset
-				const level			= levelView.file.context;
-				const layer			= level.getActiveLayer();	// get active level layer
-				if ( !layer || layer.locked ) return false;		// can't find / edit layer
-				const tileset		= tilesetView.file.context;
+				const level       = levelView.file.context;
+				const layer       = level.getActiveLayer();     // get active level layer
+				if ( !layer || layer.locked ) return false;     // can't find / edit layer
+				const tileset     = tilesetView.file.context;
 
 				//--------------------------------
 				// Validate Matrix Dimensions
 				//--------------------------------
 				// Determine dimensions of matrix.
 				if ( !Array.isArray(matrix) || !matrix.length ) return;
-				const w			= matrix[0].length;	// width
-				const h			= matrix.length;	// height
+				const w    = matrix[0].length;	// width
+				const h    = matrix.length;	// height
 				if ( w<1 || h<1 ) return; // no selection
 
 				//--------------------------------
@@ -47353,9 +48351,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				//--------------------------------
 				// Switch to the level marquee tool.
 				this.toolbox.setTool( 'levelMarquee' );
-				const tool		= this.toolbox.tools.levelMarquee; // level marquee tool
+				const tool = this.toolbox.tools.levelMarquee; // level marquee tool
 				// If marquee is floating, drop its contents.
-				const mode		= tool.skim( 'mode' );
+				const mode = tool.skim( 'mode' );
 				if ( mode==='floating' ) tool.reset(); // drop marquee
 				else tool.reset( false ); // no need to drop
 
@@ -47522,12 +48520,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const comparable =
 					state =>
 						state ? {
-							mode    : state.mode,
-							rects   : state.rects,
-							bounds  : state.bounds,
-							layerId : state.layerId,
-							mask    : state.mask,
-							anchor  : state.anchor
+							mode     : state.mode,
+							rects    : state.rects,
+							bounds   : state.bounds,
+							layerId  : state.layerId,
+							mask     : state.mask,
+							anchor   : state.anchor,
+							contents :
+								state.contents ?
+									{
+									w      : state.contents.w,
+									h      : state.contents.h,
+									matrix : state.contents.matrix
+									}
+									: null,
 							} : null;
 				// If the marquee hasn't changed, don't log for undo/redo.
 				if ( JSON.stringify(comparable(before))===JSON.stringify(comparable(after)) )
@@ -47817,21 +48823,22 @@ class JestToolPencil extends JestTool {
 		// Validate Mode & Enablement
 		//--------------------------------
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || (mode!=='idle' && mode!=='shiftlining') ) return;
 
 		//-------------------------
 		// Get Click Position
 		//-------------------------
 		// Determine if left, or right-clicked.
-		const isRightClick	= ( e.button === 2 );
-		const isLeftClick	= ( e.button === 0 );
-		this._mouseButton	= e.button;
-		// Calculate click position in tile units.
-		const units	= this.anchor.units;
-		const x		= Math.floor( e.offsetX / units );
-		const y		= Math.floor( e.offsetY / units );
+		const isRightClick = ( e.button === 2 );
+		const isLeftClick  = ( e.button === 0 );
+		this._mouseButton  = e.button;
+		// Calculate click position in tile units
+		const click = this.target.mousePos( e );
+		const units = this.anchor.units;
+		const x     = Math.floor( click.x / units );
+		const y     = Math.floor( click.y / units );
 
 		//--------------------------------
 		// SHIFT+CLICK INTERCEPT → LINE DRAW MODE
@@ -48094,8 +49101,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			// Options Keyboard Command(s)
 			//-------------------------
 			// Register "[" and "]" for brush size control
-			client.io.registerShortcut( '[', 'sizeDown' );
-			client.io.registerShortcut( ']', 'sizeUp' );
+			client.io.registerShortcut( '[', 'pencilSizeDown' );
+			client.io.registerShortcut( ']', 'pencilSizeUp' );
 			// Keyboard shortcut menu actions for brush resizing
 			client.io.register(
 				'keyboardShortcut', 'pencilResizeCommand',
@@ -48108,7 +49115,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Check if active tool is "pencil"
 					if ( !tool.enabled() ) return;
 					// Validate accepted commands.
-					if ( !['sizeUp','sizeDown'].includes(command) )
+					if ( !['pencilSizeUp','pencilSizeDown'].includes(command) )
 						return; // unrecognized command
 					//--------------------------------
 					// Access Options Form Data
@@ -48124,9 +49131,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 					// Alter Options
 					//--------------------------------
 					// Apply logic
-					if ( command==='sizeUp' )
+					if ( command==='pencilSizeUp' )
 						field.setValue( Math.min( value+1, field.getMax() ?? 10 ) );
-					else if ( command==='sizeDown' )
+					else if ( command==='pencilSizeDown' )
 						field.setValue( Math.max( value-1, field.getMin() ?? 1 ) );
 				});
 
@@ -48679,8 +49686,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 			// Options Keyboard Command(s)
 			//-------------------------
 			// Register "[" and "]" for brush size control
-			client.io.registerShortcut( '[', 'sizeDown' );
-			client.io.registerShortcut( ']', 'sizeUp' );
+			client.io.registerShortcut( '[', 'pencilSizeDown' );
+			client.io.registerShortcut( ']', 'pencilSizeUp' );
 			// Keyboard shortcut menu actions for brush resizing
 			client.io.register(
 				'keyboardShortcut', 'eraserResizeCommand',
@@ -48693,7 +49700,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 					// Check if active tool is "eraser"
 					if ( !tool.enabled() ) return;
 					// Validate accepted commands.
-					if ( !['sizeUp','sizeDown'].includes(command) )
+					if ( !['pencilSizeUp','pencilSizeDown'].includes(command) )
 						return; // unrecognized command
 					//--------------------------------
 					// Access Options Form Data
@@ -48709,9 +49716,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 					// Alter Options
 					//--------------------------------
 					// Apply logic
-					if ( command==='sizeUp' )
+					if ( command==='pencilSizeUp' )
 						field.setValue( Math.min( value+1, field.getMax() ?? 10 ) );
-					else if ( command==='sizeDown' )
+					else if ( command==='pencilSizeDown' )
 						field.setValue( Math.max( value-1, field.getMin() ?? 1 ) );
 				});
 

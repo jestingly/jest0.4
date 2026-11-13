@@ -261,7 +261,8 @@ js/apps/jest/clients/plugins/jest/parsers/json.plugin.js
 
 # Tiler application plugin(s)
 # NOTE: The order they are imported is the order they will appear.
-js/apps/jest/clients/plugins/creator/settings/options.plugin.js
+js/apps/jest/clients/plugins/creator/settings/system.plugin.js
+js/apps/jest/clients/plugins/creator/settings/tiler/editor.plugin.js
 js/apps/jest/clients/plugins/creator/methods/painter.plugin.js
 js/apps/jest/clients/plugins/creator/methods/editor.plugin.js
 js/apps/jest/clients/plugins/creator/methods/keyboard.plugin.js

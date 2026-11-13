@@ -13,13 +13,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 		// Initialize Tileset Marquee Tool
 		//--------------------------------
 		init: function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Get the tileset view & its dimensional information.
+			const tilesetView = client.getState().tilesetView;
+
+			// --------------------------------
+			// Create Marquee Tool [object]
+			// --------------------------------
 			// Instantiate marquee tool
-			const tool = new JestToolMarquee( client, subtype );
+			const tool   = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
+			// Match the marquee anchor to native tileset tile pixels.
+			tool.anchor.graticulate( tilesetView.anchor.units );
 			// Wire tool to grid and palette canvas
-			tool.anchor.graticulate( client.config.tileGrid );
 			const canvas = client.gameboard.display.getCanvas( 'palette' );
 			tool.setTarget( canvas );
 
@@ -159,22 +169,47 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 				});*/
 
 			//-------------------------
+			// Tab Change Event
+			//-------------------------
+			// Update the marquee grid when the active tileset tab changes.
+			client.tabbarTileset.register(
+				'tabChange', 'tilesetMarqueeGrid',
+				() => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Get the tileset view & its dimensional information.
+					const bounds = s.tilesetView.anchor.getZoomed();
+					// Match the marquee grid to the newly active tileset view.
+					tool.anchor.graticulate( bounds.display.units );
+				});
+
+			//-------------------------
 			// Marquee Visual Rendering
 			//-------------------------
 			// Register marquee drawing visual.
 			client.register(
 				'draw', subtype,
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
 					// --------------------------------
 					// Draw Tool Visual(s)
 					// --------------------------------
 					// Get level marquee tool mode.
-					const toolMode = tool.skim( 'mode' );
+					const toolMode   = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
 					if ( toolMode!=='selecting' && toolMode!=='selected'
 						 && toolMode!=='floating' && toolMode!=='dragging' ) return;

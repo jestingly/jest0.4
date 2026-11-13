@@ -19,10 +19,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 			// Create Dragdrop Tool [object]
 			// --------------------------------
 			// Add a dragdrop tool to the tileset canvas board.
-			const tool		= new JestToolDragdrop( this, subtype );
+			const tool = new JestToolDragdrop( this, subtype );
 			client.toolbox.registerTool( subtype, tool );
-			tool.build();			// build tool
-			tool.setClickToDrag();	// click-to-drag (not hold-to-drag)
+			tool.build(); // build tool
+			tool.setClickToDrag(); // click-to-drag (not hold-to-drag)
 			// Set tool grid size.
 			tool.anchor.graticulate( client.config.tileGrid );
 
@@ -33,15 +33,96 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 			// Set Tiledrop Drag & Drop Source + Destination
 			// --------------------------------
 			// Set the "tileset" canvas as the crate source lift region for dragdrop.
-			const paletteCanvas	= client.gameboard.display.getCanvas( 'palette' );
-			tool.setTarget( paletteCanvas );		// set tile-click source
+			const paletteCanvas = client.gameboard.display.getCanvas( 'palette' );
+			tool.setTarget( paletteCanvas ); // set tile-click source
 			// Set the "level" canvas as the crate drop destination for dragdrop.
-			const levelCanvas	= client.gameboard.display.getCanvas( 'workspace' );
-			const levelCanvasEl	= levelCanvas.el;
+			const levelCanvas   = client.gameboard.display.getCanvas( 'workspace' );
+			const levelCanvasEl = levelCanvas.el;
 			tool.crate.addGarage( levelCanvasEl );
 			// Set swatch panel as a garage.
-			const swatchPanelEl	= client.swatchPanel.panel.el;
+			const swatchPanelEl = client.swatchPanel.panel.el;
 			tool.crate.addGarage( swatchPanelEl );
+
+			//--------------------------------
+			// Synchronize Tiledrop Level Zoom
+			//--------------------------------
+			// Rescales the carried tile preview and updates its destination snapping.
+			// The snapshot matrix and original stamp remain logically unscaled.
+			// RETURNS: [boolean] `true` on success else `false`.
+			const syncTileDropZoom = () => {
+				//--------------------------------
+				// Validate Carried Tile Data
+				//--------------------------------
+				// Get the original unscaled snapshot carried by the crate.
+				const snapshot = tool.crate.display.getContents();
+				const stamp    = snapshot?.stamp;
+				const matrix   = snapshot?.matrix;
+
+				// Require a valid tile matrix and its original stamp canvas.
+				if ( !stamp?.el || !matrix?.length || !matrix[0]?.length )
+					return false; // nothing is currently being carried
+
+				//--------------------------------
+				// Resolve Active Level Zoom
+				//--------------------------------
+				// Get the active level view. Fall back to normal scale when no level
+				// is open so the crate never retains a previous level's magnification.
+				const state = this.getState();
+				const view  = state?.levelView;
+				const zoom  = view?.anchor.getZoom() ?? 1;
+
+				// Get the display-space size of one level tile.
+				const units = view?.anchor.getUnitsZoomed() ?? client.config.tileGrid;
+
+				//--------------------------------
+				// Configure Crate Coordinate Space
+				//--------------------------------
+				// Keep the crate's logical units equal to the normal tile size.
+				tool.crate.anchor.graticulate( client.config.tileGrid );
+				// Apply level magnification through the crate anchor.
+				tool.crate.anchor.setZoom( zoom );
+
+				// Keep the mouse centered within the first carried tile while freely
+				// following the pointer outside a garage.
+				tool.crate.offsetX = units / 2;
+				tool.crate.offsetY = units / 2;
+
+				//--------------------------------
+				// Calculate Zoomed Preview Size
+				//--------------------------------
+				// Determine the logical tile dimensions of the carried matrix.
+				const columns = matrix[0].length;
+				const rows    = matrix.length;
+
+				// Convert the logical matrix dimensions into display-space pixels.
+				const width  = Math.max( 1, Math.round(columns * units) );
+				const height = Math.max( 1, Math.round(rows    * units) );
+
+				//--------------------------------
+				// Render Zoomed Crate Preview
+				//--------------------------------
+				// Get the crate's preview canvas.
+				const preview = tool.crate.display.getCanvas( 'dragdrop' );
+				if ( !preview ) return false; // abort
+
+				// Scale the original stamp into the crate using nearest-neighbor
+				// rendering supplied by ElementCanvas.draw().
+				preview.draw(
+					stamp, true, true,
+					0, 0, 0, 0,
+					stamp.width, stamp.height, width, height
+					);
+
+				// Match the outer crate panel to the scaled preview dimensions.
+				tool.crate.panel.resize( width, height );
+
+				//--------------------------------
+				// Refresh Current Drag Position
+				//--------------------------------
+				// Immediately resnap the crate after a real-time zoom change.
+				tool.crate.refreshPosition();
+				return true; // success
+			};
 
 			// --------------------------------
 			// Add Event Listener(s)
@@ -50,12 +131,41 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 			tool.register(
 				'dragdropPickup', 'liftTile',
 				( e, pos, tool ) => {
-					//console.log('tiledrop: dragdrop pickup');
-					// Draw the tile inside the crate.
-					//console.log( e, pos, tool );
-					if ( client.toolTilesetTileLift(tool,pos.tx,pos.ty) )
-						// Set a short mouse-click timeout suppression.
-						client.delegator.permaSuppress( 'tiledrop', ['click','mouseup','mousedown'] );
+					//--------------------------------
+					// Create Carried Tile Snapshot
+					//--------------------------------
+					// Copy the selected tileset region into the drag-drop crate.
+					if ( !client.toolTilesetTileLift(tool,pos.tx,pos.ty) )
+						return false; // pickup failed
+
+					//--------------------------------
+					// Match Active Level Zoom
+					//--------------------------------
+					// Immediately display and snap the crate at the active level scale.
+					syncTileDropZoom();
+
+					//--------------------------------
+					// Suppress Underlying Mouse Events
+					//--------------------------------
+					// Prevent the pickup click from triggering editor actions underneath.
+					client.delegator.permaSuppress(
+						'tiledrop',
+						['click','mouseup','mousedown']
+						);
+				});
+
+			//--------------------------------
+			// Live Level Zoom Listener
+			//--------------------------------
+			// Update an actively carried tiledrop whenever the level zoom changes.
+			client.register(
+				'levelZoomed', 'tiledropCrateZoom',
+				() => {
+					// Ignore zoom changes when no tile snapshot is being carried.
+					if ( !tool.crate.display.getContents() )
+						return; // nothing to update
+					// Resize, resnap, and reposition the crate immediately.
+					syncTileDropZoom();
 				});
 
 			// Event listener when "item dropped".
@@ -66,10 +176,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					// Validate State & Get Editor [objects]
 					//--------------------------------
 					// Check for open view & tool.
-					const state		= this.getState(); // get program state
+					const state = this.getState(); // get program state
 					if ( !state?.levelView ) return;
 					// Require level view & level [object].
-					const view		= state.levelView;
+					const view  = state.levelView;
 					//--------------------------------
 					// Commit Tile Drop Movement
 					//--------------------------------
@@ -104,7 +214,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 						// Only trigger if matrix is 1x1.
 						if ( w===1 && h===1 ) {
 							// Get tile from matrix.
-							const tile	= region.matrix[0][0];
+							const tile = region.matrix[0][0];
 							// Prompt user to add tile to swatch panel.
 							client.modals.newSwatch.inputs.title.setValue( '' );
 							client.modals.newSwatch.open( tile );
@@ -147,7 +257,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				( tool ) => {
 					//console.log('lifted');
 					// Get marquee anchor bounds.
-					const bounds	= tool.anchor.getBounds(); // bounding box info
+					const bounds = tool.anchor.getBounds(); // bounding box info
 					// Store the marquee bounds info inside tiledrop contents.
 					client.toolbox.tools.tiledrop.setContents( bounds );
 					// Clear the selection.
@@ -160,7 +270,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				( e ) => {
 					// Get tileset marquee anchor bounds.
 					const tilesetMarquee = client.toolbox.tools.tilesetMarquee;
-					const bounds	= tilesetMarquee.tracer.getBounds(); // bounding box info
+					const bounds = tilesetMarquee.tracer.getBounds(); // bounding box info
 					// Permit the drag-drop if a selection is made.
 					if ( bounds.w>0 && bounds.h>0 )
 						tool.jot( 'canceling', false );
@@ -173,21 +283,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 		extend: function( Klass, proto ) {
 			// Display a tile inside the drag & drop crate.
 			// RETURNS: [boolean] `true` on success else `false` on fail.
-			// * tool	- [object] JestToolToldrop emitting the event.
-			// * x,y	- [number] Coordinates of tile x,y on tileset.
+			// * tool  - [object] JestToolToldrop emitting the event.
+			// * x,y   - [number] Coordinates of tile x,y on tileset.
 			proto.toolTilesetTileLift = function( tool, x, y ) {
 				//console.log( 'lifting tileset tile(s)' );
 				// Get active state info.
-				const state		= this.getState();	// get current program state
+				const state    = this.getState(); // get current program state
 				// Validate an active view is open.
-				if ( !state.tileset ) return false;	// no active tileset
-				const tileset	= state.tileset;	// get tileset ref
+				if ( !state.tileset ) return false; // no active tileset
+				const tileset  = state.tileset; // get tileset ref
 				// --------------------------------
 				// Draw Tile in Crate
 				// --------------------------------
 				// Check for an active marquee selection.
 				let w = 1, h = 1; // width & height
-				const contents	= tool.getContents();
+				const contents = tool.getContents();
 				if ( contents ) {
 					// Get bounds from tiledrop contents (stored via marquee).
 					( { x, y, w, h } = contents );
@@ -195,16 +305,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					tool.setContents( null );
 				}
 				// Clamp width & height
-				w	= Math.max( 1, w ); // no smaller than a single tile
-				h	= Math.max( 1, h ); // no smaller than a single tile
+				w = Math.max( 1, w ); // no smaller than a single tile
+				h = Math.max( 1, h ); // no smaller than a single tile
 				// Get region matrix & stamp.
-				const snapshot	= tileset.snapshotRegion( x, y, w, h );
+				const snapshot = tileset.snapshotRegion( x, y, w, h );
 				const { matrix, stamp } = snapshot;
 				// Set the crate contents to carry designated tile data.
 				//tool.crate.display.setContents( tileset.getTileData(tx,ty) );
 				tool.crate.display.setContents( snapshot );
 				// Get tile snapshot canvas & stamp onto crate display.
-				//const stamp		= tileset.getTileStamp( tx, ty );
+				//const stamp = tileset.getTileStamp( tx, ty );
 				tool.crate.display.render( 'dragdrop', stamp );
 				// Resize crate to show contents.
 				tool.crate.panel.resize( stamp.width, stamp.height );

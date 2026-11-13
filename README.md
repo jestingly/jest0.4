@@ -1,4 +1,4 @@
-# jest0.41
+# jest0.42
 
 ```text
 //-------------------------------------------------------
@@ -20,6 +20,12 @@ Edit the following files to configure your application:
 • css/vars_local.css
 • js/apps/jest/components/JestConfiguration_loc.js
 • js/apps/jest/components/JestConfiguration_rem.js
+
+//-------------------------------------------------------
+       DEVELOPER NOTES • CHANGES from v0.41 to v0.42
+//-------------------------------------------------------
+
+• The zoom capability now exists. You can zoom into a level using the "+" & "-" keys. Additionally, there is a zoom slider in a new _Editor_ collapsible options/settings sidebar menu.
 
 //-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.4 to v0.41

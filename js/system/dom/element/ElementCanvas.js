@@ -78,12 +78,12 @@ class ElementCanvas extends OSElement {
 	resize( width=100, height=100 ) {
 		// Validate argument(s)
 		if ( !Number.isInteger(width) ) {
-			console.error( `Argument "width" must be an integer.` );
-			width  = 100;
+			//console.warn( `Argument "width" must be an integer.` );
+			width  = Math.round( width );
 		}
 		if ( !Number.isInteger(height) ) {
-			console.error( `Argument "width" must be an integer.` );
-			height = 100;
+			//console.warn( `Argument "height" must be an integer.` );
+			height = Math.round( height );
 		}
 		// Set width & height
 		this.width     = Math.max( 0, width );  // save new width
@@ -101,35 +101,79 @@ class ElementCanvas extends OSElement {
 	// --------------------------------
 	// Rendering Method(s)
 	// --------------------------------
-	// Render an image into the display.
-	// RETURNS: [void].
-	// * canvas	- [object] ElementCanvas object to render inside the display.
-	// clear	- [bool] Whether to clear area first.
-	// resize	- [bool] Whether to resize the canvas to match the sw,sh.
-	// dx,dy	- [number] Coordinates of location on destination canvas to draw.
-	// sx,sy	- [number] Coordinates of location on source canvas to clip.
-	// sw,sh	- [number] Width and height dimensions of source canvas to clip.
-	draw( canvas, clear=false, resize=false, dx=0, dy=0, sx=0, sy=0, sw=null, sh=null ) {
-		// Set auto dimension(s) if not supplied.
-		const w   = sw ?? canvas.el.width;
-		const h   = sh ?? canvas.el.height;
-		// Get tooldrop canvas context & clear it.
-		const ctx = this.el.getContext( '2d' );
-		// Clear area if requested.
-		if ( clear )
-			ctx.clearRect( 0, 0, w, h );
-		// Resize crate to show contents if requested.
-		if ( resize )
-			this.resize( w, h );
+	// Render a canvas into this canvas.
+	// RETURNS: [boolean] `true` on success else `false` on fail.
+	// * canvas	- [ElementCanvas] Source canvas to render.
+	//   clear	- [bool] Whether to clear the destination area first.
+	//   resize	- [bool] Whether to resize this canvas to the destination size.
+	//   dx,dy	- [number] Destination coordinates.
+	//   sx,sy	- [number] Source crop coordinates.
+	//   sw,sh	- [number] Source crop dimensions.
+	//   dw,dh	- [number] Destination dimensions used to scale the source.
+	draw( canvas, clear=false, resize=false,
+		  dx=0, dy=0, sx=0, sy=0,
+		  sw=null, sh=null, dw=null, dh=null ) {
+		//--------------------------------
+		// Resolve Source Dimension(s)
+		//--------------------------------
+		// Use the complete source canvas when no crop size was supplied.
+		const sourceWidth  = sw ?? canvas.el.width;
+		const sourceHeight = sh ?? canvas.el.height;
 
-		// Draw the selected tile on the dragdrop crate canvas.
+		//--------------------------------
+		// Resolve Destination Dimension(s)
+		//--------------------------------
+		// Preserve the original 1:1 drawing behavior unless explicit
+		// destination dimensions were supplied by the caller.
+		const destinationWidth  = dw ?? sourceWidth;
+		const destinationHeight = dh ?? sourceHeight;
+
+		//--------------------------------
+		// Resize Destination Canvas
+		//--------------------------------
+		// Resize before obtaining and configuring the drawing context because
+		// changing canvas dimensions resets all context rendering properties.
+		if ( resize )
+			this.resize( destinationWidth, destinationHeight );
+
+		//--------------------------------
+		// Configure Pixel Rendering
+		//--------------------------------
+		// Access the destination canvas drawing context.
+		const ctx = this.el.getContext( '2d' );
+
+		// Disable interpolation so scaled pixels retain sharp edges.
+		ctx.imageSmoothingEnabled = false;
+
+		//--------------------------------
+		// Clear Destination Area
+		//--------------------------------
+		// Clear the complete destination drawing region when requested.
+		if ( clear )
+			ctx.clearRect(
+				dx,
+				dy,
+				destinationWidth,
+				destinationHeight
+				);
+
+		//--------------------------------
+		// Draw and Scale Canvas
+		//--------------------------------
+		// Copy the requested source region into the destination region.
 		ctx.drawImage(
-			canvas.el,			// image contents being copied
-			sx,    sy,			// source crop x,y
-			w,     h,			// source W x H
-			dx,    dy,			// destination x,y
-			w,     h			// destination W x H
+			canvas.el,
+			sx,
+			sy,
+			sourceWidth,
+			sourceHeight,
+			dx,
+			dy,
+			destinationWidth,
+			destinationHeight
 			);
+
+		return true; // success
 	}
 
 	//--------------------------------

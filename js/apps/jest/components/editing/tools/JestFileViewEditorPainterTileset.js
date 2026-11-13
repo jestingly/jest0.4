@@ -71,6 +71,12 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// RETURNS: [void]
 	initView() {
 		super.initView(); // call parent method
+		//-------------------------
+		// Configure Level Measurements
+		//-------------------------
+		// Graticulate to match the application configuration tile grid.
+		const units  = this.client.config.tileGrid;
+		this.anchor.graticulate( units ); // set tile grid
 		// Resize to level size.
 		const width  = this.file.context.image.file.el.width;
 		const height = this.file.context.image.file.el.height;

@@ -12,8 +12,8 @@ JestAppsRegistry.AppJestTiler =
 	class JestTiler extends JestCreator {
 		// Declare properties
 		icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
-		name			= 'Tiler';		// name of application
-		version			= '0.3beta';		// application version
+		name			= 'Tiler';			// name of application
+		version			= '0.42';			// application version
 		id				= 'tiler';			// tiler application id.
 		// Server [objects]
 		//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -93,11 +93,18 @@ JestAppsRegistry.AppJestTiler =
 			// Get the level editing canvas
 			const gameboard	= this.gameboard;	// get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
+			canvas.el.style.imageRendering = 'pixelated'; // pixel art canvas
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			const toolbar	= this.toolbar;
 			// Get the file menu.
 			const filemenu	= this.filemenu;	// get ref
+
+			//-------------------------
+			// Initiate App-Level Settings
+			//-------------------------
+			// Initiate the tiler app as having settings.
+			this.settings.tiler = {};
 
 			// --------------------------------
 			// Plugin Tiler UI Hook(s)
@@ -159,12 +166,14 @@ JestAppsRegistry.AppJestTiler =
 			// --------------------------------
 			// Create swatch(es) list of swatch display(s).
 			this.swatches	= {}; // [object] of tile swatches
+
 			// Create primary swatch (foreground).
 			const swatchFg	= new JestDisplay( this );
 			this.swatches.foreground = swatchFg;
 			swatchFg.build( 'swatch', ['swatch','swatch-fg'] ); // build display
 			toolbar.panel.addPanel( 'swatchFg', swatchFg.panel );
 			swatchFg.panel.addAttribute( 'data-tooltip', 'Foreground Tile' );
+
 			// Create secondary swatch (background).
 			const swatchBg	= new JestDisplay( this );
 			this.swatches.background = swatchBg;
@@ -179,21 +188,27 @@ JestAppsRegistry.AppJestTiler =
 			await this.gameboard.addWorld( 'jest' );
 			const world		= this.gameboard.getWorld( 'jest' );
 			//console.log( `Opening new world preset file [object] "${fileInfo.stem}".` );
+
 			// Open game world tileset(s).
-			for ( const data of world.tilesets ) {
+			for ( const data of world.tilesets )
 				await this.openTilesetFile( data.stem );
-			}
 			loadbar.update(); // step 7
+
+			// --------------------------------
+			// Plugin App Settings Hook(s)
+			// --------------------------------
+			// Initialize user interface plugin(s).
+			await JestTiler.initPlugins( 'settings', this );
 
 			// --------------------------------
 			// Load Toolbox Tool Plugin(s)
 			// --------------------------------
 			// Setup temporary loadbar variable(s).
 			// NOTE: Loadbar is accessible after UI plugins.
-			let loadStep	= 0; // tracks current step
-			let loadTotal	= 0; // total steps
+			let loadStep    = 0; // tracks current step
+			let loadTotal   = 0; // total steps
 			// Determine how many tool plugin(s) to load.
-			loadTotal		= this.countPlugins( 'tools' );
+			loadTotal       = this.countPlugins( 'tools' );
 			// Condense loader screen load segments.
 			let loadScrnSteps	= 2;
 			// Begin discharging load events.
@@ -250,7 +265,7 @@ JestAppsRegistry.AppJestTiler =
 							//persistent: true,
 							buttons   :
 								[
-								{ label: 'Ok', click: () =>  {/*console.log('Ok pressed');*/} }
+								{ label: 'Ok', click: ()=>{/*console.log('Ok pressed');*/} }
 								]
 							//onExpire  : () => console.log('Notification expired')
 							});
@@ -523,19 +538,19 @@ JestAppsRegistry.AppJestTiler =
 				// Setup File Editing View
 				//--------------------------------
 				// Create a new view panel for level.
-				const view		= new JestFileViewEditorPainterLevel( this );
-				const skey		= view.skey;		// we'll use system key for various signature(s)
-				view.build();						// build the view
-				this.easels.files.showcase( view );	// add view to "files" easel
+				const view      = new JestFileViewEditorPainterLevel( this );
+				const skey      = view.skey;        // we'll use system key for various signature(s)
+				view.build();                       // build the view
+				this.easels.files.showcase( view ); // add view to "files" easel
 				// Open the file.
-				view.openFile( cabFile );			// open the level file in the view
+				view.openFile( cabFile );           // open the level file in the view
 
 				//--------------------------------
 				// Handle File Change/Save Event(s)
 				//--------------------------------
 				// Set view mode to pre-saved (since opened file) & unchanged.
-				cabFile.jot( "saved", true );		// it has not been saved
-				cabFile.jot( "changed", false );	// it has not been changed
+				cabFile.jot( "saved", true );       // it has not been saved
+				cabFile.jot( "changed", false );    // it has not been changed
 
 				//--------------------------------
 				// Setup Undo/Redo History Management
@@ -595,7 +610,7 @@ JestAppsRegistry.AppJestTiler =
 					});
 
 				// Add history panel to the sidebar menu.
-				const histMenu	= this.sidebar.getSection( 'history' );
+				const histMenu = this.sidebar.getSection( 'history' );
 				histMenu.addItem( skey, view.history.panel );
 				view.history.hide(); // hide the history
 
@@ -603,7 +618,7 @@ JestAppsRegistry.AppJestTiler =
 				// Add View to Tab-bar
 				//--------------------------------
 				// Open new tab for view.
-				const tab	= this.tabbarFile.addView( view );
+				const tab = this.tabbarFile.addView( view );
 				// Add filetype icon.
 				/*tab.clicker.addElements([
 					{
@@ -690,13 +705,13 @@ JestAppsRegistry.AppJestTiler =
 			// Begin the report.
 			let report	= {
 				// Active level info.
-				levelView:				null,
-				level:					null,
-				levelViewKey:			null,
+				levelView      : null,
+				level          : null,
+				levelViewKey   : null,
 				// Active tileset info.
-				tilesetView:			null,
-				tileset:				null,
-				tilesetViewKey:			null
+				tilesetView    : null,
+				tileset        : null,
+				tilesetViewKey : null
 				};
 
 			//--------------------------------
@@ -706,9 +721,9 @@ JestAppsRegistry.AppJestTiler =
 			const levelView = this.tabbarFile[property];
 			// Populate the level information when a valid view exists.
 			if ( levelView ) {
-				report.levelView		= levelView;
-				report.level			= levelView.file.context;
-				report.levelViewKey		= levelView.skey;
+				report.levelView      = levelView;
+				report.level          = levelView.file.context;
+				report.levelViewKey   = levelView.skey;
 			}
 
 			//--------------------------------
@@ -718,9 +733,9 @@ JestAppsRegistry.AppJestTiler =
 			const tilesetView = this.tabbarTileset[property];
 			// Populate the tileset information when a valid view exists.
 			if ( tilesetView ) {
-				report.tilesetView		= tilesetView;
-				report.tileset			= tilesetView.file.context;
-				report.tilesetViewKey	= tilesetView.skey;
+				report.tilesetView    = tilesetView;
+				report.tileset        = tilesetView.file.context;
+				report.tilesetViewKey = tilesetView.skey;
 			}
 			// Return the requested application state.
 			return report;
@@ -916,25 +931,25 @@ JestAppsRegistry.AppJestTiler =
 			// Check State & Status
 			// --------------------------------
 			// Get active state info.
-			let state	= this.getState(); // get current program state
-			let snapshot, report, mode, enabled, key;
+			let state     = this.getState(); // get current program state
 			// If no selection is made, return null.
-			enabled		= this.skim( 'enabled' );
-			mode		= this.skim( 'mode' );
+			const enabled = this.skim( 'enabled' );
+			const mode    = this.skim( 'mode' );
 			if ( !enabled ) return null;
+
 			// --------------------------------
 			// Check If Canvas Is Available
 			// --------------------------------
 			// Determine if editor canvas is set.
-			const editor     = this.gameboard.display.getCanvas( 'workspace' );
+			const editor = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
 				console.warn( 'Workspace canvas is not set or invalid' );
 				return; // abort
 			}
-			const editorCtx  = editor.el.getContext( '2d' );
+			const editorCtx = editor.el.getContext( '2d' );
 
 			// Determine if palette canvas is set.
-			const palette    = this.gameboard.display.getCanvas( 'palette' );
+			const palette   = this.gameboard.display.getCanvas( 'palette' );
 			if ( !palette || !palette.el ) {
 				console.warn( 'Palette canvas is not set or invalid' );
 				return; // abort
@@ -942,46 +957,50 @@ JestAppsRegistry.AppJestTiler =
 			const paletteCtx = palette.el.getContext( '2d' );
 
 			// Determine if sketchpad canvas is set.
-			const sketch     = this.gameboard.display.getCanvas( 'sketchpad' );
+			const sketch    = this.gameboard.display.getCanvas( 'sketchpad' );
 			if ( !sketch || !sketch.el ) {
 				console.warn( 'Sketchpad canvas is not set or invalid' );
 				return; // abort
 			}
-			const sketchCtx  = sketch.el.getContext( '2d' );
+			const sketchCtx = sketch.el.getContext( '2d' );
 
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null,
+			this.emit(
+				'predraw', null,
 				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
+				editor, palette, sketch );
 
 			// --------------------------------
 			// Draw Depending Upon Mode
 			// --------------------------------
+			// Access the state properties.
+			const levelView   = state.levelView;    // level view
+			const tilesetView = state.tilesetView;  // tileset view
 			// Handle mode.
 			switch ( mode ) {
+				// App running.
 				case 'running':	// application is running
 					// --------------------------------
 					// Render the Editor Canvas
 					// --------------------------------
 					// Require a file to be open.
-					if ( state.levelView!==null ) {
-						// Set the fill color to blue
-						//editorCtx.fillStyle = '#000';
-						// Clear the canvas with an empty screen.
-						editorCtx.clearRect( 0, 0, editor.el.width, editor.el.height );
+					if ( levelView!==null ) {
 						//editorCtx.fillStyle = 'transparent';
 						// --------------------------------
 						// Draw Level Board on Editor
 						// --------------------------------
 						// Draw active view on editor.
-						state.levelView.refreshCanvas(); // refresh composite render
-						const levelImage = state.levelView.getViewRender(); // get canvas
-						editorCtx.drawImage(
-							levelImage.el,   // image contents being copied
-							0, 0,            // source crop x,y
-							levelImage.width, levelImage.height, // source W x H
-							0, 0,            // destination x,y
-							editor.width, editor.height // destination W x H
+						levelView.refreshCanvas(); // refresh composite render
+						const levelImage = levelView.getViewRender(); // get canvas
+						// Copy the level canvas and scale it to fill the editor canvas.
+						editor.draw(
+							levelImage,   // Source ElementCanvas
+							true,         // Clear the canvas first
+							true,         // Resize the canvas
+							0, 0,         // Destination x, y
+							0, 0,         // Source x, y
+							levelImage.width, levelImage.height // source WxH
+							//editor.width, editor.height // destination WxH
 							);
 					}
 
@@ -989,32 +1008,37 @@ JestAppsRegistry.AppJestTiler =
 					// Render the Palette Canvas
 					// --------------------------------
 					// Require a file to be open.
-					if ( state.tilesetView!==null ) {
-						// Clear the canvas with an empty screen.
-						paletteCtx.clearRect( 0, 0, palette.el.width, palette.el.height );
+					if ( tilesetView!==null ) {
 						// --------------------------------
 						// Draw Tileset Board on Palette
 						// --------------------------------
 						// Draw active view on palette.
-						const tilesetImage	= state.tilesetView.getViewRender();
-						paletteCtx.drawImage(
-							tilesetImage.el,	// image contents being copied
-							0, 0,				// source crop x,y
-							tilesetImage.el.width, tilesetImage.el.height, // source W x H
-							0, 0,				// destination x,y
-							palette.width, palette.height // destination W x H
+						tilesetView.refreshCanvas(); // refresh render
+						const tilesetImage = tilesetView.getViewRender(); // get canvas
+						// Copy the tileset canvas and scale it to fill the palette canvas.
+						palette.draw(
+							tilesetImage, // Source ElementCanvas
+							true,         // Clear the canvas first
+							true,         // Resize the canvas
+							0, 0,         // Destination x, y
+							0, 0,         // Source x, y
+							tilesetImage.width, tilesetImage.height // source WxH
+							//palette.width, palette.height // destination WxH
 							);
 					}
 					break;
+				// Unknown mode.
 				default: break; // no mode to draw
 			}
 			// Emit post-draw hooks.
-			this.emit( 'draw', null,
+			this.emit(
+				'draw', null,
 				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
-			this.emit( 'postdraw', null,
+				editor, palette, sketch );
+			this.emit(
+				'postdraw', null,
 				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
+				editor, palette, sketch );
 		}
 
 		//--------------------------------
@@ -1023,22 +1047,22 @@ JestAppsRegistry.AppJestTiler =
 		// Store some selection to clipboard for paste.
 		copy() {
 			// Emit copy event(s).
-			this.emit( 'copy', null );		// emit hook
+			this.emit( 'copy', null );     // emit hook
 		}
 
 		// Store some selection to clipboard for paste & remove it.
 		cut() {
 			// Emit cut event(s).
-			this.emit( 'copy', null );		// emit hook
-			this.emit( 'delete', null );	// emit hook
+			this.emit( 'copy', null );     // emit hook
+			this.emit( 'delete', null );   // emit hook
 		}
 
 		// Paste an item from the clipboard.
 		paste() {
 			// Access application state & current clipboard.
-			const state		= this.getState(); // get current program state
+			const state    = this.getState(); // get current program state
 			// Look for a snapshot on the clipboard.
-			const snapshot 	= this.governor.current( 'clipboard' ); // clipboard data
+			const snapshot = this.governor.current( 'clipboard' ); // clipboard data
 			if ( !snapshot ) return;
 			// Emit paste event(s).
 			this.emit( 'paste', null, snapshot ); // emit hook
@@ -1047,8 +1071,8 @@ JestAppsRegistry.AppJestTiler =
 		// Delete a selected item.
 		delete() {
 			// Access application state & emit event.
-			const state		= this.getState(); // get current program state
-			this.emit( 'delete', null ); // emit hook
+			const state = this.getState(); // get current program state
+			this.emit( 'delete', null );   // emit hook
 		}
 
 		//--------------------------------
@@ -1060,25 +1084,25 @@ JestAppsRegistry.AppJestTiler =
 		// * key	- [string] Value of swatch to sample to (e.g. 'foreground').
 		toolSetTileSwatch( tile, key ) {
 			// Block action if app is busy.
-			if ( this.busy() ) return;	// app busy‐gate
+			if ( this.busy() ) return; // app busy‐gate
 			// Get active state info.
-			const state		= this.getState();				// get current program state
+			const state   = this.getState();           // get current program state
 			//console.log( state );
 			// Validate an active view is open.
-			if ( !state.tilesetView ) return false;			// no active tileset
-			if ( !this.swatches?.[key] ) return false;		// no swatch
+			if ( !state.tilesetView ) return false;    // no active tileset
+			if ( !this.swatches?.[key] ) return false; // no swatch
 			// --------------------------------
 			// Get Double-Clicked Tile
 			// --------------------------------
 			const { tx, ty } = tile;
 			// Grab the tile snapshot & store in display backend contents data.
-			const data		= state.tileset.getTileData( tx, ty );
-			const display	= this.swatches[key];
+			const data    = state.tileset.getTileData( tx, ty );
+			const display = this.swatches[key];
 			display.contents = data;
 			// Render the tile in the swatch display
-			const canvas	= state.tileset.getTileStamp( tx, ty );
-			display.addCanvas( 'tile' );		// add a canvas to display
-			display.render( 'tile', canvas );	// render tile on canvas
+			const canvas  = state.tileset.getTileStamp( tx, ty );
+			display.addCanvas( 'tile' );        // add a canvas to display
+			display.render( 'tile', canvas );   // render tile on canvas
 			// Highlight the swatch.
 			if ( display ) {
 				display.panel.addClass( 'signal' );
@@ -1095,11 +1119,11 @@ JestAppsRegistry.AppJestTiler =
 			// Check If Paste Possible
 			//--------------------------------
 			// Validate an active view is open.
-			const state		= this.getState();		// get current program state
-			if ( !state.tilesetView ) return false;	// no active level
-			const tileset	= state.tilesetView.file.context;	// active [JestTileset] instance
+			const state   = this.getState();        // get current program state
+			if ( !state.tilesetView ) return false; // no active level
+			const tileset = state.tilesetView.file.context; // active [JestTileset] instance
 			// Convert the region to a stamp.
-			const stamp		= tileset.createStamp( matrix );	// convert to stamp
+			const stamp   = tileset.createStamp( matrix );  // convert to stamp
 			return stamp; // return stamp
 		}
 	};

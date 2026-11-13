@@ -494,8 +494,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Check If File Open
 					//--------------------------------
 					// Check for open view & tool.
-					const view		= state.levelView;
-					const key		= state.levelViewKey;
+					const view   = state.levelView;
+					const key    = state.levelViewKey;
 					//--------------------------------
 					// Check If Update Possible
 					//--------------------------------
@@ -759,6 +759,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			console.log( matrix3 );
 			const matrix4 = client.grapher.fillMatrixPerimeter( matrix3, ['a','b'], 0 );
 			console.log( matrix4 );*/
+
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'paintbrushZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------

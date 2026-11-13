@@ -435,10 +435,14 @@ class OSElement extends OSEventTarget {
 	// * height	- [int] Value of new height or [null] for no change.
 	resize( width, height ) {
 		// Resize the DOM element style width and/or height.
-		if ( width!==null ) // update element width
-			this.el.style.width		= `${width}px`;
-		if ( height!==null ) // update element height
-			this.el.style.height	= `${height}px`;
+		// Update element width.
+		if ( width!==null
+			 && this.el.style.width!==`${width}px` )
+			this.el.style.width  = `${width}px`;  // width
+		// Update element height.
+		if ( height!==null
+			 && this.el.style.height!==`${height}px` )
+			this.el.style.height = `${height}px`; // height
 	}
 	// Expand the DOM element by some amount (adds to existing size).
 	// RETURNS: [void]
@@ -476,15 +480,35 @@ class OSElement extends OSEventTarget {
 	//-----------------------------
 	// Positioning DOM element.
 	//-----------------------------
-	// Get the relative position of a mouse click event.
-	// RETURNS: [void]
-	// * event	- event [object] sent through mouse event.
+	// Convert a mouse event into the element's local pixel coordinates.
+	// Canvas positions are returned in backing pixels, regardless of CSS zoom.
+	// RETURNS: [object] { x, y } local coordinates.
+	// * event - [MouseEvent] Pointer event to convert.
 	mousePos( event ) {
-		// Get the bounding rect.
+		// Measure the element as it is currently displayed.
 		const rect = this.el.getBoundingClientRect();
+
+		// Exclude the garage border so dropping and visual snapping use the
+		// exact same local coordinate origin.
+		const borderLeft = this.el.clientLeft;
+		const borderTop  = this.el.clientTop;
+
+		// Start with CSS-pixel coordinates inside the displayed element.
+		const x = event.clientX - rect.left;
+		const y = event.clientY - rect.top;
+
+		// Non-canvas elements keep their existing CSS-pixel coordinates.
+		if ( !(this.el instanceof HTMLCanvasElement) )
+			return { x, y }; // local (x,y)
+
+		// Avoid division by zero for a hidden or not-yet-sized canvas.
+		if ( rect.width===0 || rect.height===0 )
+			return { x: 0, y: 0 };
+
+		// Convert displayed CSS pixels to the canvas backing-store pixels.
 		return {
-			x: event.clientX - rect.left,
-			y: event.clientY - rect.top
+			x : x * this.el.width  / rect.width,
+			y : y * this.el.height / rect.height
 			};
 	}
 

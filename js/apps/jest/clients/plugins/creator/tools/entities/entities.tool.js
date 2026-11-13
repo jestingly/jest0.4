@@ -283,32 +283,32 @@ class JestToolEntities extends JestTool {
 		// Reverse order prioritizes the topmost drawn entity.
 		for ( let i=items.length-1; i>=0; i-- ) {
 			// Access curator item returned from getEntities() hook.
-			const object	= items[i];
-			const data		= object?.data;
+			const object = items[i];
+			const data   = object?.data;
 
 			//--------------------------------
 			// Resolve Entity Dimensions
 			//--------------------------------
-			const image	= data?.image;
+			const image = data?.image;
 
 			// Check whether the entity image is ready.
-			const valid	= Boolean( image?.canvas && image.skim('image')==='drawn' );
+			const valid = Boolean( image?.canvas && image.skim('image')==='drawn' );
 
 			// Skip hidden objects.
 			if ( object.skim('visible')===false ) continue;
 
 			// Convert entity coordinates into pixels.
-			const units	= this.client.config.tileGrid;
-			const bx	= Number(data.x) * units;
-			const by	= Number(data.y) * units;
+			const units = this.anchor.units;
+			const bx    = Number(data.x) * units;
+			const by    = Number(data.y) * units;
 
 			// Use actual dimensions or default NPC dimensions.
-			const bw	= valid ? image.canvas.width  : 45;
-			const bh	= valid ? image.canvas.height : 48;
+			const bw    = valid ? image.canvas.width  : 45;
+			const bh    = valid ? image.canvas.height : 48;
 
 			// Require valid bounds.
 			if ( ![bx,by,bw,bh].every(Number.isFinite) )
-				continue;
+				continue; // skip
 
 			//--------------------------------
 			// Check Point Intersection
@@ -391,18 +391,18 @@ class JestToolEntities extends JestTool {
 		//--------------------------------
 		// Calculate Measurements
 		//--------------------------------
-		const mouse	= this.target.mousePos( e );
-		const units	= this.client.config.tileGrid;
+		const mouse = this.target.mousePos( e );
+		const units = this.anchor.units;
 		// Store original coordinates.
-		this.dragStartX		= Number( object.data.x );
-		this.dragStartY		= Number( object.data.y );
+		this.dragStartX  = Number( object.data.x );
+		this.dragStartY  = Number( object.data.y );
 		// Calculate entity's pixel position.
-		const x		= this.dragStartX * units;
-		const y		= this.dragStartY * units;
+		const x     = this.dragStartX * units;
+		const y     = this.dragStartY * units;
 		// Preserve where the cursor grabbed the image.
-		this.grabOffsetX	= mouse.x - x;
-		this.grabOffsetY	= mouse.y - y;
-		this.moved	= false;
+		this.grabOffsetX = mouse.x - x;
+		this.grabOffsetY = mouse.y - y;
+		this.moved  = false;
 
 		//--------------------------------
 		// Change Mode
@@ -447,7 +447,7 @@ class JestToolEntities extends JestTool {
 		// Calculate New Coordinates
 		//--------------------------------
 		const mouse	= this.target.mousePos( e );
-		const units	= this.client.config.tileGrid;
+		const units	= this.anchor.units;
 		// Convert pixel position to level coordinates.
 		let x	= (mouse.x-this.grabOffsetX) / units;
 		let y	= (mouse.y-this.grabOffsetY) / units;

@@ -11,7 +11,7 @@ console.log( 'jestAlert: js/apps/jest/components/JestWorldling.js loaded' );
 // Represents an [object] inside the game world.
 class JestWorldling extends JestSavable {
 	// Object propert(ies)
-	_remote  = false;      // [bool] Whether object is serverside (false) or local (true)
+	_remote  = false;     // [bool] Whether object is serverside (false) or local (true)
 	// World data
 	_status  = 0;         // Value of worldling [object] status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
 	_level   = null;      // [string] Value of level filename (e.g. level1).

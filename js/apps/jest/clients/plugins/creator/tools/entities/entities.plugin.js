@@ -1188,7 +1188,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			// Register entity hook drawing on the level editor.
 			client.register(
 				'draw', 'levelEntitiesCuratorHooks',
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					//--------------------------------
 					// Validate Editor State
 					//--------------------------------
@@ -1198,14 +1198,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					if ( mode!=='running' ) return;
 					// Require Entities curator.
 					if ( curator.typeSelected!=='hook' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
 					//--------------------------------
 					// Access Entity Hooks
 					//--------------------------------
 					// Get all visible entity hook objects.
-					const items		= curator.getVisibleObjects( 'hook' );
-					const selected	= curator.getSelectedObject();
-					const units		= client.config.tileGrid;
+					const items      = curator.getVisibleObjects( 'hook' );
+					const selected   = curator.getSelectedObject();
+					const units      = tool.anchor.units;
+					const zoom       = state.levelView.anchor.getZoom();
 
 					//--------------------------------
 					// Resolve Default NPC Placeholder
@@ -1221,11 +1225,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						//--------------------------------
 						// Resolve Entity Image
 						//--------------------------------
-						const data		= item.data;
-						const image		= data.image;
+						const data   = item.data;
+						const image  = data.image;
 
 						// Determine whether the hook image is ready.
-						const valid		= Boolean( image?.canvas && image.skim('image')==='drawn' );
+						const valid  = Boolean( image?.canvas && image.skim('image')==='drawn' );
 
 					    // Skip if neither image is available.
 					    if ( !valid && !fallbackReady ) continue;
@@ -1245,29 +1249,37 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						// Draw Entity Image
 						//--------------------------------
 						editorCtx.save();
-						editorCtx.globalAlpha	= 1;
+						editorCtx.globalAlpha = 1;
 						editorCtx.globalCompositeOperation = 'source-over';
 						// Draw the actual hook image.
 						if ( valid )
-						    editorCtx.drawImage( image.canvas.el, x, y, w, h );
+						    editor.draw(
+								image.canvas,
+								false, // do not clear
+								false, // do not resize
+								x, y, 0, 0,
+								w, h, w*zoom, h*zoom
+								);
 						// Draw the default NPC sprite from ui/opps.gif.
-						else editorCtx.drawImage(
-					        fallback.canvas.el,
-					        npcPlaceholder.x, npcPlaceholder.y,
-					        npcPlaceholder.w, npcPlaceholder.h,
-					        x, y, w, h );
+						else editor.draw(
+					        fallback.canvas,
+							false, // do not clear
+							false, // do not resize
+							x, y, npcPlaceholder.x, npcPlaceholder.y,
+							npcPlaceholder.w, npcPlaceholder.h, w*zoom, h*zoom
+							);
 
 						//--------------------------------
 						// Highlight Selected Entity
 						//--------------------------------
 						if ( tool.skim('enabled') && item===selected ) {
-							const dashSpeed	= 0.5;
-							const offset	= (e.tickCount * dashSpeed) % 10;
-							editorCtx.lineWidth		= 2;
-							editorCtx.strokeStyle	= 'rgba(0,255,255,0.9)';
+							const dashSpeed = 0.5;
+							const offset    = (e.tickCount * dashSpeed) % 10;
+							editorCtx.lineWidth      = 2;
+							editorCtx.strokeStyle    = 'rgba(0,255,255,0.9)';
 							editorCtx.setLineDash( [6,4] );
 							editorCtx.lineDashOffset = offset;
-							editorCtx.strokeRect( x-2, y-2, w+4, h+4 );
+							editorCtx.strokeRect( x-2, y-2, w*zoom+4, h*zoom+4 );
 						}
 
 						//--------------------------------
@@ -1276,16 +1288,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						// Draw marching ants around the NPC beneath the mouse.
 						if ( tool.skim('enabled') && item===tool.hovered ) {
 							const offset = (e.tickCount * 0.5) % 8;
-							editorCtx.lineWidth		= 1;
+							editorCtx.lineWidth      = 1;
 							editorCtx.setLineDash( [4,4] );
 							// Black dashes.
-							editorCtx.strokeStyle	= '#000';
+							editorCtx.strokeStyle    = '#000';
 							editorCtx.lineDashOffset = -offset;
-							editorCtx.strokeRect( x-3, y-3, w+6, h+6 );
+							editorCtx.strokeRect( x-3, y-3, w*zoom+6, h*zoom+6 );
 							// White dashes.
-							editorCtx.strokeStyle	= '#fff';
+							editorCtx.strokeStyle    = '#fff';
 							editorCtx.lineDashOffset = -(offset+4);
-							editorCtx.strokeRect( x-3, y-3, w+6, h+6 );
+							editorCtx.strokeRect( x-3, y-3, w*zoom+6, h*zoom+6 );
 						}
 
 						// Restore the canvas editor.
@@ -1306,16 +1318,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				async ( file, { npc=[] } ) => {
 					for ( const item of npc ) {
 						// Add NPC to curator.
-						const object	=
+						const object =
 							curator.addObject(
 								'hook',
 								{
-								file		: file.skey,
-								path		: item.path ?? '',
-								script		: item.script ?? '',
-								x			: item.x ?? 0,
-								y			: item.y ?? 0,
-								readonly	: false
+								file     : file.skey,
+								path     : item.path ?? '',
+								script   : item.script ?? '',
+								x        : item.x ?? 0,
+								y        : item.y ?? 0,
+								readonly : false
 								});
 
 						// Update the dropdown item label.
@@ -1325,6 +1337,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						if ( item.path && object )
 							await client.setHookImage( tool, object, item.path );
 					}
+				});
+
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'entitiesZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});
 		},
 
@@ -1887,15 +1918,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				//--------------------------------
 				// Retrieve the center of the currently visible
 				// level viewport in logical tile coordinates.
-				const units		= this.config.tileGrid;
-				const center	= this.getVisibleLevelCenter( units );
+				const units  = tool.anchor.units;
+				const center = this.getVisibleLevelCenter( units );
 
 				//--------------------------------
 				// Prepare Pasted Entity
 				//--------------------------------
 				// Position the new entity at the visible center.
 				// Preserve its copied script and image path.
-				const data	= {
+				const data   = {
 					path	: snapshot.path ?? '',
 					script	: snapshot.script ?? '',
 					x		: Math.round( center.x*4 ) / 4,

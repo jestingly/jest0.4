@@ -733,6 +733,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					});
 			const record	= client.secretary.getRecord( 'json/patterns.json' );
 			tool.curators.primary.importObjects( record ); // import json [objects]
+
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'floodfillZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------

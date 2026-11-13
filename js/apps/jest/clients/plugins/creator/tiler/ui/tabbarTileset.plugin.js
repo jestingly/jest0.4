@@ -19,32 +19,34 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 			// Create Sidebar Tileset Tabbar [object]
 			// --------------------------------
 			// Create the tileset tabbar.
-			const tabbarTileset		= new JestTabbar( client );
-			client.tabbarTileset	= tabbarTileset; // set tabbar
+			const tabbarTileset  = new JestTabbar( client );
+			client.tabbarTileset = tabbarTileset; // set tabbar
 			tabbarTileset.build();
 
 			// Add a palette menu to the sidebar.
 			client.sidebar.addDisableExclusion( 'palette' ); // prevent forced collapse
-			const section	= client.sidebar.addSection( 'palette', 'Palette', null, {} );
+			const section  = client.sidebar.addSection( 'palette', 'Palette', null, {} );
 			// Add tabbar to client interface.
 			//section.addItem( 'tileset', tabbarTileset.panel );
 			client.sidebar.refit( 'palette' );
 
 			// Create event for when tab is changed, to switch level.
 			tabbarTileset.register(
-				'tabChange', 'changeTileset', view=>client.tabbarTilesetChange(view) );
+				'tabChange', 'changeTileset',
+				view=>client.tabbarTilesetChange(view)
+				);
 
 			// Create & add the palette panel to the sidebar.
 			client.gameboard.display.addCanvas( 'palette' ); // create gameboard palette canvas
-			const palette	= client.gameboard.display.getCanvas( 'palette' );
-			client.palette	= palette;			// store palette
-			client.palette.addClass( 'block' );	// canvas style is "display:block"
+			const palette  = client.gameboard.display.getCanvas( 'palette' );
+			client.palette = palette;           // store palette
+			client.palette.addClass( 'block' ); // canvas style is "display:block"
 			section.addItem( 'canvas', palette );
 
 			/*//-----------------------------
 			// Configure to View
 			//-----------------------------
-			button.skey		= view.skey; // match button skey to view
+			button.skey = view.skey; // match button skey to view
 			// Create event to update tabbar button filename when changed.
 			view.file.register( 'stemChange', 'tabbar', file=>client.renameButton(button,file) );
 			// Make new view the active tab.
@@ -68,7 +70,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 				// Resize Gameboard Canvas to Match Level Dimensions
 				// --------------------------------
 				// Attempt to get the canvas.
-				const canvas	= this.gameboard.display.getCanvas( 'palette' );
+				const canvas = this.gameboard.display.getCanvas( 'palette' );
 				// Check for an active view.
 				if ( this.tabbarTileset.activeView!==null ) {
 					// Resize a gameboard canvas to match new active target's viewport.

@@ -94,17 +94,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: async function( client ) {
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
+
 			// --------------------------------
 			// Create Marquee Tool [object]
 			// --------------------------------
 			// Add a marquee tool to the level canvas board.
-			const tool   = new JestToolMarquee( client, subtype );
+			const tool      = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
-			// Wire into the grid.
-			tool.anchor.graticulate( client.config.tileGrid );
-			const canvas = client.gameboard.display.getCanvas( 'workspace' );
+			// Match the marquee anchor to native level tile pixels.
+			const canvas    = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas ); // set target
 
 			// Simultaneous tools allowed:
@@ -177,11 +184,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			//--------------------------------
 			// Create tool curator.
 			tool.addCurator( 'primary' );
-			const curator		= tool.curators.primary; // shorthand
+			const curator = tool.curators.primary; // shorthand
 
 			// Register a marquee history handler for complex
 			// marquee state & manipulation undo/redo logging.
-			const marqueeMemory	= new Map();
+			const marqueeMemory = new Map();
 
 			// Add curator item type(s).
 			curator.registerType( 'mosaic' );
@@ -193,6 +200,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 
 			// Add the curator panel to the sidebar.
 			client.sidebar.addSection( 'marquee', 'Marquee', curator );
+
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'levelMarqueeZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 
 			// --------------------------------
 			// Refresh & Remmber Settings Between Tab Change
@@ -222,8 +248,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					// --------------------------------
 					// Reload Dropdown(s)
 					// --------------------------------
-					curator.flushVisibleCache();	// flush cache
-					curator.refreshOptions();		// refresh list
+					curator.flushVisibleCache();   // flush cache
+					curator.refreshOptions();      // refresh list
 
 					// --------------------------------
 					// Save / Restore Tab Selection(s)
@@ -649,7 +675,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						if ( bounds!==null && bounds.w>0 && bounds.h>0 ) {
 							// Grab bounds.
 							const { x, y, w, h } = bounds;
-							const units	= client.config.tileGrid;
+							const units	= tool.anchor.units;
 							let parsed	= message;
 							if ( message!=='' ) parsed += `  →  `;
 							parsed += `<strong>marquee</strong> (${x/units},${y/units})`;
@@ -1419,11 +1445,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Register marquee drawing visual.
 			client.register(
 				'draw', subtype,
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
 					// --------------------------------
 					// Draw Tool Visual(s)
@@ -1452,11 +1481,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					 // Validate mask area
 					 if ( bounds && bounds.w>0 && bounds.h>0
 						  && Array.isArray(mask) && mask.length>0 )
-					 	masked = true;
+					 	masked    = true;
 
 					 // Validate traced area
 					 if ( trace && trace.w>0 && trace.h>0 )
-					 	traced = true;
+					 	traced    = true;
 
 					 // Exit if nothing to process
 					 if ( !masked && !traced ) return;
@@ -1491,8 +1520,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							client.drawCompositeRect(
 								editorCtx, {units,cols,rows},
 								bounds.x, bounds.y, mask,
-								null, //"rgba( 50, 0, 0, 0.2 )",	// fill
-								stroke, null, null			// stroke
+								null, //"rgba( 50, 0, 0, 0.2 )", // fill
+								stroke, null, null // stroke
 								);
 							// Unset the "difference" marquee color mode.
 							editorCtx.restore(); // restore drawing mode
@@ -1501,8 +1530,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						// Check if a new selection is being traced.
 						if ( traced ) {
 							// Calculate dimensions.
-							const cols = trace.w;	// trace region width
-							const rows = trace.h;	// trace region height
+							const cols = trace.w;  // trace region width
+							const rows = trace.h;  // trace region height
 							// Composite stroke style(s).
 							editorCtx.save();
 							editorCtx.globalCompositeOperation = 'difference';
@@ -1671,12 +1700,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Register marquee drawing visual.
 			client.register(
 				'draw', 'levelMarqueeCuratorRegions',
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
-					const type	= curator.typeSelected;
+					const type	     = curator.typeSelected;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 					// Tool must be selected.
 					if ( !tool.skim('enabled') ) return;
 					// Require curator seleted type to be 'warp'.
@@ -1684,14 +1716,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						case "sign":
 						case "warp":
 							// Get all visible warp objects.
-							const units		= client.config.tileGrid;
-							const items		= curator.getVisibleObjects( type );
-							const selected	= curator.getSelectedObject();
+							const units     = tool.anchor.units;
+							const items     = curator.getVisibleObjects( type );
+							const selected  = curator.getSelectedObject();
 							for ( const item of items ) {
 								let { x, y, w=4, h=4 } = item.data;
-								let stroke			= 2;
-								const dashSpeed		= 0.5; // px per frame (try 0.5, 1, 2, etc.)
-								const offset		= (e.tickCount * dashSpeed) % 10;
+								let stroke      = 2;
+								const dashSpeed = 0.5; // px per frame (try 0.5, 1, 2, etc.)
+								const offset    = (e.tickCount * dashSpeed) % 10;
 								// Convert dimensions to tile-grid.
 								x *= units; // x coordinate on tile grid
 								y *= units; // y coordinate on tile grid
@@ -2158,7 +2190,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				const { w, h }	= snapshot;
 				const level		= state.levelView.file.context;
 				// Calculate viewport visible level canvas center.
-				const units		= this.config.tileGrid;
+				const units		= tool.anchor.units;
 				const center	= this.getVisibleLevelCenter( units );
 				center.x -= Math.floor( w / 2 );
 				center.y -= Math.floor( h / 2 );

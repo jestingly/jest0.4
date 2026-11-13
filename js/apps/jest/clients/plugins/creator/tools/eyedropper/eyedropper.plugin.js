@@ -57,8 +57,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 			// existing active-layer-only sampling behavior.
 			const inputComposite =
 				new JestInputCheckbox(
-					client, 'composite', null,
-					tool.composite, 'Composite' );
+					client, 'composite', null, tool.composite, 'Composite'
+					);
 			inputComposite.build( 'input-composite' );
 			inputComposite.showLabel();
 			// Explain the sampling mode without crowding the panel.
@@ -334,8 +334,26 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 					const key   = !e.shiftKey ? 'foreground' : 'background';
 					client.toolEyedropLevelTile( x, y, key );
 				});
-		},
 
+			// --------------------------------
+			// Settings Change Listener(s)
+			// --------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'eyedropperZoom',
+				zoom => {
+					// --------------------------------
+					// Get Current File State
+					// --------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					// --------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					// --------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
+		},
 
 		//--------------------------------
 		// New Method(s) In Tiler Application

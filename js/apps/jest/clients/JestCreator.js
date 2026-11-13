@@ -12,7 +12,7 @@ class JestCreator extends Jest {
 	// Declare properties
 	icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
 	name			= 'Creator';		// name of application
-	version			= '0.3beta';		// application version
+	version			= 'unknown';		// application version
 	id				= 'creator';		// creator application id.
 	// Server [objects]
 	//online			= null;			// [object] JestOnline for connection to a websocket.

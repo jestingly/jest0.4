@@ -36,12 +36,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 			proto.drawCompositeRect = function(
 				ctx, bounds, cx, cy, mask,
 				fill=null, stroke=null, shadow=null, contents=null ) {
+				//--------------------------------
+				// Validate Drawing Mask
+				//--------------------------------
+				// An empty mask contains no drawable cells. This can legitimately occur
+				// while a selection is being cleared, rebuilt, or reduced to zero cells.
+				if ( !mask?.length || !mask[0]?.length )
+					return false; // nothing to draw
+
+				//--------------------------------
+				// Resolve Composite Dimension(s)
+				//--------------------------------
 				// Get grid units of board.
 				const { units } = bounds;
-				// Get columns & rows span of mask.
-				const cols = mask[0].length,
-					  rows = mask.length;
 
+				// Get the column and row span of the validated mask.
+				const rows = mask.length;
+				const cols = mask[0].length;
+				
 				// -------------------------
 				// Compute Composite Mask
 				// -------------------------

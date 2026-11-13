@@ -33,21 +33,22 @@ class JestToolDragdrop extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='tool-dragdrop', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-dragdrop' ];
+		const defaultClasses = [ 'tool-dragdrop' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 		// --------------------------------
 		// Create Crate Tool [object]
 		// --------------------------------
 		// Add a crate tool to the editor.
-		const crate		= new JestToolCrate( this.client );
+		const crate  = new JestToolCrate( this.client );
 		crate.build(); // generate crate
-		this.crate		= crate;
+		this.crate   = crate;
 		this.client.panel.addPanel( 'crate', crate.panel );
+
 		// React to drop event.
 		crate.register(
 			'dropped', 'dragdrop',
@@ -62,25 +63,27 @@ class JestToolDragdrop extends JestTool {
 					this.stop( null, false ); // stop & reset (no need to re-drop)
 				}
 				// Disable the crate & hide it.
-				this.crate.disable();	// disable if ensabled
-				this.crate.clear();		// erase crate contents & hide
+				this.crate.disable();  // disable if ensabled
+				this.crate.clear();    // erase crate contents & hide
 			});
+
 		// Set graticulate listener to update crate.
 		this.anchor.register( 'graticulate', 'crateUpdate',
 			( units ) => {
 				// Update the crate units.
 				this.crate.anchor.graticulate( units );
 			});
+
 		// --------------------------------
 		// Create Canvas In Crate [object]
 		// --------------------------------
 		// Add a canvas to the crate for drag display.
 		crate.display.addCanvas( 'dragdrop' );
 		// Disable the crate & hide it.
-		this.crate.disable();	// disable if ensabled
-		this.crate.clear();		// erase crate contents & hide
+		this.crate.disable();  // disable if ensabled
+		this.crate.clear();    // erase crate contents & hide
 		// Disable this to start.
-		this.disable();			// disabled
+		this.disable();        // disabled
 		// Change crate styling when entering/leaving
 		/*crate.register(
 			'garagEenter', 'highlightGarage',
@@ -99,7 +102,7 @@ class JestToolDragdrop extends JestTool {
 	// --------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
-	// * target		- [ElementCanvas] The target to allow selectability on.
+	// * target  - [ElementCanvas] The target to allow selectability on.
 	setTarget( target ) {
 		// Validate argument(s)
 		if ( !(target instanceof ElementCanvas) ) {
@@ -122,8 +125,8 @@ class JestToolDragdrop extends JestTool {
 		if ( !super.enable() ) return false;
 		// Add event listener(s)
 		this.jot( 'enabled', true );
-		this.reset();			// reset drag drop
-		this.crate.enable();	// enable the crate
+		this.reset();         // reset drag drop
+		this.crate.enable();  // enable the crate
 	}
 	// Disable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
@@ -132,9 +135,9 @@ class JestToolDragdrop extends JestTool {
 		if ( !super.disable() ) return false;
 		// Remove event listener(s)
 		this.jot( 'enabled', false );
-		this.removeTargetListeners();	// remove target event(s)
-		this.removeGlobalListeners();	// remove global event(s)
-		this.crate.disable();	// disable the crate
+		this.removeTargetListeners(); // remove target event(s)
+		this.removeGlobalListeners(); // remove global event(s)
+		this.crate.disable(); // disable the crate
 	}
 
 	//--------------------------------
@@ -355,21 +358,21 @@ class JestToolDragdrop extends JestTool {
 		// Get Click Location
 		//-------------------------
 		// Find the x & y of the mouse click
-		let click	= this.target.mousePos( e );
+		let click = this.target.mousePos( e );
 		// Convert to grid units.
-		let x		= Math.floor( click.x / this.anchor.units );
-		let y		= Math.floor( click.y / this.anchor.units );
+		let x     = Math.floor( click.x / this.anchor.units );
+		let y     = Math.floor( click.y / this.anchor.units );
 		//-------------------------
 		// Get Screen Location (for crate)
 		//-------------------------
 		// Compute where the cursor is:
-		const screenX		= e.clientX,
-		      screenY		= e.clientY;
+		const screenX     = e.clientX,
+		      screenY     = e.clientY;
 		// “Grab” the crate from its center.
-		const crateWidth	= this.anchor.units;
-		const crateHeight	= this.anchor.units;
-		const grabOffsetX	= Math.floor( crateWidth/2 );
-		const grabOffsetY	= Math.floor( crateHeight/2 );
+		const crateWidth  = this.anchor.units;
+		const crateHeight = this.anchor.units;
+		const grabOffsetX = Math.floor( crateWidth/2 );
+		const grabOffsetY = Math.floor( crateHeight/2 );
 		// Return screen click data.
 		return {
 			tx: x, ty: y, crateWidth, crateHeight,
@@ -385,23 +388,24 @@ class JestToolDragdrop extends JestTool {
 	drop( garage, localX, localY ) {
 		//console.log( 'dropping dragdrop' );
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
+		const enabled = this.skim( 'enabled' );
 		//const mode	= this.skim( 'mode' );
 		if ( !enabled ) return;
 		//-------------------------
 		// Get Data for Event
 		//-------------------------
 		// Get data from crate contents.
-		const contents	= this.crate.display.getContents();
-		// Track mouse and drag coordinates.
-		const units		= this.anchor.units; // tile units
-		const levelX	= Math.round( localX / units );
-		const levelY	= Math.round( localY / units );
+		const contents = this.crate.display.getContents();
+		// Use the crate's current destination-space units. These may differ from
+		// the source tool units when dropping onto a zoomed surface, for example.
+		const units    = this.crate.anchor.getUnitsZoomed(); // tile units
+		const levelX   = Math.round( localX / units );
+		const levelY   = Math.round( localY / units );
 		//-------------------------
 		// Handle Crate
 		//-------------------------
-		this.crate.hide();		// hide the crate
-		this.crate.disable();	// disable if enabled
+		this.crate.hide();     // hide the crate
+		this.crate.disable();  // disable if enabled
 		//-------------------------
 		// Reset Tool Mode
 		//-------------------------
@@ -439,10 +443,10 @@ class JestToolDragdrop extends JestTool {
 		//-------------------------
 		// Trigger the crate drop event if possible.
 		if ( e && drop )
-			this.crate.drop( e );	// drop the crate
-		this.crate.reset();			// reset the crate
-		this.crate.hide();			// hide the crate
-		this.crate.disable();		// disable if enabled
+			this.crate.drop( e );   // drop the crate
+		this.crate.reset();         // reset the crate
+		this.crate.hide();          // hide the crate
+		this.crate.disable();       // disable if enabled
 		//-------------------------
 		// Reset Tool Mode
 		//-------------------------

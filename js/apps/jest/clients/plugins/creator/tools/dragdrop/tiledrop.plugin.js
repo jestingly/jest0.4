@@ -145,33 +145,60 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					syncTileDropZoom();
 
 					//--------------------------------
-					// Suppress Underlying Mouse Events
+					// Shield Event Overlap(s)
 					//--------------------------------
-					// Prevent the pickup click from triggering editor actions underneath.
+					// Request to suppress necessary action(s).
+					tool.suppress(); // suppress event(s)
+				});
+
+			// Event listener when carrying to suppress external mouse-interactions.
+			tool.register(
+				'suppressed', 'suppressMouseActions',
+				dragdrop => {
+					// Prevent editor tools beneath the carried crate from
+					// receiving the same mouse interaction.
 					client.delegator.permaSuppress(
-						'tiledrop',
+						dragdrop.name,
 						['click','mouseup','mousedown']
 						);
 				});
 
-			//--------------------------------
-			// Live Level Zoom Listener
-			//--------------------------------
-			// Update an actively carried tiledrop whenever the level zoom changes.
-			client.register(
-				'levelZoomed', 'tiledropCrateZoom',
+			// Event listener when carrying to release external mouse-interactions.
+			tool.register(
+				'released', 'releaseMouseActions',
+				dragdrop => {
+					// Release permanent ownership while retaining a short
+					// cooldown for the terminating mouse interaction.
+					client.delegator.clearPerma(
+						dragdrop.name,
+						['click','mouseup','mousedown'],
+						300
+						);
+				});
+
+			// A drop outside every garage emits "dragdropStopped" without
+			// emitting "dragdropDropped", so it requires its own cleanup path.
+			tool.register(
+				'dragdropStopped', 'releaseTileDrop',
 				() => {
-					// Ignore zoom changes when no tile snapshot is being carried.
-					if ( !tool.crate.display.getContents() )
-						return; // nothing to update
-					// Resize, resnap, and reposition the crate immediately.
-					syncTileDropZoom();
+					//--------------------------------
+					// Release Event Overlap Shield
+					//--------------------------------
+					// Request to release necessary suppression.
+					tool.release(); // release suppression
 				});
 
 			// Event listener when "item dropped".
 			tool.register(
 				'dragdropDropped', 'layTile',
 				( garage, e, tool, region ) => {
+					//--------------------------------
+					// Finalize Successful Drop
+					//--------------------------------
+					// Release suppression before validating.
+					// This guarantees cleanup.
+					tool.release(); // release suppression
+
 					//--------------------------------
 					// Validate State & Get Editor [objects]
 					//--------------------------------
@@ -180,11 +207,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					if ( !state?.levelView ) return;
 					// Require level view & level [object].
 					const view  = state.levelView;
+
 					//--------------------------------
 					// Commit Tile Drop Movement
 					//--------------------------------
-					// Set a short mouse-click timeout suppression.
-					client.delegator.clearPerma( 'tiledrop', ['click','mouseup','mousedown'], 300 );
 					// Replace a tile on the level.
 					//console.log( e, tile );
 					//client.toolLevelDraw( tile, e.lx, e.ly );
@@ -220,8 +246,6 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 							client.modals.newSwatch.open( tile );
 						}
 					}
-					// Empty the crate display contents.
-					tool.crate.display.setContents( null );
 				});
 
 			// Event listener when target "double clicked".
@@ -246,6 +270,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 						// Toggle the tiledrop tool.
 						tool.enable();	// enable tool
 					}
+				});
+
+			//--------------------------------
+			// Live Level Zoom Listener
+			//--------------------------------
+			// Update an actively carried tiledrop whenever the level zoom changes.
+			client.register(
+				'levelZoomed', 'tiledropCrateZoom',
+				() => {
+					// Ignore zoom changes when no tile snapshot is being carried.
+					if ( !tool.crate.display.getContents() )
+						return; // nothing to update
+					// Resize, resnap, and reposition the crate immediately.
+					syncTileDropZoom();
 				});
 
 			//-------------------------

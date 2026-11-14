@@ -16,6 +16,8 @@ class JestToolDragdrop extends JestTool {
 	crate		= null;			// [JestToolCrate] for carrying [object].
 	startTimer	= null;			// Timeout for double-click handling.
 	clickToDrag	= true;			// [bool] Whether click-to-drag (true) or hold-to-drag (false).
+	// Suppression state
+	suppressed = false;			// [bool] Whether this drag owns external suppression.
 
 	// --------------------------------
 	// Constructor
@@ -131,13 +133,23 @@ class JestToolDragdrop extends JestTool {
 	// Disable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	disable() {
+		//--------------------------------
+		// Release Active Drag Resources
+		//--------------------------------
+		// Force-release external clamp(s).
+		this.release(); // release suppression
+
 		// Check parent constructor.
 		if ( !super.disable() ) return false;
+
+		//--------------------------------
+		// Disable Tool
+		//--------------------------------
 		// Remove event listener(s)
 		this.jot( 'enabled', false );
-		this.removeTargetListeners(); // remove target event(s)
-		this.removeGlobalListeners(); // remove global event(s)
-		this.crate.disable(); // disable the crate
+		this.removeTargetListeners();  // remove target event(s)
+		this.removeGlobalListeners();  // remove global event(s)
+		this.crate.disable();          // disable the crate
 	}
 
 	//--------------------------------
@@ -457,6 +469,66 @@ class JestToolDragdrop extends JestTool {
 		//-------------------------
 		// Emit drop( event.
 		this.emit( 'dragdropStopped', null, this );
+	}
+
+	//--------------------------------
+	// Release External Suppression
+	//--------------------------------
+	// Release third-party interaction clamps and discard the carried snapshot.
+	// Emits "released" so plugins can remove whatever restrictions they own.
+	// RETURNS: [boolean] `true` when released else `false`.
+	release() {
+		//--------------------------------
+		// Prevent Duplicate Release
+		//--------------------------------
+		// Multiple terminal drag events may occur during the same operation.
+		if ( !this.suppressed )
+			return false; // already released
+
+		// Change the state before emitting so callbacks cannot recursively
+		// release the same drag operation.
+		this.suppressed = false;
+
+		//--------------------------------
+		// Discard Carried Tile Data
+		//--------------------------------
+		// Crate.clear() resets only its visual panel. Explicitly remove the
+		// stored snapshot to avoid reviving stale contents.
+		this.crate.display.setContents( null );
+
+		//--------------------------------
+		// Notify External Consumers
+		//--------------------------------
+		// Plugins decide which delegator restrictions or other clamps to remove.
+		this.emit( 'released', null, this );
+
+		return true; // released
+	}
+
+	//--------------------------------
+	// Request External Suppression
+	//--------------------------------
+	// Request third-party interaction clamps for the active drag operation.
+	// Emits "suppressed" so plugins can install their own restrictions.
+	// RETURNS: [boolean] `true` when activated else `false`.
+	suppress() {
+		//--------------------------------
+		// Prevent Duplicate Suppression
+		//--------------------------------
+		// A drag operation should own only one suppression lifecycle.
+		if ( this.suppressed )
+			return false; // already suppressed
+
+		// Change the state before emitting so callbacks see the correct status.
+		this.suppressed = true;
+
+		//--------------------------------
+		// Notify External Consumers
+		//--------------------------------
+		// Plugins decide which mouse actions or other resources to suppress.
+		this.emit( 'suppressed', null, this );
+
+		return true; // suppression activated
 	}
 
 	//-------------------------

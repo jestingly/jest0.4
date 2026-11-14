@@ -321,10 +321,10 @@ class JestToolCrate extends JestTool {
 			for ( const garage of this.garages ) {
 				if ( el===garage ) {
 					hoveredGarage = garage;
-					break;
+					break; // found it
 				}
 			}
-			if ( hoveredGarage ) break;
+			if ( hoveredGarage ) break; // already found
 		}
 		// If hoveredGarage changed vs this.currentGarage, fire enter/leave.
 		if ( hoveredGarage!==this.currentGarage ) {

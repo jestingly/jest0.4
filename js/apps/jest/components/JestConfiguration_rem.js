@@ -9,9 +9,9 @@ console.log( 'jestAlert: js/apps/jest/components/JestConfiguration.js loaded' );
 // JestConfiguration Class
 //-------------------------
 class JestConfiguration extends JestSavable {
-	// --------------------------------
+	//---------------------------------
 	// Media & Web Setting(s)
-	// --------------------------------
+	//---------------------------------
 	// File(s) & resource(s)
 	server			= 'ws://#.#.#.#'; // server websocket (e.g. local IP to connect to)
 	// Resource [string] value of path to webfiles root: images, sounds, etc.
@@ -19,9 +19,9 @@ class JestConfiguration extends JestSavable {
 	root			= 'http://jesterly.net/sandbox/';
 	refresh			= true;			// forces hard refresh on file downloads
 
-	// --------------------------------
+	//---------------------------------
 	// Game Setting(s)
-	// --------------------------------
+	//---------------------------------
 	// Definition propert(ies)
 	tileGrid		= 16;			// [int] Value of tile size width/height (defaults to 16px).
 	levelGrid		= 64;			// [int] Value of level width/height (defaults to 64 tiles).
@@ -30,9 +30,9 @@ class JestConfiguration extends JestSavable {
 	janiBleed		= 12;			// [int] Value of bleed around jani safe area (defaults to 6 tiles).
 	janiSpan		= null;			// [int] Value of jani width/height in pixels (auto-calculated).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	//   options	- [object] of custom configuration options (optional)

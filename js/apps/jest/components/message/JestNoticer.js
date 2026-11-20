@@ -14,9 +14,9 @@ class JestNoticer extends JestElement {
 	container		= null;			// [Panel] Container panel for notifications.
 	notices			= [];			// [array] Active JestNotice instances.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -24,9 +24,9 @@ class JestNoticer extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.

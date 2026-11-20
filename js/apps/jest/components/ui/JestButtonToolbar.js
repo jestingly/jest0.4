@@ -12,9 +12,9 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestButtonToolbar.js loaded'
 class JestButtonToolbar extends JestButton {
 	// Object properties
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -22,9 +22,9 @@ class JestButtonToolbar extends JestButton {
 		super( client );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.

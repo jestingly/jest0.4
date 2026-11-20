@@ -24,13 +24,13 @@ class JestInputRange extends JestInput {
 	// Constructor
 	//-------------------------
 	// Initializes a range input with limits and step.
-	// * name			- [string] optional field name
-	// * id				- [string] HTML id (auto-generated if not provided)
-	// * defaultValue	- [string] Default fallback value
-	// * labelText		- [string] label content
-	// * min			- [number|null] minimum value
-	// * max			- [number|null] maximum value
-	// * step			- [number|null] increment step
+	// * name         - [string] optional field name
+	// * id           - [string] HTML id (auto-generated if not provided)
+	// * defaultValue - [string] Default fallback value
+	// * labelText    - [string] label content
+	// * min          - [number|null] minimum value
+	// * max          - [number|null] maximum value
+	// * step         - [number|null] increment step
 	constructor( client, name=null, id=null, defaultValue=null, labelText=null,
 				 min=0, max=100, step=1 ) {
 		super( client );
@@ -207,9 +207,9 @@ class JestInputRange extends JestInput {
 		return this.min;
 	}
 
-	// -------------------------
+	//--------------------------
 	// setMin()
-	// -------------------------
+	//--------------------------
 	// Sets minimum and clamps max if needed.
 	// * val – [number]
 	setMin( val ) {
@@ -237,9 +237,9 @@ class JestInputRange extends JestInput {
 		return this.max;
 	}
 
-	// -------------------------
+	//--------------------------
 	// setMax()
-	// -------------------------
+	//--------------------------
 	// Sets maximum and clamps max if needed.
 	// * val – [number]
 	setMax( val ) {
@@ -257,9 +257,9 @@ class JestInputRange extends JestInput {
 		this.setValue( this.getValue() );
 	}
 
-	// -------------------------
+	//--------------------------
 	// Convenient Method(s)
-	// -------------------------
+	//--------------------------
 	// Updates the slider range to match limit(s).
 	// current selected tab's animation layer.
 	//   min – [number] minimum value (default = 0)

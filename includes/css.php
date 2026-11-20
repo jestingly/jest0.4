@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="js/apps/jest/clients/css/JestCreator.css">
 <link rel="stylesheet" href="js/apps/jest/clients/css/JestTiler.css">
 <link rel="stylesheet" href="js/apps/jest/clients/css/JestAnimator.css">
+<link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/settings/tiler/css/overworld.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/online/cloud/css/cloud.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/navigation/css/layers.css">
 <link rel="stylesheet" href="js/apps/jest/clients/plugins/creator/tools/swatches/css/swatches.css">

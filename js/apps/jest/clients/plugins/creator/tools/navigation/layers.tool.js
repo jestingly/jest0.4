@@ -18,9 +18,9 @@ class JestToolLayers extends JestTool {
 	// Canvas target
 	target      = null;         // [ElementCanvas] workspace canvas
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -51,9 +51,9 @@ class JestToolLayers extends JestTool {
 		// Tool is empty by default.
 		this.jot( 'mode', 'empty' );	// tool is idle to start
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const filetypes    = this.client.imager.filetypes.join( ', .' );
 
@@ -97,9 +97,9 @@ class JestToolLayers extends JestTool {
 		this.panel.refs.buttons.addPanel( 'toolbar', this.toolbar.panel );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the layers tool.
 	// RETURNS: [boolean].
 	enable() {

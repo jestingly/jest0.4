@@ -60,9 +60,9 @@ class JestNotice extends JestElement {
 					);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.

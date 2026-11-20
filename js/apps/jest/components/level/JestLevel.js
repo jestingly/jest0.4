@@ -17,9 +17,9 @@ class JestLevel extends JestSavable {
 	layers        = [];        // Ordered collection of level layers
 	activeLayerId = null;      // [int] Value of active layer (the id).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of level name (e.g. 'level1').
@@ -59,14 +59,14 @@ class JestLevel extends JestSavable {
 		// Check if setup is possible.
 		const status = this.skim( 'status' );
 		if ( status!=='constructed' ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'building' );	// set status
 		this.build();						// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'loading' );	// set status
 		await this.load();					// load the data
 		this.jot( 'status', 'empty' );		// set status
@@ -220,7 +220,7 @@ class JestLevel extends JestSavable {
 		// Resolve Target Level Layer
 		//--------------------------------
 		// Attempt to get layer by id.
-		let layer	= this.layers.find(layer=>layer.id===id) ?? null;
+		let layer = this.layers.find(layer=>layer.id===id) ?? null;
 
 		// If layer does not exist, check for fallback.
 		//if ( !layer && fallback===true )
@@ -299,9 +299,9 @@ class JestLevel extends JestSavable {
 		return true; // layer order changed
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Level Rendering
-	// --------------------------------
+	//---------------------------------
 	// Clear all boards belonging to each layer.
 	// RETURNS: [void].
 	clear() {
@@ -332,9 +332,9 @@ class JestLevel extends JestSavable {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// State‐Snapshot Utilities
-	// -------------------------
+	//--------------------------
 	// Export the entire level’s state as a JSON‐serializable object.
 	// RETURNS: { tilemap: [ [ {ts,tx,ty}, … ], … ] }  or null if tilemap is not set.
 	exportState() {

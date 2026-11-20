@@ -17,9 +17,9 @@ class JestToolFlipbook extends JestTool {
 	layerToolbar	= null;		// Navigator [JestToolbar] for layer buttons
 	layerForm		= null;		// [JestForm] for navigating layer(s).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -51,9 +51,9 @@ class JestToolFlipbook extends JestTool {
 		const config	= this.client.config;
 		const halfJFS	= config.janiFullSpan / 2;
 
-		// --------------------------------
+		//---------------------------------
 		// Sticker Control(s) Form
-		// --------------------------------
+		//---------------------------------
 		// Create DOM Panel element [object].
 		const stickerForm	= new JestForm( this.client );
 		this.stickerForm	= stickerForm; // store form
@@ -167,9 +167,9 @@ class JestToolFlipbook extends JestTool {
 		layerRange.showLabel();		// show the label
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -189,9 +189,9 @@ class JestToolFlipbook extends JestTool {
 		this.target	= target;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the flipbook tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {

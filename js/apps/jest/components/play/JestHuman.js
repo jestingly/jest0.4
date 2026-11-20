@@ -10,22 +10,22 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestHuman.js loaded' );
 //-------------------------
 // Represents a human character [object] with animations for different parts (head, sword, body).
 class JestHuman extends JestWorldling {
-	// --------------------------------
+	//---------------------------------
 	// Human Properties
-	// --------------------------------
+	//---------------------------------
 	type			= null;				// [string] Value of [object] taxonomic type (e.g. "human").
-	// --------------------------------
+	//---------------------------------
 	// Core [objects] & Input/Output
-	// --------------------------------
+	//---------------------------------
 	// Movement propert(ies)
 	collider		= null;				// [object] Anchor used to test for collision movement (x,y) location(s).
 	// Animation / graphical avatar propert(ies)
 	head			= null;				// [object] Sprite for the human's head (spritesheet-based).
 	body			= null;				// [object] Sprite for the human's body (spritesheet-based).
 	sword			= null;				// [object] Animation for the human's sword (spritesheet-based).
-	// --------------------------------
+	//---------------------------------
 	// Motion Variable(s)
-	// --------------------------------
+	//---------------------------------
 	gears			= null;				// [object] of actual possible gears that the user can be in.
 	// Directions: 0=up, 1=left, 2=down, 3=right
 	dir				= 2;				// [int] Current facing direction
@@ -37,9 +37,9 @@ class JestHuman extends JestWorldling {
 	// Sound propert(ies)
 	soundStep		= 0;				// [number] Value of current sound step: 0 through n
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the Human.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -69,17 +69,17 @@ class JestHuman extends JestWorldling {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Setup Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Setup the human [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Call parent setup method(s)
 		await super.setup();		// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Setup Human Definitions
-		// --------------------------------
+		//---------------------------------
 		this.anchor.graticulate( this.client.config.tileGrid );		// human level anchor is in tile-based units
 		this.anchor.resize( 1, 1 );									// human body is 1x1 tiles width/height
 		return true; // successfully setup
@@ -88,9 +88,9 @@ class JestHuman extends JestWorldling {
 	// Setup a collision detection anchor [object].
 	// RETURNS: [void].
 	setupCollider() {
-		// --------------------------------
+		//---------------------------------
 		// Create Collision Detection [object]
-		// --------------------------------
+		//---------------------------------
 		// Create collision anchor [object] for user on-wall detection
 		const collider	= new Anchor();									// create collider point
 		this.collider	= collider;										// store anchor as property
@@ -103,10 +103,10 @@ class JestHuman extends JestWorldling {
 	// Setup the human avatar animation [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setupAvatar() {
-		// --------------------------------
+		//---------------------------------
 		// Set Default Gear View(s)
 		// & Prep to Download JANI(s)
-		// --------------------------------
+		//---------------------------------
 		// Load the *.jani file(s)
 		const files		= []; // create list of files to load
 		for ( const mode in this.gears ) {
@@ -115,9 +115,9 @@ class JestHuman extends JestWorldling {
 			const name	= `${mode}.jani`;
 			files.push( name ); // push to download JANI by name
 		}
-		// --------------------------------
+		//---------------------------------
 		// Load Default JestJani [object(s)]
-		// --------------------------------
+		//---------------------------------
 		// Load jani(s) using fantascope.
 		const janis		= await this.client.fantascope.loadFiles( files, 'remote' );
 		// Iterate all jani(s) & set parent as human anchor point.
@@ -148,9 +148,9 @@ class JestHuman extends JestWorldling {
 			// Throw error if JANI didn't load.
 			else console.warn( `Human JANI failed to load: ${name}.` );
 		}
-		// --------------------------------
+		//---------------------------------
 		// Set Visual(s)
-		// --------------------------------
+		//---------------------------------
 		// Set the current JAni
 		this.view	= this.gears.idle.view; // set default avatar JANI view
 		// Set all default image(s).
@@ -170,9 +170,9 @@ class JestHuman extends JestWorldling {
 		return true; // succees
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Avatar Handling
-	// --------------------------------
+	//---------------------------------
 	// Change the character's avatar JAnimation.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of loaded JAni to use for the human display.
@@ -185,38 +185,38 @@ class JestHuman extends JestWorldling {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of loaded JAni to use for the human display.
 	setJani( name ) {
-		// --------------------------------
+		//---------------------------------
 		// Remove Current Avatar
-		// --------------------------------
+		//---------------------------------
 		// Turn off existing avatar
 		this.view.reset();						// Reset the current JAni
-		// --------------------------------
+		//---------------------------------
 		// Setup New Avatar
-		// --------------------------------
+		//---------------------------------
 		// Equip new avatar
 		const view		= this.gears[name].view;
 		// Configure new JAni to match pertinent current human stats
 		view.reset().enable().play();			// Reset, enable, then play the new JAni
-		// --------------------------------
+		//---------------------------------
 		// Change Human Avatar
-		// --------------------------------
+		//---------------------------------
 		this.view		= view;					// Change human avatar to new JAni
 		this.setDirection( false, this.dir );	// Synch player's direction to view
 		//console.log( avatar );
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Graphic Skin Handling
-	// --------------------------------
+	//---------------------------------
 	// Set the human's image for a given type ('head', 'body', 'sword')
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * attr	- [string] The attribute of skin to change ('head', 'body', 'sword').
 	// * path	- [string] The filename of the image asset (e.g. 'heads/head104.png').
 	skin( attr, path ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Get allowable skin type
 		const attrs		= [ 'sprites', 'head', 'body', 'hair', 'sword' ];
 		if ( !attrs.includes(attr) ) {

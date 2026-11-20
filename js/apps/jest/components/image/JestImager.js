@@ -39,18 +39,18 @@ class JestImager extends JestFileLoader {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _createFileObject( record, fileInfo, address, network ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Record Data
-		// --------------------------------
+		//---------------------------------
 		// Check if the parsed blob data is available.
 		if ( !record?.blob || !(record.blob instanceof Blob) ) {
 			console.warn( 'Cannot find file data.' );
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Create File [object]
-		// --------------------------------
+		//---------------------------------
 		// Continue to create file [object].
 		const file		=
 			new JestGraphic(

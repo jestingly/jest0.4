@@ -18,9 +18,9 @@ class JestToolHand extends JestTool {
 	scrollY    = 0;       // [number] Scroll-top position when the drag began.
 	dragging   = false;   // [boolean] Whether a pan is active.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client - [object] Application client that this piece belongs to.
@@ -29,9 +29,9 @@ class JestToolHand extends JestTool {
 		super( client, name ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the hand tool and listen for a pan start.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -45,9 +45,9 @@ class JestToolHand extends JestTool {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Reset the tool to be used.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	reset() {
@@ -71,7 +71,7 @@ class JestToolHand extends JestTool {
 		this.target.register( 'mousedown', 'handStart', e=>this.start(e), 'dom' );
 		return true; // success
 	}
-	
+
 	//--------------------------------
 	// Disable Hand Tool
 	//--------------------------------
@@ -100,9 +100,9 @@ class JestToolHand extends JestTool {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Hand Drawing Target
-	// --------------------------------
+	//---------------------------------
 	// Set the workspace canvas and its scroll container.
 	// RETURNS: [boolean] success.
 	// * target - [ElementCanvas] Canvas to pan.

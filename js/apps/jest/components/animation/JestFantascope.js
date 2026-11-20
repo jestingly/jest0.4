@@ -39,9 +39,9 @@ class JestFantascope extends JestFileLoader {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _createFileObject( record, fileInfo, address, network ) {
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Create File [object]
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the return variable.
 		let jani	= null; // initially jani is [null]
 		// Validate the loaded data.

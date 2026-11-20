@@ -12,9 +12,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client - [object] Application client that this piece belongs to.
@@ -48,9 +48,9 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 		// Copy level canvas content to this canvas.
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void]
 	// * file - [JestFile] The file to assign.
@@ -64,9 +64,9 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {

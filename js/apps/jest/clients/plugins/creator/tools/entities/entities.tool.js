@@ -27,9 +27,9 @@ class JestToolEntities extends JestTool {
 	// Dragging state
 	moved       = false;        // [bool] whether entity has moved
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -48,27 +48,27 @@ class JestToolEntities extends JestTool {
 	build( name='tool-entities', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-entities' ];
+		const defaultClasses = [ 'tool-entities' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 
 		// Tool is empty by default.
-		this.jot( 'mode', 'empty' );	// tool is idle to start
+		this.jot( 'mode', 'empty' ); // tool is idle to start
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
-		const filetypes		= this.client.imager.filetypes.join( ', .' );
-		const imageSelect	= new JestInputFileSelect( this.client, `.${filetypes}` );
-		this.imageSelect	= imageSelect;
+		const filetypes   = this.client.imager.filetypes.join( ', .' );
+		const imageSelect = new JestInputFileSelect( this.client, `.${filetypes}` );
+		this.imageSelect  = imageSelect;
 		imageSelect.build( 'imageSelect', ['open-image-select'] );
 		// Add image file-select input field to buttons toolbar.
 		//this.panel.refs.buttons.addPanel( 'imageSelect', imageSelect.panel );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target
-	// --------------------------------
+	//---------------------------------
 	// Assign the workspace canvas.
 	// RETURNS: [boolean].
 	// * target - [ElementCanvas] canvas to interact with
@@ -92,9 +92,9 @@ class JestToolEntities extends JestTool {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the entities tool.
 	// RETURNS: [boolean].
 	enable() {
@@ -185,17 +185,19 @@ class JestToolEntities extends JestTool {
 		// Check Keyboard Modifiers
 		//--------------------------------
 		// Determine if shift key is pressed.
-		const add		= e.shiftKey;
+		const add    = e.shiftKey;
 		// Check for alt/option key.
-		const sub		= e.altKey;
+		const sub    = e.altKey;
 		//--------------------------------
 		// Calculate Mouse Position
 		//--------------------------------
-		const mouse		= this.target.mousePos( e );
+		const mouse  = this.target.mousePos( e );
+		// Ignore preview clicks before selecting or deselecting a Hook.
+		if ( !this.target.containsRinkPoint(mouse) ) return;
 		//--------------------------------
 		// Find Clicked Entity
 		//--------------------------------
-		const object	= this.getEntityAt( mouse.x, mouse.y );
+		const object = this.getEntityAt( mouse.x, mouse.y );
 		// Clicking empty space deselects.
 		if ( !object ) {
 			this.deselect();
@@ -250,7 +252,9 @@ class JestToolEntities extends JestTool {
 	    if ( e ) {
 			// Check if mouse is hovering, grabbing, etc.
 		    const mouse  = this.target.mousePos( e );
-		    object = this.getEntityAt( mouse.x, mouse.y );
+			// Hit-test Hooks only within the permittable rink.
+			if ( this.target.containsRinkPoint(mouse) )
+				object   = this.getEntityAt( mouse.x, mouse.y );
 	    }
 
 		//--------------------------------
@@ -528,9 +532,9 @@ class JestToolEntities extends JestTool {
 		this.updateCursor( e ); // update cursor
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Get Modifiers
-	// -----------------------------
+	//------------------------------
 	// Returns modifier flags based on current mouse event.
 	getModifiers( e ) {
 		return {

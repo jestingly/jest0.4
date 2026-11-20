@@ -13,9 +13,9 @@ class JestFilePNG extends JestFileImage {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -77,9 +77,9 @@ class JestFilePNG extends JestFileImage {
 
 
 
-			// --------------------------------
+			//---------------------------------
 			// Load Image
-			// --------------------------------
+			//---------------------------------
 			// Try loading tileset image into gallery
 			await this.client.gallery.loadImages([
 				{ category: 'TILESET', stem: stem, extension: 'PNG' }

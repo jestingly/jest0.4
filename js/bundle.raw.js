@@ -56,11 +56,14 @@ Array.prototype.first = function() {
 //-----------------------------
 // Description: Merges this array with another and removes duplicates.
 // * otherArray - [array] Array to merge
-// RETURNS: [array] New array with unique strings
+// RETURNS: [array|string] New value(s) to merge as unique strings.
 Array.prototype.mergeUnique = function ( otherArray ) {
-	if ( !Array.isArray(otherArray) )
+	// The argument must be an array or a string.
+	if ( typeof otherArray==="string" )
+		otherArray = [otherArray]; // make [array]
+	else if ( !Array.isArray(otherArray) )
 		throw new TypeError('Argument must be an array');
-
+	// Concatenate arrays & filter out non-unique values.
 	return Array.from(new Set([...this, ...otherArray]));
 };
 
@@ -104,11 +107,11 @@ class OSConfigurable {
 	//  - init(instance)				→ called in the constructor, to wire instance-level hooks
 	// * targetClass  - [string|null] optional name of the class to defer for
 	static use( type, plugin ) {
-		// -----------------------
+		//------------------------
 		// Because this.plugins is static to OSConfigurable,
 		// we will ensure that all children have their own
 		// class-specific plugins.
-		// -----------------------
+		//------------------------
 		// Shadow plugins per subclass if not already
 		if ( !Object.hasOwn( this, 'plugins' ) ) {
 			this.plugins = {}; // fork it
@@ -579,18 +582,18 @@ class OSCallback extends OSConfigurable {
 		return count;
 	}
 
-	// -------------------------
+	//--------------------------
 	// Helper: Is Promise-like
-	// -------------------------
+	//--------------------------
 	// RETURNS: [bool] Whether v is thenable (Promise-like).
 	// * v	- [any]
 	_isThenable( v ) {
 		return v!=null && (typeof v==='object' || typeof v==='function') && typeof v.then==='function';
 	}
 
-	// -------------------------
+	//--------------------------
 	// Helper: Parse stack for file:line:col
-	// -------------------------
+	//--------------------------
 	// RETURNS: [object] { file, line, col } best-effort from error stack.
 	// * err	- [Error]
 	_parseStack( err ) {
@@ -618,9 +621,9 @@ class OSCallback extends OSConfigurable {
 	}
 
 
-	// -------------------------
+	//--------------------------
 	// Trigger (Async-Aware)
-	// -------------------------
+	//--------------------------
 	// Triggers a specific callback by ID under an event name.
 	// RETURNS: [Promise<any>] Resolves/rejects based on the callback.
 	// * command	- [string] Name of the event.
@@ -708,9 +711,9 @@ class OSCallback extends OSConfigurable {
 	}
 
 
-	// -------------------------
+	//--------------------------
 	// EmitAsync (Configurable)
-	// -------------------------
+	//--------------------------
 	// Configurable async emitter.
 	// RETURNS: [Promise<void|any[]>] Serial resolves void; parallel resolves results array.
 	// * command	- [string] Name of event to emit.
@@ -845,9 +848,9 @@ class OSObject extends OSCallback {
 	// * ...args	- [array] of breadcrumb [objects]
 	addBreadcrumbs( ...args ) {
 		//console.log( 'jestAlert: Adding breadcrumb trail ...' );
-		// --------------------------------
+		//---------------------------------
 		// Push argument(s)
-		// --------------------------------
+		//---------------------------------
 		for ( const arg of args ) {
 			if ( typeof arg==='object' )
 				this.breadcrumbs.push( arg );
@@ -867,9 +870,9 @@ class OSObject extends OSCallback {
 	// Create a quick reference
 	// RETURNS: [bool] `true` on success, else `false`.
 	ref( key, val ) {
-		// --------------------------------
+		//---------------------------------
 		// Store item in reference(s)
-		// --------------------------------
+		//---------------------------------
 		// Determine the key
 		let keyUnique	= key || jsos.generateKey();
 		while ( this.refs.hasOwnProperty(keyUnique) )
@@ -1146,22 +1149,22 @@ console.log( 'jestAlert: js/os/OSElement.js loaded' );
 // Jest HTML DOM Element class
 class OSElement extends OSEventTarget {
 	// Element properties
-	el				= null;		// DOM element [object]
-	tag				= null;		// DOM element type [string]
-	id				= null;		// id [string] attribute value of DOM element
-	classes			= null;		// class(es) [stray] attribute value of DOM element
-	attributes		= null;		// [object] of attributes
-	text			= null;		// [string] value of inner text
+	el         = null;      // DOM element [object]
+	tag        = null;      // DOM element type [string]
+	id         = null;      // id [string] attribute value of DOM element
+	classes    = null;      // class(es) [stray] attribute value of DOM element
+	attributes = null;      // [object] of attributes
+	text       = null;      // [string] value of inner text
 
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
-	// * options		- [object] Configuration options for the class [object].
+	// * options - [object] Configuration options for the class [object].
 	constructor( options={} ) {
 		super( options ); // call parent constructor
-		this.tag			= options.tag || 'div';			// [string] value of HTML markup tag
+		this.tag			= options.tag || 'div';   // [string] value of HTML markup tag
 		// Setup element properties
-		this.id				= options.id ?? null;			// HTML id [string] value
-		this.classes		= options.classes ?? [];		// HTML class(es) [stray] value(s)
+		this.id				= options.id ?? null;     // HTML id [string] value
+		this.classes		= options.classes ?? [];  // HTML class(es) [stray] value(s)
 		let	classesDataType	= jsos.datatype( this.classes );
 		if ( classesDataType!=='array' )
 			this.classes	= classesDataType==='string' ? [this.classes] : [];
@@ -1169,35 +1172,35 @@ class OSElement extends OSEventTarget {
 		this.text			= options.text ?? '';
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the DOM element [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	setup() {
-		return super.setup();	// call parent setup method
+		return super.setup(); // call parent setup method
 	}
 
 	// Render the OSElement [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
-		this.createElement();				// Create the DOM element [object]
-		this.initCallbacks();				// apply initial callback(s)
-		//this._attachEventListeners();		// apply callback listeners
-		return true;						// sucess
+		//---------------------------------
+		this.createElement();   // Create the DOM element [object]
+		this.initCallbacks();   // apply initial callback(s)
+		//this._attachEventListeners(); // apply callback listeners
+		return true; // sucess
 	}
 
 	// Creates the DOM element for the [object].
 	// RETURNS: [object] The created DOM element.
 	createElement() {
 		// Create the DOM element for the panel.
-		const el	= jsos.generateElement( this.tag, this.id, this.classes, this.text, this.objectURL );
-		this.el		= el;					// cross-reference to DOM element
+		const el = jsos.generateElement( this.tag, this.id, this.classes, this.text, this.objectURL );
+		this.el  = el;                  // cross-reference to DOM element
 		// Inject inner text content.
-		this.el.innerHTML	= this.text;	// clear existing content
+		this.el.innerHTML = this.text;  // clear existing content
 		// Use enhanced attribute method instead of raw loop
 		if ( typeof this.attributes==='object' && this.attributes!==null )
 			this.addAttributes( this.attributes );
@@ -1473,24 +1476,26 @@ class OSElement extends OSEventTarget {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Inner Content Handling
-	// --------------------------------
+	//---------------------------------
 	// Set the inner text of an element.
 	// NOTE: This replaces all the inner content.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	// * text	- [string] Content to display insid the element.
 	setText( text ) {
 		// Replace text content with text.
 		this.el.textContent = text;
+		return this; // return element
 	}
 	// Set the inner HTML of an element.
 	// NOTE: This replaces all the inner content.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	// * text	- [string] HTML to display insid the element.
 	setHTML( text ) {
 		// Replace inner HTML with text.
 		this.el.innerHTML = text;
+		return this; // return element
 	}
 
 	//--------------------------------
@@ -1573,10 +1578,14 @@ class OSElement extends OSEventTarget {
 	// * height	- [int] Value of new height or [null] for no change.
 	resize( width, height ) {
 		// Resize the DOM element style width and/or height.
-		if ( width!==null ) // update element width
-			this.el.style.width		= `${width}px`;
-		if ( height!==null ) // update element height
-			this.el.style.height	= `${height}px`;
+		// Update element width.
+		if ( width!==null
+			 && this.el.style.width!==`${width}px` )
+			this.el.style.width  = `${width}px`;  // width
+		// Update element height.
+		if ( height!==null
+			 && this.el.style.height!==`${height}px` )
+			this.el.style.height = `${height}px`; // height
 	}
 	// Expand the DOM element by some amount (adds to existing size).
 	// RETURNS: [void]
@@ -1622,13 +1631,18 @@ class OSElement extends OSEventTarget {
 		// Measure the element as it is currently displayed.
 		const rect = this.el.getBoundingClientRect();
 
+		// Exclude the garage border so dropping and visual snapping use the
+		// exact same local coordinate origin.
+		const borderLeft = this.el.clientLeft;
+		const borderTop  = this.el.clientTop;
+
 		// Start with CSS-pixel coordinates inside the displayed element.
 		const x = event.clientX - rect.left;
 		const y = event.clientY - rect.top;
 
 		// Non-canvas elements keep their existing CSS-pixel coordinates.
 		if ( !(this.el instanceof HTMLCanvasElement) )
-			return { x, y };
+			return { x, y }; // local (x,y)
 
 		// Avoid division by zero for a hidden or not-yet-sized canvas.
 		if ( rect.width===0 || rect.height===0 )
@@ -1645,24 +1659,26 @@ class OSElement extends OSEventTarget {
 	// Show DOM Element
 	//--------------------------------
 	// Makes DOM element visible.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	show() {
 		// See if element exists.
 		if ( !this.el ) return;
 		// Remove "hidden" class from element.
 		this.removeClass( 'hidden' );
+		return this; // return element
 	}
 
 	//--------------------------------
 	// Hide DOM Element
 	//--------------------------------
 	// Hides DOM element from document.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	hide() {
 		// See if element exists.
 		if ( !this.el ) return;
 		// Add "hidden" class to element.
 		this.addClass( 'hidden' );
+		return this; // return element
 	}
 }
 
@@ -1681,14 +1697,18 @@ class ElementCanvas extends OSElement {
 	anchor     = null;     // [object] Anchor for matrix handling.
 	width      = 100;      // [int] value of canvas width
 	height     = 100;      // [int] value of canvas height
+	// Canvas drawing propert(ies)
+	alpha      = 0;        // [Number] value of current drawing alpha translucency
+	// Object propert(ies)
+	rink       = null;     // [object|null] Rink rectangle in canvas pixels.
 
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
-	// * options		- [object] Configuration options for the class [object].
+	// * options - [object] Configuration options for the class [object].
 	constructor( options={} ) {
-		// --------------------------------
+		//---------------------------------
 		// Configure DOM "Canvas" Data
-		// --------------------------------
+		//---------------------------------
 		options.tag  = 'canvas';
 		super( options ); // call OSObject parent constructor
 		// Handle default canvas size
@@ -1702,15 +1722,15 @@ class ElementCanvas extends OSElement {
 	// Setup the [object].
 	// RETURNS: [boolean] true or false.
 	setup() {
-		// --------------------------------
+		//---------------------------------
 		// Setup Canvas [object]
-		// --------------------------------
+		//---------------------------------
 		super.setup(); // call parent setup method
 		// Ensure class(es) include element base class(es)
 		this.classes.push( 'jest-canvas' );
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor [object]
-		// --------------------------------
+		//---------------------------------
 		// Create an anchor [object] for moving & size specifications
 		const anchor = new Anchor();    // create central anchor
 		anchor.move( 0, 0 );            // move anchor to default position
@@ -1721,25 +1741,25 @@ class ElementCanvas extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] true or false.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Add Event Handler(s)
-		// --------------------------------
+		//---------------------------------
 		// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'canvas', (w,h)=>this.resize(w,h) );
-		// --------------------------------
+		//---------------------------------
 		// Render Canvas
-		// --------------------------------
+		//---------------------------------
 		super.render(); // call parent render method
-		// --------------------------------
+		//---------------------------------
 		// Default Orientation(s)
-		// --------------------------------
+		//---------------------------------
 		this.resize ( this.width, this.height );
 		return true;    // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Sizing & Positioning Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Resize the DOM canvas.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * width	- [int] Value of new width.
@@ -1747,12 +1767,12 @@ class ElementCanvas extends OSElement {
 	resize( width=100, height=100 ) {
 		// Validate argument(s)
 		if ( !Number.isInteger(width) ) {
-			console.error( `Argument "width" must be an integer.` );
-			width  = 100;
+			//console.warn( `Argument "width" must be an integer.` );
+			width  = Math.round( width );
 		}
 		if ( !Number.isInteger(height) ) {
-			console.error( `Argument "width" must be an integer.` );
-			height = 100;
+			//console.warn( `Argument "height" must be an integer.` );
+			height = Math.round( height );
 		}
 		// Set width & height
 		this.width     = Math.max( 0, width );  // save new width
@@ -1767,9 +1787,35 @@ class ElementCanvas extends OSElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
+	// Set the alpha translucency drawing mode (0-1).
+	// RETURNS: [boolean] `true` on success else `false` on fail.
+	// * value  - [number] Value of translucency alpha to set canvas drawing mode to.
+	setAlpha( value=1 ) {
+		//--------------------------------
+		// Validate Argument(s)
+		//--------------------------------
+		// Require argument to be a number.
+		if ( !Number.isFinite(value) ) {
+			console.warn( 'setAlpha(): Argument must be a number.' );
+			return false; // fail
+		}
+		// Clamp value between 0 and 1.
+		value = Math.max( 0, Math.min(1,value) );
+		
+		//--------------------------------
+		// Configure Pixel Translucency
+		//--------------------------------
+		// Access the destination canvas drawing context.
+		const ctx  = this.el.getContext( '2d' );
+		// Set opacity (0.0 = invisible, 1.0 = solid)
+		ctx.globalAlpha = value;
+		// Proceed to change the alpha translucency.
+		this.alpha = value;
+	}
+
 	// Render a canvas into this canvas.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * canvas	- [ElementCanvas] Source canvas to render.
@@ -1984,6 +2030,68 @@ class ElementCanvas extends OSElement {
 		this.resize( 0, 0 );
 		return true; // success
 	}
+
+	//--------------------------------
+	// Get Canvas Mouse Position
+	//--------------------------------
+	// RETURNS: [object] Pointer position in editable pixels.
+	// * event - [MouseEvent] Pointer event to convert.
+	mousePos( event ) {
+		// Resolve the pointer in canvas backing pixels using the existing conversion.
+		const point	 = super.mousePos( event );
+		const bounds = this.getRinkBounds();
+		// Keep signed coordinates so a drag can continue past the level edge.
+		return { x: point.x-bounds.x, y: point.y-bounds.y };
+	}
+
+	//--------------------------------
+	// Get Rink Canvas Bounds
+	//--------------------------------
+	// Set an internal rink (e.g. bleeds, margins, padding).
+	// RETURNS: [void].
+	setRinkBounds( x, y, w, h, cols, rows ) {
+		// Set the internal bleed margin(s) rink.
+		this.rink = { x, y, w, h, cols, rows };
+	}
+
+	// Get the arbitrary rink boundaries.
+	// RETURNS: [object] Rink rectangle as { x, y, w, h }.
+	getRinkBounds() {
+		// Use the entire canvas by default.
+		return this.rink ?? { x: 0, y: 0, w: this.width, h: this.height };
+	}
+
+	//--------------------------------
+	// Get Rink Client Bounds
+	//--------------------------------
+	// RETURNS: [object|null] Rink rectangle in viewport coordinates.
+	getRinkClientBounds() {
+		// Measure the displayed canvas and find the editable pixel rectangle.
+		const rect = this.el.getBoundingClientRect();
+		const { x, y, w, h } = this.getRinkBounds();
+
+		// A collapsed or hidden canvas cannot receive a drop.
+		if ( !this.el.width || !this.el.height || !rect.width || !rect.height || !w || !h )
+			return null; // fail
+
+		// Convert backing pixels to viewport distances on both axes.
+		const scaleX = rect.width / this.el.width;
+		const scaleY = rect.height / this.el.height;
+		const left   = rect.left + x*scaleX;
+		const top    = rect.top + y*scaleY;
+		return { left, top, right: left+w*scaleX, bottom: top+h*scaleY, scaleX, scaleY };
+	}
+
+	//--------------------------------
+	// Test Rink Position
+	//--------------------------------
+	// RETURNS: [boolean] `true` if local point is inside the rink.
+	// * point - [object] Coordinates returned by mousePos().
+	containsRinkPoint( point ) {
+		// Test against the active level's size in canvas pixels.
+		const { w, h } = this.getRinkBounds();
+		return point.x>=0 && point.y>=0 && point.x<w && point.y<h;
+	}
 }
 
 /* --- BEGIN js/system/dom/element/ElementImage.js --- */
@@ -2093,32 +2201,32 @@ console.log( 'jestAlert: js/dom/element/ElementAudio.js loaded' );
 // Plays loaded soundbyte built-in JS audio components.
 class ElementAudio extends OSElement {
 	// Attribute properties
-	url				= null;			// [string] value of src URL
+	url      = null;		// [string] value of src URL
 	// Playback status properties
-	playing			= false;		// [bool] Value indicating playing status (unreliable).
+	playing  = false;		// [bool] Value indicating playing status (unreliable).
 	// Playback timing
-	queued			= false;		// [bool] Whether sound is queued to play as soon as ready
-	volume			= 1;			// [float] Volume sound should play at.
+	queued   = false;		// [bool] Whether sound is queued to play as soon as ready
+	volume   = 1;			// [float] Volume sound should play at.
 
 	//-------------------------
 	// Setup [Object]
 	//-------------------------
 	// Creates the class [object] with configurable components.
 	// RETURNS: [void].
-	// * options		- [object] Configuration options for the class [object].
+	// * options - [object] Configuration options for the class [object].
 	constructor( options={} ) {
 		// Parse some data
-		options.tag		= 'audio';
-		super( options );	// call OSObject parent constructor
-		this.jot( 'source', 'empty' );				// set status
-		this.jot( 'playback', 'unplayed' );			// playback empty
+		options.tag = 'audio';
+		super( options ); // call OSObject parent constructor
+		this.jot( 'source', 'empty' );         // set status
+		this.jot( 'playback', 'unplayed' );    // playback empty
 		// Store volume.
-		this.volume		= options.volume ?? 0.2;	// Store internal volume default
+		this.volume = options.volume ?? 0.2;   // Store internal volume default
 		// Setup the [object] before creating the element
-		this.setup();								// setup the [object]
-		this.render();								// render the [object]
+		this.setup();   // setup the [object]
+		this.render();  // render the [object]
 		// Determine if audio should autoplay upon load
-		this.queued		= options.queued ?? false;	// whether to auto-play
+		this.queued = options.queued ?? false; // whether to auto-play
 		// Call load complete if source preloaded
 		if ( this.isReady() ) this.onLoad();
 	}
@@ -2126,10 +2234,10 @@ class ElementAudio extends OSElement {
 	// Setup the [object].
 	// RETURNS: [boolean] true or false.
 	setup() {
-		super.setup();		// call parent setup method
+		super.setup();  // call parent setup method
 		// Ensure class(es) include element base class(es)
 		this.classes.push( 'jest-audio' );
-		return true;		// success
+		return true;    // success
 	}
 
 	// Render the [object].
@@ -2138,10 +2246,10 @@ class ElementAudio extends OSElement {
 		// Remove 'src' attribute if supplied
 		let url	= null;
 		if ( this.attributes.src ) {
-			url	= this.attributes.src;		// save source
-			delete this.attributes.src;		// delete attribute src
+			url	= this.attributes.src;   // save source
+			delete this.attributes.src;  // delete attribute src
 		}
-		super.render();			// call parent render method
+		super.render(); // call parent render method
 		// Apply listener(s)
 		this.register( 'loadeddata', 'status', e=>this.onLoad(e), 'dom' );
 		// Apply listener(s)
@@ -2156,14 +2264,17 @@ class ElementAudio extends OSElement {
 			];
 		stops.forEach(
 			type => {
-				this.register( 'interrupt', `playback_${type}`, e=>this.onInterrupt(e), 'dom' );
+				this.register(
+					'interrupt', `playback_${type}`,
+					e => this.onInterrupt(e), 'dom'
+					);
 			});
 		this.register( 'ended', 'playback', e=>this.onEnd(e), 'dom' );
 		// Set source if exists
 		const finalURL = url ?? this._options?.objectURL;
 		if ( finalURL )
 			this.setSrc( finalURL ); // set supplied source
-		return true;			// success
+		return true; // success
 	}
 
 	//-------------------------
@@ -2174,9 +2285,9 @@ class ElementAudio extends OSElement {
 	setVolume( volume ) {
 		// Require volume to be a number.
 		if ( typeof volume==='number' )
-			this.volume	= Math.min( 1, Math.max(0,volume) ); // clamp
+			this.volume = Math.min( 1, Math.max(0,volume) ); // clamp
 		// Set volume on element.
-		this.el.volume	= this.volume; // apply immediately
+		this.el.volume  = this.volume; // apply immediately
 	}
 
 	//-------------------------
@@ -2184,11 +2295,11 @@ class ElementAudio extends OSElement {
 	//-------------------------
 	// Set the element src attribute.
 	// RETURNS: [boolean] true or false.
-	// * url		- [string] value of attribute source URL.
+	// * url - [string] value of attribute source URL.
 	setSrc( url ) {
 		// Change status to unloaded & parse URL
-		this.jot( 'source', 'unloaded' );		// set status
-		this.url	= jestGetURL( url );		// update URL
+		this.jot( 'source', 'unloaded' );  // set status
+		this.url = jestGetURL( url );      // update URL
 		// Apply the src URL
 		this.el.setAttribute( 'src', this.url );
 		return true;
@@ -2198,9 +2309,9 @@ class ElementAudio extends OSElement {
 	// RETURNS: [boolean] true or false.
 	isReady() {
 		// Determine if media is ready
-		const status	= this.skim( 'source' )
+		const status = this.skim( 'source' )
 		// 2 = HAVE_CURRENT_DATA, means it has loaded enough to play
-		const ready		= this.el.readyState >= 2;
+		const ready  = this.el.readyState >= 2;
 		if ( ready && status!=='loaded' )
 			this.jot( 'source', 'loaded' );
 		return ready; // return ready state
@@ -2215,33 +2326,35 @@ class ElementAudio extends OSElement {
 		// Make sure file is already loaded
 		if ( !this.isReady() ) {
 			// console.warn( `Cannot play audio before load.` );
-			return;
+			return; // abort (not ready)
 		}
 		// If queued, it is not queued anymore
 		if ( this.queued===true )
-			this.queued		= false;	// no longer queued
+			this.queued = false; // no longer queued
 		// Set audio volume.
 		if ( typeof volume==='number' )
-			this.setVolume( volume );	// override
+			this.setVolume( volume ); // override
 		else this.setVolume( this.volume ); // use internal
 		// Play audio stream.
-		this.el.play().catch( err => console.error(`Error playing ${this.name}:`,err) );
+		this.el.play().catch(
+			err => console.error( `Error playing ${this.name}:`, err )
+			);
 	}
 
 	// Safely attempts to play an audio element.
 	// RETURNS: [Promise<boolean>] Whether playback started successfully.
-	// ---------------------------
+	//----------------------------
 	// NOTE: Browser autoplay policies may prevent audio from playing until
 	// the user interacts with the page.
 	// Autoplay restrictions are expected browser behavior and should
 	// not be treated as fatal application errors.
-	// ---------------------------
+	//----------------------------
 	// * audio	- [HTMLAudioElement] Audio element to play
 	async safePlayAudio( audio ) {
 		// Reject invalid audio elements before attempting playback.
 		if ( !audio || typeof audio.play!=="function" ) {
 			console.warn( "[ElementAudio] Invalid audio element." );
-			return false;
+			return false; // failed
 		}
 
 		// Try to safely play the audo playback.
@@ -2270,15 +2383,17 @@ class ElementAudio extends OSElement {
 		}
 		// Set audio volume.
 		if ( typeof volume==='number' )
-			this.setVolume( volume );	// override
+			this.setVolume( volume ); // override
 		else this.setVolume( this.volume ); // use internal
 		// Reset audio stream & play
-		this.el.currentTime	= 0;		// reset the audio stream time
-		this.el.play().catch( err => console.error(`Error replaying ${this.name}:`,err) );
+		this.el.currentTime	= 0; // reset the audio stream time
+		this.el.play().catch(
+			err => console.error( `Error replaying ${this.name}:`, err )
+			);
 	}
 
 	// Stops the audio.
-	// * volume		- [float] Playback volume.
+	// * volume - [float] Playback volume.
 	stop() {
 		// Make sure file is already loaded
 		if ( !this.isReady() ) {
@@ -2286,8 +2401,10 @@ class ElementAudio extends OSElement {
 			return;
 		}
 		// Stop the audio
-		this.el.currentTime	= 0;		// reset the audio stream time
-		this.el.stop().catch( err => console.error(`Error stopping ${this.name}:`,err) );
+		this.el.currentTime	= 0; // reset the audio stream time
+		this.el.stop().catch(
+			err => console.error( `Error stopping ${this.name}:`, err )
+			);
 	}
 
 	//-------------------------
@@ -2296,8 +2413,8 @@ class ElementAudio extends OSElement {
 	// onLoad event handler callback for attribute src
 	// RETURNS: [void].
 	onLoad() {
-		this.jot( 'source', 'loaded' );			// src loaded
-		this.emit( 'loaded' );					// emit src load event
+		this.jot( 'source', 'loaded' );         // src loaded
+		this.emit( 'loaded' );                  // emit src load event
 		// Play sound if queued
 		if ( this.queued===true ) this.play();
 	}
@@ -2305,33 +2422,33 @@ class ElementAudio extends OSElement {
 	// onPlay event handler callback for playback start.
 	// RETURNS: [void].
 	onPlay() {
-		this.jot( 'playback', 'playing' );		// playback begin
-		this.playing	= true;					// sound started playing
-		this.emit( 'started' );					// emit playback start event
+		this.jot( 'playback', 'playing' );      // playback begin
+		this.playing = true;                    // sound started playing
+		this.emit( 'started' );                 // emit playback start event
 	}
 
 	// onResume event handler callback for when playback resumes.
 	// RETURNS: [void].
 	onResume() {
-		this.jot( 'playback', 'playing' );		// playback resumed
-		this.playing	= true;					// sound resumed playing
-		this.emit( 'resumed' );					// emit playback resume event
+		this.jot( 'playback', 'playing' );      // playback resumed
+		this.playing = true;                    // sound resumed playing
+		this.emit( 'resumed' );                 // emit playback resume event
 	}
 
 	// onInterrupt event handler callback for playback interrupt.
 	// RETURNS: [void].
 	onInterrupt() {
-		this.jot( 'playback', 'interrupted' );	// playback interrupted
-		this.playing	= false;				// sound playing interrupted
-		this.emit( 'interrupted' );				// emit playback interrupted event
+		this.jot( 'playback', 'interrupted' );  // playback interrupted
+		this.playing = false;                   // sound playing interrupted
+		this.emit( 'interrupted' );             // emit playback interrupted event
 	}
 
 	// onEnd event handler callback for playback complete.
 	// RETURNS: [void].
 	onEnd() {
-		this.jot( 'playback', 'ended' );		// playback finished
-		this.playing	= false;				// sound playing interrupted
-		this.emit( 'ended' );					// emit playback end event
+		this.jot( 'playback', 'ended' );        // playback finished
+		this.playing = false;                   // sound playing interrupted
+		this.emit( 'ended' );                   // emit playback end event
 	}
 }
 
@@ -2351,30 +2468,30 @@ class Anchor extends OSCallback {
 	// Object properties
 	//canvas     = null;       // [object] ElementCanvas (for visual testing).
 	_color     = null;       // [string] Hex value, stores debugging color view. Set using this.debugging().
-	_alpha     = null;       // [int] Value, stores transparency as a value 0-100.
+	_alpha     = null;       // [number] Value, stores transparency as a value 0-100.
 	// Declare properties
 	_parent    = null;       // Parent Anchor [object].
-	x          = null;       // [int] value of X coordinate of the [object] relative to parent.
-	y          = null;       // [int] value of Y coordinate of the [object] relative to parent.
-	z          = null;       // [int] value of Z coordinate of the [object] relative to parent.
-	width      = null;       // [int] value of width of the [object] (minimum = 1).
-	height     = null;       // [int] value of height of the [object] (minimum = 1).
+	x          = null;       // [number] value of X coordinate of the [object] relative to parent.
+	y          = null;       // [number] value of Y coordinate of the [object] relative to parent.
+	z          = null;       // [number] value of Z coordinate of the [object] relative to parent.
+	width      = null;       // [number] value of width of the [object] (minimum = 1).
+	height     = null;       // [number] value of height of the [object] (minimum = 1).
 	// View-local display and coordinate measurements.
-	units      = null;       // [int] value of grid (x,y) & width/height should conform to (defaults to 1px).
+	units      = null;       // [number] value of grid (x,y) & width/height should conform to (defaults to 1px).
 	zoom       = 1;          // [number] Display zoom for this file view.
-	minZoom    = 0.25;       // [number] Minimum display zoom.
-	maxZoom    = 4;          // [number] Maximum display zoom.
+	minZoom    = 0.01;       // [number] Minimum display zoom.
+	maxZoom    = 10;         // [number] Maximum display zoom.
 
 	//-------------------------
 	// Instantiation
 	//-------------------------
 	// Initializes the object.
-	// * x       - [int] value of horizontal offset relative to parent(s)
-	// * y       - [int] value of vertical offset relative to parent(s)
-	// * z       - [int] value of z index relative to parent(s)
-	//   width   - [int] value of custom width span of anchor
-	//   height  - [int] value of custom height span of anchor
-	//   units   - [int] Value of anchor grid size (defaults to 1px).
+	// * x       - [number] value of horizontal offset relative to parent(s)
+	// * y       - [number] value of vertical offset relative to parent(s)
+	// * z       - [number] value of z index relative to parent(s)
+	//   width   - [number] value of custom width span of anchor
+	//   height  - [number] value of custom height span of anchor
+	//   units   - [number] Value of anchor grid size (defaults to 1px).
 	constructor( x=0, y=0, z=0, width=1, height=1, units=1 ) {
 		super();                       // Call parent constructor
 		this.move( x, y, z );          // Move the anchor point coordinates
@@ -2419,33 +2536,21 @@ class Anchor extends OSCallback {
 		return {
 			logical : this.getBounds(),
 			display : {
-				units  : Number(this.units)  * this.zoom,
-				x      : Number(this.x)      * this.zoom,
-				y      : Number(this.y)      * this.zoom,
-				width  : Number(this.width)  * this.zoom,
-				height : Number(this.height) * this.zoom
+				zoom  : this.zoom,
+				units : Number(this.units)  * this.zoom,
+				x     : Number(this.x)      * this.zoom,
+				y     : Number(this.y)      * this.zoom,
+				w     : Number(this.width)  * this.zoom,
+				h     : Number(this.height) * this.zoom
 				}
 			};
 	}
 
-	// Set this anchor's display zoom.
-	// RETURNS: [number|false] Applied zoom, or `false` if invalid.
-	// * value - [number] Requested zoom multiplier.
-	setZoom( value ) {
-		// Validate the requested zoom.
-		const requested = Number( value );
-		if ( !Number.isFinite(requested) ) return false;
-
-		// Clamp zoom to the supported range.
-		this.zoom = Math.min(
-			this.maxZoom,
-			Math.max( this.minZoom, requested )
-			);
-
-		// Tell the view or renderer to update its display.
-		this.emit( 'zoom', null, this.zoom );
-
-		return this.zoom;
+	// Return this anchor's units magnified by zoom.
+	// RETURNS: [Number] Magnified units value.
+	getUnitsZoomed() {
+		// Multiply the grid units by the magnification zoom value.
+		return Number(this.units) * this.zoom; // [Number] value
 	}
 
 	//--------------------------------
@@ -2459,21 +2564,21 @@ class Anchor extends OSCallback {
 		const requested = Number( value );
 		if ( !Number.isFinite(requested) ) return false;
 
-		// Keep zoom within the supported range.
+		// Clamp zoom to the supported range.
 		this.zoom =
 			Math.min(
 				this.maxZoom,
 				Math.max( this.minZoom, requested )
 				);
 
-		// Apply the new display size.
-		if ( !this.applyZoom() ) return false;
-
-		// Emit event
-		this.emit( 'zoom', null, zoom );
-
+		// Tell the view or renderer to update its display.
+		this.emit( 'zoom', null, this.zoom );
 		return this.zoom; // applied zoom
 	}
+
+	// Return this anchor's set zoom magnification value.
+	// RETURNS: [Number] of magnification zoom value.
+	getZoom() { return this.zoom; }
 
 	//-------------------------
 	// Public Methods
@@ -2496,20 +2601,20 @@ class Anchor extends OSCallback {
 	//-------------------------
 	// Move the anchor point [object].
 	// RETURNS: [void].
-	// * x	- [int] value of horizontal offset relative to parent(s)
-	// * y	- [int] value of vertical offset relative to parent(s)
-	// * z	- [int] value of z index relative to parent(s)
+	// * x - [number] value of horizontal offset relative to parent(s)
+	// * y - [number] value of vertical offset relative to parent(s)
+	// * z - [number] value of z index relative to parent(s)
 	move( x, y, z=null ) {
-		this.x  = x;  // [int] Horizontal offset
-		this.y  = y;  // [int] Vertical offset
-		this.z  = z===null ? this.z : z; // [int] Z index offset
+		this.x  = x; // [number] Horizontal offset
+		this.y  = y; // [number] Vertical offset
+		this.z  = z===null ? this.z : z; // [number] Z index offset
 	}
 
 	// Raise or lower the z-value of the [object].
 	// RETURNS: [void].
-	// * z	- [int] value of z index relative to parent(s)
+	// * z - [number] value of z index relative to parent(s)
 	setZ( z ) {
-		this.z  = z;  // [int] Z index offset
+		this.z = z; // [number] Z index offset
 	}
 
 	//-------------------------
@@ -2517,15 +2622,15 @@ class Anchor extends OSCallback {
 	//-------------------------
 	// Define the grid size.
 	// RETURNS: [bool] `true` on success, else `false`.
-	//   size	- [int] Value of grid the anchor is locked to.
+	//   size - [number] Value of grid the anchor is locked to.
 	graticulate( size=1 ) {
 		// Validate argument(s)
-		if ( !jsos.prove(size,'int') || size<1 ) {
-			console.warn( `Attempted to set forbidden grid size, resorting to default.` );
-			size   = 1;     // default grid width/height
+		if ( !jsos.prove(size,'number') || size<0.00001 ) {
+			console.warn( `Attempted to set forbidden grid size. Resorting to default.` );
+			size = 1; // default grid width/height
 		}
 		// Continue to setup the grid
-		this.units = size;  // set grid square of level
+		this.units = size; // set grid square of level
 		// Emit event
 		this.emit( 'graticulate', null, size );
 		return true; // success
@@ -2535,9 +2640,12 @@ class Anchor extends OSCallback {
 	// RETURNS: [object] of location & dimensions.
 	getBounds() {
 		return {
-			units: this.units,
-			x: this.x, y: this.y,
-			w: this.width, h: this.height
+			zoom  : this.zoom,
+			units : this.units,
+			x     : this.x,
+			y     : this.y,
+			w     : this.width,
+			h     : this.height
 			};
 	}
 
@@ -2566,17 +2674,17 @@ class Anchor extends OSCallback {
 
 	// Resize the anchor point [object].
 	// RETURNS: [void].
-	// * width		- [int] value of custom width span of anchor
-	// * height		- [int] value of custom height span of anchor
+	// * width   - [number] value of custom width span of anchor
+	// * height  - [number] value of custom height span of anchor
 	resize( width, height=null ) {
 		// Validate argument(s)
-		if ( !jsos.prove(width,'int') || width<0 ||
-			 !jsos.prove(height,'int') || height<0 ) {
+		if ( !jsos.prove(width,'number') || width<0 ||
+			 !jsos.prove(height,'number') || height<0 ) {
 			console.warn( `Attempted to set forbidden grid size: w=${width}, h=${height}` );
 			return;
 		}
-		this.width		= width;	// [int] value of anchor width
-		this.height		= height;	// [int] value of anchor height
+		this.width  = width;   // [number] value of anchor width
+		this.height = height;  // [number] value of anchor height
 		// Emit event
 		this.emit( 'resize', null, width, height );
 	}
@@ -3025,9 +3133,9 @@ class AnimationAnimator {
 		// Access context & clear the board
 		const ctx = this.canvas.el.getContext( '2d' );
 
-		// -----------------------------------------
+		//------------------------------------------
 		// Render all view layers onto canvas
-		// -----------------------------------------
+		//------------------------------------------
 		// * views	- [array] of View objects sorted by Y.
 		// * ctx	- [CanvasRenderingContext2D] target canvas
 		// RETURNS: [void].
@@ -3203,25 +3311,25 @@ class AnimationView extends AnimationObject {
 	// If no frame set, returns 0. If frame not found, clamps safely.
 	// RETURNS: [int] the index of the current active frame.
 	getFrameIndex() {
-		// --------------------------------
+		//---------------------------------
 		// Validate Frame Reference
-		// --------------------------------
+		//---------------------------------
 		// If frame is null or animation missing, default to 0.
 		if ( !this.frame || !this.animation || !Array.isArray(this.animation.frames) )
 			return 0; // default to first frame
 
-		// --------------------------------
+		//---------------------------------
 		// Resolve Index
-		// --------------------------------
+		//---------------------------------
 		// Find index inside animation.frames array.
 		let index = this.animation.frames.indexOf( this.frame );
 
 		// If frame not found (rare but possible), clamp to 0.
 		if ( index===-1 ) index = 0;
 
-		// --------------------------------
+		//---------------------------------
 		// Constrain to Valid Range
-		// --------------------------------
+		//---------------------------------
 		// Prevent OOB: clamp within [0 .. frames.length-1].
 		index = Math.max( 0, Math.min( index, this.animation.frames.length-1 ));
 
@@ -3869,9 +3977,9 @@ class AnimationAnimation extends AnimationObject {
 		// Clamp insertion index
 		index	= Math.max( 0, index );
 
-		// -------------------------
+		//--------------------------
 		// Move Frame If Already In Animation
-		// -------------------------
+		//--------------------------
 		// Check if frame is inside animation.
 		const currentIndex = this.frames.indexOf( frame );
 		if ( currentIndex !== -1 ) {
@@ -5005,9 +5113,9 @@ class Timeout extends OSCallback {
 	pauseTime		= null;						// [number|null] Pause time of ticker.
 	timerId			= null;						// [] Timer ID if using setInterval
 
-	// --------------------------
+	//---------------------------
 	// Initialization
-	// --------------------------
+	//---------------------------
 	// Initializes the timeout.
 	// * delay	- [number] Time interval between ticks in milliseconds.
 	// * mode	- [string] 'timer' or 'raf'.
@@ -5021,9 +5129,9 @@ class Timeout extends OSCallback {
 		this.jot( mode );
 	}
 
-	// --------------------------
+	//---------------------------
 	// Overloaded Method(s)
-	// --------------------------
+	//---------------------------
 	// Sets the ticker mode.
 	// RETURNS: [void].
 	// * mode	- [string] 'timer' or 'raf' (requestAnimationFrame).
@@ -5035,9 +5143,9 @@ class Timeout extends OSCallback {
 		super.jot( 'mode', mode );
 	}
 
-	// --------------------------
+	//---------------------------
 	// Toggling Method(s)
-	// --------------------------
+	//---------------------------
 	// Starts the ticker.
 	// RETURNS: [void].
 	start() {
@@ -5101,9 +5209,9 @@ class Timeout extends OSCallback {
 	}
 
 
-	// --------------------------
+	//---------------------------
 	// Rendering
-	// --------------------------
+	//---------------------------
 	// Main tick method called on each frame.
 	// Calculates elapsed time, maintains consistent timing, and emits tick events.
 	// RETURNS: [void].
@@ -5182,19 +5290,19 @@ class Loadbar extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render(); // call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Create bar element [object]
-		// --------------------------------
+		//---------------------------------
 		const bar		= jsos.generateElement( 'div', null, ['jest-loadbar-bar'] );
 		this.el.appendChild( bar );
 		this.bar		= bar;				// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Create percent element [object]
-		// --------------------------------
+		//---------------------------------
 		const percent	= jsos.generateElement( 'div', null, ['jest-loadbar-text'], '0%' );
 		bar.appendChild( percent );			// add # percent to bar
 		this.percent	= percent;			// cross-reference
@@ -5261,8 +5369,8 @@ console.log( 'jestAlert: js/system/components/panel/Panel.js loaded' );
 // Provides a class for creating a panel [object].
 class Panel extends OSElement {
 	// Same constructor argument(s)
-	name		= null;				// [string] value of panel name (used for sorting)
-	type		= null;				// Type of panel (form, etc.)
+	name   = null;      // [string] value of panel name (used for sorting)
+	type   = null;      // Type of panel (form, etc.)
 
 	//-------------------------
 	// Constructor
@@ -5271,11 +5379,11 @@ class Panel extends OSElement {
 	constructor( options ) {
 		super( options ); // parent construct
 		// Handle option argument(s)
-		this.name		= options.name || null;				// [string] name of object
-		this.type		= options.type || 'unspecified';	// [string] value of type of panel
+		this.name = options.name || null;           // [string] name of object
+		this.type = options.type || 'unspecified';  // [string] value of type of panel
 		// Setup the panel before creating the element
-		this.setup();		// setup the panel
-		this.render();		// render the panel
+		this.setup();   // setup the panel
+		this.render();  // render the panel
 	}
 
 	//-------------------------
@@ -5284,18 +5392,18 @@ class Panel extends OSElement {
 	// Setup the panel [object].
 	// RETURNS: [boolean] true or false.
 	setup() {
-		super.setup(); // call parent setup method
+		super.setup();  // call parent setup method
 		// Ensure class(es) include panel base class(es)
 		this.classes.push( 'jest-panel' );
-		return true; // success
+		return true;    // success
 	}
 	// Render the panel [object].
 	// RETURNS: [boolean] true or false.
 	render() {
 		super.render(); // call parent render method
-		// --------------------------------
+		//---------------------------------
 		// Render the children
-		// --------------------------------
+		//---------------------------------
 		this.addElements( this._options.elements );	// Generate the panel elements
 	}
 
@@ -5304,7 +5412,7 @@ class Panel extends OSElement {
 	//-------------------------
 	// Dynamically updates the panel content.
 	// RETURNS: [void].
-	// * elements	- [array] New content definitions for the panel.
+	// * elements - [array] New content definitions for the panel.
 	addElements( elements ) {
 		// Require element data
 		if ( !elements ) return;
@@ -5323,25 +5431,25 @@ class Panel extends OSElement {
 		if ( this.el===null ) return false;
 		// Ensure panel element [object] contains breadcrumbs
 		data.breadcrumbs = [ ...this.breadcrumbs ];
-		// --------------------------------
+		//---------------------------------
 		// Create PanelElement [object]
-		// --------------------------------
+		//---------------------------------
 		let panel = null; // define element
 		/*switch ( data.type ) {
 			case 'form':
-				panel		= new PanelForm( data );
+				panel  = new PanelForm( data );
 				break;
 			case 'button':
-				panel		= new PanelFormButton( data );
+				panel  = new PanelFormButton( data );
 				break;
 			case 'dropdown':
-				panel		= new PanelFormDropdown( data );
+				panel  = new PanelFormDropdown( data );
 				break;
 			default:
-				panel		= new PanelElement( data );
+				panel  = new PanelElement( data );
 				break;
 		}*/
-		panel       = new Panel( data );
+		panel = new Panel( data );
 		// Append to DOM & return
 		const index = data?.index ?? null;
 		this.addPanel( data.name, panel );
@@ -5351,14 +5459,14 @@ class Panel extends OSElement {
 
 	// Add a panel [object].
 	// RETURNS: [void].
-	// * name		- [string] Value of Panel name.
-	// * panel		- Panel [object] to add to the window.
-	//   index		- [int|null] Value of index to insert child at.
+	// * name   - [string] Value of Panel name.
+	// * panel  - Panel [object] to add to the window.
+	//   index  - [int|null] Value of index to insert child at.
 	addPanel( name, panel, index=null ) {
 		// Append to DOM & return
 		this.insertAt( panel.el, index );
 		// Store quick-ref
-		const key         = name ?? null;
+		const key = name ?? null;
 		const breadcrumbs = [ ...this.breadcrumbs ];
 		this.addBreadcrumbs( breadcrumbs ); // copy breadcrumbs
 		this.ref( key, panel );
@@ -5448,10 +5556,10 @@ class Panel extends OSElement {
 		if ( this.el && this.el.parentNode )
 			this.el.parentNode.removeChild( this.el );
 		// Clear references and internal flags
-		this.refs		= {};
-		this.el			= null;
-		this.client		= null;
-		this._options	= null;
+		this.refs   = {};
+		this.el     = null;
+		this.client = null;
+		this._options    = null;
 		this.breadcrumbs = [];
 		// Optional logging
 		//console.log( `Panel.destroy(): '${this.name}' panel destroyed.` );
@@ -5619,17 +5727,17 @@ class BaseWindow extends OSElement {
 	// Open the window inside the OS environment.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	open() {
-		// --------------------------------
+		//---------------------------------
 		// Create window [object]
-		// --------------------------------
+		//---------------------------------
 		// Append the window to the environment
 		const environment		= JestEnvironment.getEnvironment();
 		environment.appendChild( this.el );
 		// Bind window-specific events
 		//this.bindWindowEvents();
-		// --------------------------------
+		//---------------------------------
 		// Reframe State of window [object]
-		// --------------------------------
+		//---------------------------------
 		// Set current reframe state
 		this.jot( 'reframing', 'idle' );	// change reframing state
 		this.measure();							// Measure the window
@@ -5757,9 +5865,9 @@ class Window extends BaseWindow {
 	createPanel( data ) {
 		// Require this element to be created
 		if ( this.el===null ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Panel [object]
-		// --------------------------------
+		//---------------------------------
 		let element = null; // define element
 		switch ( data.type ) {
 			case "panel":
@@ -6433,34 +6541,34 @@ class JSOSValidation extends JSOSParse {
 // Copyright ® 1999-2026
 //-------------------------------------------------------
 console.log( 'jestAlert: js/system/interface/JSOS/classes/JSOSReadWrite.js loaded' );
-// --------------------------------
+//---------------------------------
 // JSOSReadWrite
-// --------------------------------
+//---------------------------------
 // A hybrid storage system supporting:
 // - browser.storage (Firefox)
 // - chrome.storage (Chrome)
 // - localStorage (Embedded Web)
-// --------------------------------
+//---------------------------------
 class JSOSReadWrite extends JSOSValidation {
-	// --------------------------------
+	//---------------------------------
 	// Class Variables
-	// --------------------------------
+	//---------------------------------
 	storage				= null;			// [object] The selected storage system
 	useChrome			= false;		// [bool] Whether Chrome storage is used
 	useBrowser			= false;		// [bool] Whether Firefox browser storage is used
 	useLocalStorage		= false;		// [bool] Whether fallback localStorage is used
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [object] A new hybrid storage system
 	// * options	- [object] Configuration (unused)
 	constructor( options={} ) {
 		super(); // call parent constructor
 
-		// --------------------------------
+		//---------------------------------
 		// Detect Available Storage System
-		// --------------------------------
+		//---------------------------------
 		if ( typeof browser!=='undefined' && browser.storage ) {
 			this.storage		= browser.storage;
 			this.useBrowser		= true;
@@ -6481,9 +6589,9 @@ class JSOSReadWrite extends JSOSValidation {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Write Data
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [promise] resolve or reject value
 	// * key	- [string] Data key
 	// * val	- [mixed] Value to store
@@ -6521,9 +6629,9 @@ class JSOSReadWrite extends JSOSValidation {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Read Data
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [promise] resolve with data
 	// * key	- [string] Data key to read
 	readData( key ) {
@@ -6561,9 +6669,9 @@ class JSOSReadWrite extends JSOSValidation {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Download Data
-	// --------------------------------
+	//---------------------------------
 	// Convert a canvas into a downloadable image file.
 	// RETURNS: [void].
 	// * filename	- [string] Value of filename to download.
@@ -6607,9 +6715,9 @@ class JSOSUtility extends JSOSReadWrite {
 	// Known SVG tag list (render-critical)
 	svgTags			= null;				// [Set<string>] svgTags which use NS element methods.
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
 	// * options		- [object] Configuration options for the class [object].
@@ -6627,9 +6735,9 @@ class JSOSUtility extends JSOSReadWrite {
 				]);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Unique Key Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate a unique ID.
 	// RETURNS: [void].
 	generateKey() {
@@ -6646,9 +6754,9 @@ class JSOSUtility extends JSOSReadWrite {
 		return skey;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Release Key
-	// -------------------------------
+	//--------------------------------
 	// Removes a used key from the tracking set.
 	// * key	- [string] Unique key to remove.
 	releaseKey( key ) {
@@ -6966,9 +7074,9 @@ class JSOSInterface extends JSOSUtility {
 	// Setup the window [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create environment
-		// --------------------------------
+		//---------------------------------
 		// Create an OSElement to reference the window.
 		//this.window		= new OSElement();
 		//this.window.el	= window; // set window element as window
@@ -6996,9 +7104,9 @@ class JSOSEnvironment extends OSElement {
 	// * options		- [object] Configuration options for the class [object].
 	constructor( options={} ) {
 		super( options );	// call parent constructor
-		// --------------------------------
+		//---------------------------------
 		// Setup & Render Environment
-		// --------------------------------
+		//---------------------------------
 		// Setup the [object]
 		this.setup();		// setup the enviroment
 		this.render();		// render the enviroment
@@ -7033,19 +7141,19 @@ class JSOSEnvironment extends OSElement {
 	// Insert environment HTML into the page
 	generateEnvironment() {
 		console.log( 'jestAlert: Generating environment ...' );
-		// --------------------------------
+		//---------------------------------
 		// Clear environment
-		// --------------------------------
+		//---------------------------------
 		// Remove jest environment if open
 		//this.removeEnvironment();
-		// --------------------------------
+		//---------------------------------
 		// Create environment
-		// --------------------------------
+		//---------------------------------
 		// Insert the environment into the DOM
 		document.body.appendChild( this.el );
-		// --------------------------------
+		//---------------------------------
 		// Setup the enviroment
-		// --------------------------------
+		//---------------------------------
 		// Setup the environment HTML block
 		this.setupEnvironment();
 	}
@@ -7054,9 +7162,9 @@ class JSOSEnvironment extends OSElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] Value of application name.
 	async execute( name='' ) {
-		// --------------------------------
+		//---------------------------------
 		// Load Application [object]
-		// --------------------------------
+		//---------------------------------
 		// Build class name
 		const className		= 'App'+name;
 		console.log( `jestAlert: Opening application "${className}" ...` );
@@ -7067,9 +7175,9 @@ class JSOSEnvironment extends OSElement {
 		// Create class instance of application [object]
 		const app			= new AppClass();			// Create the application [object]
 		this.apps[name]		= app;						// Save the application in open apps
-		// --------------------------------
+		//---------------------------------
 		// Add Application Dock Shortcut
-		// --------------------------------
+		//---------------------------------
 		// Determine if dock icon should be created.
 		console.log( 'jestAlert: Application `'+this.name+'` calling dock shortcut ...' );
 		app.dockShortcut(); // create dock shortcut
@@ -7081,14 +7189,14 @@ class JSOSEnvironment extends OSElement {
 		console.log( 'jestAlert: Setting up the environment ...' );
 		// Ensure previous environment exists
 		if ( this.el ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Core [objects]
-			// --------------------------------
+			//---------------------------------
 			const librarian		= new OSLibrarian();
 			this.librarian		= librarian;
-			// --------------------------------
+			//---------------------------------
 			// Add status dock menu to the environment
-			// --------------------------------
+			//---------------------------------
 			const dock			= new Dock( { id: 'jest-dock' } );
 			this.dock			= dock; // quick-reference
 			this.el.appendChild( this.dock.el );
@@ -7136,9 +7244,9 @@ JestLibraryRegistry.LibraryHarlequin =
 		constructor( libs ) {
 			// Call the parent application constructor
 			super( libs=[] );
-			// --------------------------------
+			//---------------------------------
 			// Setup application
-			// --------------------------------
+			//---------------------------------
 			this.setup(); // setup the library
 		}
 	};
@@ -7172,9 +7280,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 		// * close		- [bool] `true` or `false` whether to include close button
 		windowHeaderConfig( icon, title, minimize=true, maximize=true, close=true ) {
 			let elements	= []; // begin configuration elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Create Window Icon & Title
-			// --------------------------------
+			//---------------------------------
 			// Determine icon
 			if ( icon!==null ) {
 				const configIcon	=
@@ -7195,9 +7303,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 					text:		title,
 				};
 			elements.push( configTitle ); // push into elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Create Controls
-			// --------------------------------
+			//---------------------------------
 			let controls	= [];
 			// Determine minimize button
 			if ( minimize===true ) {
@@ -7258,9 +7366,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 					elements:	controls
 				};
 			elements.push( configControls ); // push into elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Wrap-Up & Return
-			// --------------------------------
+			//---------------------------------
 			// Return successful configuration [array]
 			return elements;
 		}
@@ -7400,9 +7508,9 @@ class Application extends OSObject {
 		// Require windowObj to be part of application windows
 		if ( !this.windows.includes(windowObj) )
 			return false; // "window" not part of application
-		// --------------------------------
+		//---------------------------------
 		// Open the window
-		// --------------------------------
+		//---------------------------------
 		windowObj.open(); // open the window
 		return true; // success
 	}
@@ -7412,9 +7520,9 @@ class Application extends OSObject {
 	dockShortcut() {
 		// Require this element to be created
 		//if ( this.el===null ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Panel [object]
-		// --------------------------------
+		//---------------------------------
 		const shortcut	= new DockShortcut( this );
 		this.shortcut	= shortcut; // keep [object] reference
 		// Append to DOM & return
@@ -7460,19 +7568,19 @@ class Dock extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();					// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Add shortcuts to dock
-		// --------------------------------
+		//---------------------------------
 		const shortcuts	= new DockShortcuts();
 		this.el.appendChild( shortcuts.el );
 		this.shortcuts	= shortcuts;	// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Add loadbar to dock
-		// --------------------------------
+		//---------------------------------
 		const loadbar	= new Loadbar();
 		this.el.appendChild( loadbar.el );
 		this.loadbar	= loadbar;		// cross-reference
@@ -7541,13 +7649,13 @@ class DockShortcut extends OSElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
 		console.log( 'jestAlert: Rendering dock shortcut ...' );
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();					// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Add icon to dock app
-		// --------------------------------
+		//---------------------------------
 		// Create icon
 		const options	=
 			{
@@ -7559,9 +7667,9 @@ class DockShortcut extends OSElement {
 		icon.el.src		= jestGetURL( this.app.icon );
 		this.el.appendChild( icon.el );	// add icon to the dock appl
 		this.icon		= icon;			// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Add tooltip to shortcut
-		// --------------------------------
+		//---------------------------------
 		/*const tooltip	= new Tooltip( { text: this.app.name } );
 		this.el.appendChild( tooltip.el ); // add tooltip to the dock shortcut
 		this.tooltip	= tooltip;		// cross-reference*/
@@ -7605,9 +7713,9 @@ class DockShortcuts extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();				// call parent setup method
 		return true;				// success
 	}
@@ -7645,9 +7753,9 @@ class JestGamepiece extends OSCallback {
 	client		= null;				// [object] Application client reference.
 	_skey		= null;				// [string] Value of unique [object] key.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the game piece [object].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
@@ -7658,9 +7766,9 @@ class JestGamepiece extends OSCallback {
 		this.skey	= key;			// set unique key as [object] system key
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Unique Key Handling
-	// --------------------------------
+	//---------------------------------
 	// Get the [object] unique system key value.
 	// RETURNS: [string] Value of unique [object] skey.
 	get skey() {
@@ -7705,9 +7813,9 @@ class JestMatrix extends JestGamepiece {
 	// * client		- client [object] that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor [object]
-		// --------------------------------
+		//---------------------------------
 		// Create an anchor [object] for moving & size specifications
 		const anchor	= new Anchor();		// create central anchor
 		anchor.move( 0, 0 );				// move anchor to default position
@@ -7800,7 +7908,7 @@ console.log( 'jestAlert: js/apps/jest/components/JestWorldling.js loaded' );
 // Represents an [object] inside the game world.
 class JestWorldling extends JestSavable {
 	// Object propert(ies)
-	_remote  = false;      // [bool] Whether object is serverside (false) or local (true)
+	_remote  = false;     // [bool] Whether object is serverside (false) or local (true)
 	// World data
 	_status  = 0;         // Value of worldling [object] status (e.g. 0=creating, 1=idle, 2=ready, 3=dispose).
 	_level   = null;      // [string] Value of level filename (e.g. level1).
@@ -7809,9 +7917,9 @@ class JestWorldling extends JestSavable {
 	// Movement propert(ies)
 	focus    = null;      // [object] Anchor used to focus the graphical visual location (x,y).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the the worldling [object].
 	// RETURNS: [void].
 	// * client  - [object] Application client that this piece belongs to.
@@ -7823,9 +7931,9 @@ class JestWorldling extends JestSavable {
 		this.status  = 0;      // set default status "creating"
 		// Set remote value
 		this._remote = remote===true;
-		// --------------------------------
+		//---------------------------------
 		// Attach [object] to Gameboard
-		// --------------------------------
+		//---------------------------------
 		// Add the worldling object to the gameboard.
 		this.client.gameboard.addWorldling( this );
 	}
@@ -7841,15 +7949,15 @@ class JestWorldling extends JestSavable {
 		this.client.gameboard.removeWorldling( this );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization Methods
-	// --------------------------------
+	//---------------------------------
 	// Setup the worldling [object].
 	// RETURNS: [boolean] `true` if yes, else `false` if not.
 	setup() {
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor Point [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create focal anchor [object] for animation rendering in viewport camera
 		// NOTE: Focus is in 1px units because it is relative to viewport canvas, not level grid.
 		const focus = new Anchor();      // create focal point
@@ -7865,9 +7973,9 @@ class JestWorldling extends JestSavable {
 		return true; // successfully started
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Loop
-	// --------------------------------
+	//---------------------------------
 	// Central worldling render loop.
 	// RETURNS: [bool] whether render succeeded or not.
 	// * elapsedTime  - how much time has passed since the ticker started.
@@ -7900,9 +8008,9 @@ class JestWorldling extends JestSavable {
 		return true; // rendered
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Gameboard Information
-	// --------------------------------
+	//---------------------------------
 	// Determine whether [object] is remote (serverside) or local.
 	// RETURNS: [bool] whether [object] is serverside or local.
 	get remote() {
@@ -7937,9 +8045,9 @@ class JestWorldling extends JestSavable {
 		this._status = val;        // update status
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// World Positioning
-	// --------------------------------
+	//---------------------------------
 	// Get the user's level (world tile map JestLevel [object]).
 	// RETURNS: [object] JestLevel or [...] on fail.
 	get level() {
@@ -7996,9 +8104,9 @@ class JestWorldling extends JestSavable {
 		this._visible = val===true;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Visual Handling
-	// --------------------------------
+	//---------------------------------
 	// Get the object's AnimationView (visual [object]).
 	// RETURNS: [object] AnimationView or [...] on fail.
 	get view() {
@@ -8019,9 +8127,9 @@ class JestWorldling extends JestSavable {
 		this._view = view; // change view
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Game Methods
-	// --------------------------------
+	//---------------------------------
 	// Check if the [object] is onwall.
 	// RETURNS: [boolean] `true` if yes, else `false` if not.
 	// * anchor        - [object] Anchor (units must match tileGrid).
@@ -8359,9 +8467,9 @@ class JestParserLevel extends JestGamepiece {
 		if ( !['GLEVNW01','JESTNW02'].includes(version) )
 			throw new Error( `Unsupported level version: ${version}` );
 
-		// -------------------------
+		//--------------------------
 		// Encode Plugin Keyword Blocks
-		// -------------------------
+		//--------------------------
 		// Begin return output with level file version.
 		let out	  = `${version}\n`;
 		// Iterate each registered keyword & compile applicable code.
@@ -10650,9 +10758,9 @@ console.log( 'jestAlert: js/apps/jest/components/JestConfiguration.js loaded' );
 // JestConfiguration Class
 //-------------------------
 class JestConfiguration extends JestSavable {
-	// --------------------------------
+	//---------------------------------
 	// Media & Web Setting(s)
-	// --------------------------------
+	//---------------------------------
 	// File(s) & resource(s)
 	server			= 'ws://#.#.#.#'; // server websocket (e.g. local IP to connect to)
 	// Resource [string] value of path to webfiles root: images, sounds, etc.
@@ -10660,9 +10768,9 @@ class JestConfiguration extends JestSavable {
 	root			= 'http://jesterly.net/sandbox/';
 	refresh			= true;			// forces hard refresh on file downloads
 
-	// --------------------------------
+	//---------------------------------
 	// Game Setting(s)
-	// --------------------------------
+	//---------------------------------
 	// Definition propert(ies)
 	tileGrid		= 16;			// [int] Value of tile size width/height (defaults to 16px).
 	levelGrid		= 64;			// [int] Value of level width/height (defaults to 64 tiles).
@@ -10671,9 +10779,9 @@ class JestConfiguration extends JestSavable {
 	janiBleed		= 12;			// [int] Value of bleed around jani safe area (defaults to 6 tiles).
 	janiSpan		= null;			// [int] Value of jani width/height in pixels (auto-calculated).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	//   options	- [object] of custom configuration options (optional)
@@ -10709,9 +10817,9 @@ class JestElement extends JestMatrix {
 	panel		= null;				// Panel [object] handling the DOM element.
 	contents	= null;				// [...] Backend contents of the element.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -10719,9 +10827,9 @@ class JestElement extends JestMatrix {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element panel.
 	// RETURNS: [void].
 	// * tag		- [string] value of DOM element tag (e.g. "div", "input").
@@ -10818,9 +10926,9 @@ class JestLoadbar extends JestElement {
 	current		= 0;			// [int] value of current load progress
 	total		= 1;			// [int] value of total to load
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -10828,9 +10936,9 @@ class JestLoadbar extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -10839,9 +10947,9 @@ class JestLoadbar extends JestElement {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( "div", name, ['jest-loadbar'].mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Loading Animated Bar Element
-		// --------------------------------
+		//---------------------------------
 		// Add bar element to loadbar panel.
 		this.panel.addElements([{
 			name		: 'bar',
@@ -10849,9 +10957,9 @@ class JestLoadbar extends JestElement {
 			classes     : [ 'jest-loadbar-bar' ]
 			}]);
 		this.bar		= this.panel.refs.bar;		// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Create Percent Text Element
-		// --------------------------------
+		//---------------------------------
 		// Add text element to bar.
 		this.bar.addElements([{
 			name		: 'text',
@@ -10863,9 +10971,9 @@ class JestLoadbar extends JestElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Action Handling
-	// --------------------------------
+	//---------------------------------
 	// Reset the loadbar to 0
 	// RETURNS: [void].
 	reset() {
@@ -10938,9 +11046,9 @@ class JestButton extends JestElement {
 	clicker			= null;			// Panel [object] that contains button DOM.
 	title			= null;			// OSElement [object] that contains the display text.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -10951,9 +11059,9 @@ class JestButton extends JestElement {
 		//this.modes = modes ?? [];
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Autogenerate the button interior content.
 	// RETURNS: [void].
 	// * text		- [string] value of button text content.
@@ -11004,9 +11112,9 @@ class JestButton extends JestElement {
 		this.title		= this.clicker.refs.title; // get [object] ref
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Rename the button.
 	// RETURNS: [void].
 	// * name		- [string] Value name of button to change to.
@@ -11015,9 +11123,9 @@ class JestButton extends JestElement {
 		this.title.setHTML( name );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the button.
 	// RETURNS: [void].
 	// * type		- [string] Value of type of toggle: 'enable', 'activate', etc.
@@ -11094,9 +11202,9 @@ class JestButton extends JestElement {
 			this.panel.refs.clicker.removeClass( 'active' );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handler(s)
-	// --------------------------------
+	//---------------------------------
 	// Mouse clicks down on button.
 	// RETURNS: [void].
 	// * e		- [object] mousedown event.
@@ -11135,9 +11243,9 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestButtonToolbar.js loaded'
 class JestButtonToolbar extends JestButton {
 	// Object properties
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -11145,9 +11253,9 @@ class JestButtonToolbar extends JestButton {
 		super( client );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -11177,9 +11285,9 @@ class JestDisplay extends JestElement {
 	canvases	= {};			// [object] Map of named ElementCanvas objects.
 	target		= null;			// [object] JestElement inner target object.z
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -11187,13 +11295,13 @@ class JestDisplay extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='display', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -11246,9 +11354,9 @@ class JestDisplay extends JestElement {
 		return this.canvases[name] ?? null;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Add a Panel to Display
-	// --------------------------------
+	//---------------------------------
 	// Set a target element inside the display.
 	// RETURNS: [bool] success.
 	// target	- [JestElement] object to add, or [null] to autogenerate.
@@ -11273,9 +11381,9 @@ class JestDisplay extends JestElement {
 	// RETURNS: [object] or [null].
 	getTarget() { return this.target; }
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the display.
 	// RETURNS: [void].
 	// * action		- [string] Value of action to toggle: 'enable', 'activate', etc.
@@ -11347,9 +11455,9 @@ class JestMenu extends JestElement {
 	actions			= [];			// [array] of possible action(s).
 	buttons			= {};			// [object] of active buttons.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -11357,9 +11465,9 @@ class JestMenu extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -11370,9 +11478,9 @@ class JestMenu extends JestElement {
 		super.build( "div", name, ['menu'].mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Action Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate menu action button(s)
 	// RETURNS: [void].
 	// * action		- [object] Data of action(s) to create a button for.
@@ -11459,9 +11567,9 @@ class JestMenu extends JestElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button State Handling
-	// --------------------------------
+	//---------------------------------
 	// Toggle a menu button on/off.
 	// * key		- [string] Value of menu button to toggle.
 	// * lever		- [bool] Value whether to toggle on `true` else `false`.
@@ -11485,9 +11593,9 @@ class JestMenu extends JestElement {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button State Handling
-	// --------------------------------
+	//---------------------------------
 	// Enable or disable a single button.
 	// RETURNS: [void].
 	// * name		- [string] Value of button name.
@@ -11515,9 +11623,9 @@ class JestMenu extends JestElement {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handling
-	// --------------------------------
+	//---------------------------------
 	// Callback when a button was clicked.
 	// RETURNS: [void].
 	// * e			- [object] MouseEvent event listener data.
@@ -12485,16 +12593,16 @@ class JestMouseFollower extends JestElement {
 	// * name    - unique [string] value of component name in the system.
 	// * classes - [array] of classes to add to panel element.
 	build( name='mousefollower', classes=[] ) {
-		// --------------------------------
+		//---------------------------------
 		// Construct Main Panel
-		// --------------------------------
+		//---------------------------------
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-mousefollower'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Mouse Follower Content Box
-		// --------------------------------
+		//---------------------------------
 		// Add internal contents element.
 		this.panel.addElements([{
 			name    : 'contents',
@@ -12804,9 +12912,9 @@ class JestFileMenu extends JestMenu {
 	title		= null;			// OSElement [object] that contains the display text.
 	titleText	= null;			// [string] Value of title text (optional).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -12814,9 +12922,9 @@ class JestFileMenu extends JestMenu {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -12840,9 +12948,9 @@ class JestFileMenu extends JestMenu {
 		this.hideTitle(); // hide title by default
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Sub-Item Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Rename the menu title.
 	// RETURNS: [void].
 	// * val	- [string] Value name of menu to change to.
@@ -12892,9 +13000,9 @@ class JestToolbar extends JestMenu {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -12905,9 +13013,9 @@ class JestToolbar extends JestMenu {
 		//this.modes = modes ?? [];
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -12918,9 +13026,9 @@ class JestToolbar extends JestMenu {
 		super.build( name, ['toolbar'].mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate menu tool button.
 	// RETURNS: [object] JestButton or [null] on fail.
 	// * action		- [object] Value of action to create a button for.
@@ -12946,9 +13054,9 @@ class JestToolbar extends JestMenu {
 		return button; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handling
-	// --------------------------------
+	//---------------------------------
 	// Callback when a button was clicked.
 	// RETURNS: [void].
 	// * e			- [object] MouseEvent event listener data.
@@ -12974,29 +13082,29 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestTabbar.js loaded' );
 // A file menu for handling events such as save, open, etc.
 class JestTabbar extends JestMenu {
 	// Object properties
-	views			= [];			// [array] of open JestFileView [objects].
+	views        = [];              // [array] of open JestFileView [objects].
 	// Dynamic properties
-	activeView		= null;			// [object] JestFileView currently open.
-	previousView	= null;			// [object] JestFileView previously active.
-	activeButton	= null;			// [object] JestButton currently active.
+	activeView   = null;            // [object] JestFileView currently open.
+	previousView = null;            // [object] JestFileView previously active.
+	activeButton = null;            // [object] JestButton currently active.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- client [object] that this piece belongs to.
+	// * client  - client [object] that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build( name='tabbar', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -13008,7 +13116,7 @@ class JestTabbar extends JestMenu {
 	//-------------------------
 	// Add a JestFileView to the menu handler.
 	// RETURNS: JestButton [object] or null if fail.
-	// * view		- [JestFileView] instance representing an open tab.
+	// * view  - [JestFileView] instance representing an open tab.
 	addView( view ) {
 		//-----------------------------
 		// Validate Argument(s)
@@ -13016,7 +13124,7 @@ class JestTabbar extends JestMenu {
 		// Validate view class instance type.
 		if ( !(view instanceof JestFileView) ) {
 			console.warn( `Tabbar Add View: argument must be of type JestFileView.` );
-			return null;
+			return null; // fail
 		}
 
 		//-----------------------------
@@ -13030,14 +13138,14 @@ class JestTabbar extends JestMenu {
 		// Create Tabbar Button
 		//-----------------------------
 		// Create a tabbar button for the view.
-		const action	= { name: view.skey, text: view.file.stem };
-		const button	= this.createButton( action );
+		const action = { name: view.skey, text: view.file.stem };
+		const button = this.createButton( action );
 		button.clicker.addClass( 'x-button' );
 
 		//-----------------------------
 		// Configure to View
 		//-----------------------------
-		button.skey		= view.skey; // match button skey to view
+		button.skey  = view.skey; // match button skey to view
 		// Create event to update tabbar button filename when changed.
 		view.file.register( 'stemChange', 'tabbar', file=>this.renameButton(button,file) );
 		// Make new view the active tab.
@@ -13046,60 +13154,57 @@ class JestTabbar extends JestMenu {
 		//-----------------------------
 		// Add (X) Close Button Inside Tab Button
 		//-----------------------------
-		button.clicker.addElements([
-			{
-				name       : 'closeBtn',
-				tag        : 'div',
-				classes    : [ 'button-close' ],
-				elements: [
-					{
-					name       : 'x',
-					tag        : 'svg',
-					classes    : [ 'ico-x' ],
-					attributes : {
-						xmlns        : "http://www.w3.org/2000/svg",
-						viewBox      : "0 0 24 24",
-						width        : "24",
-						height       : "24",
-						"aria-hidden": "true"
-						},
-					elements   :
-						[
-							{
-								name       : 'path',
-								tag        : 'path',
-								attributes :
-									{
-									d                : 'M6 6 L18 18 M6 18 L18 6',
-									stroke           : 'currentColor',
-									'stroke-width'   : '2',
-									'stroke-linecap' : 'round'
-									}
-							}
-						]
-					}]
-			}]);
+		// Add an "X" close button to the tab.
+		button.clicker.addElements( [ this.getCloseButton() ] );
 		// Register "close" (x)-button click event.
 		button.clicker.refs.closeBtn.register(
-			'click', 'closeTab', e=>this.btnClose(e,action,button), 'dom' );
+			'click', 'closeTab',
+			 e=>this.btnClose(e,action,button), 'dom'
+			);
 		return button; // success
 	}
 
 	// Remove a previously added view from the menu.
-	// * view		- [JestFileView] instance representing an open tab.
+	// * view - [JestFileView] instance representing an open tab.
 	removeView( view ) {
+		//-----------------------------
+		// Validate Argument(s)
+		//-----------------------------
 		// Check if view is in views [array]
 		const index	= this.views.indexOf( view );
 		if ( index===-1 ) {
 			console.warn( `Tabbar Remove View: argument must be of type JestFileView.` );
-			return false;
+			return false; // fail
 		}
+
+		//-----------------------------
+		// Unwire the View From Tabbar
+		//-----------------------------
 		// Detach event listener(s)
 		view.file.unregister( 'stemChange', 'tabbar' );
+
+		//-----------------------------
+		// Remove Tabbar Button
+		//-----------------------------
 		// Remove the button.
 		this.removeButton( this.getButton(view.skey) );
+
+		//-----------------------------
+		// Remove File from Internal Pointers List
+		//-----------------------------
 		// Remove view from views [array].
 		this.views.splice( index, 1 );
+
+		// Release all incoming links to the tab that just closed.
+		for ( const openView of this.views )
+			openView.relationship?.removeView( view );
+
+		// Refresh the neighbor controls after tab removal and selection.
+		this.emit( 'viewRemoved', null, view );
+
+		//-----------------------------
+		// Auto-Select Next Tab
+		//-----------------------------
 		// if the removed view was active, pick its nearest neighbour
 		if ( this.activeView===view ) {
 			// No tabs remaining in the tabbar
@@ -13115,15 +13220,55 @@ class JestTabbar extends JestMenu {
 	}
 
 	//-------------------------
+	// UI Generation Method(s)
+	//-------------------------
+	// Create an "X" close-button.
+	// RETURNS: [object] JestElement data setup.
+	getCloseButton() {
+		//-----------------------------
+		// Create (X) "Close Button"
+		//-----------------------------
+		return {
+			name     : 'closeBtn',
+			tag      : 'div',
+			classes  : [ 'button-close' ],
+			elements : [{
+				name       : 'x',
+				tag        : 'svg',
+				classes    : [ 'ico-x' ],
+				attributes : {
+					xmlns         : "http://www.w3.org/2000/svg",
+					viewBox       : "0 0 24 24",
+					width         : "24",
+					height        : "24",
+					'aria-hidden' : "true"
+					},
+				elements   : [{
+					name       : 'path',
+					tag        : 'path',
+					attributes : {
+						d                : 'M6 6 L18 18 M6 18 L18 6',
+						stroke           : 'currentColor',
+						'stroke-width'   : '2',
+						'stroke-linecap' : 'round'
+						}
+					}]
+				}]
+			};
+	}
+
+	//-------------------------
 	// Rename Tab
 	//-------------------------
 	// Rename the tab to match the new filename.
 	// RETURNS: [void]
-	// * button		- [object] JestButton serving as a clickable button.
-	// * file		- [string] Value of new filename.
+	// * button  - [object] JestButton serving as a clickable button.
+	// * file    - [string] Value of new filename.
 	renameButton( button, file ) {
 		// Change button visual name.
 		button.rename( file.stem );
+		// Refresh file names shown in controls that list open tabs.
+		this.emit( 'viewRenamed', null, file );
 	}
 
 	//-------------------------
@@ -13131,15 +13276,15 @@ class JestTabbar extends JestMenu {
 	//-------------------------
 	// Switch the active view and update the button states.
 	// RETURNS: [void]
-	// * view	- [object] View object being set as active.
-	//   action	- [string] Type of action taking place: 'open', 'switch', 'close', etc.
+	// * view    - [object] View object being set as active.
+	//   action  - [string] Type of action taking place: 'open', 'switch', 'close', etc.
 	setActiveView( newView=null, action='switch' ) {
 		//console.log( 'Changing active view...' );
 		//-------------------------
 		// Clear Previous Active Button
 		//-------------------------
 		// Log current view if active.
-		let prevView	= null;
+		let prevView = null;
 		// Check for active view.
 		if ( this.activeView!==null ) {
 			Object.entries(this.buttons).forEach(
@@ -13148,7 +13293,7 @@ class JestTabbar extends JestMenu {
 						button.panel.refs.clicker.removeClass( 'active' );
 				});
 			// Keep reference to current view.
-			prevView	= this.activeView;
+			prevView = this.activeView;
 		}
 
 		//-------------------------
@@ -13195,14 +13340,14 @@ class JestTabbar extends JestMenu {
 	//-------------------------
 	// Close a view and update the button states.
 	// RETURNS: [void]
-	// * view	- [object] View object being set as active.
+	// * view  - [object] View object being set as active.
 	closeTab( view=null ) {
 		//-------------------------
 		// Clear "Previous Tab" If It's Closing
 		//-------------------------
 		// Check if previous view is the view that's closing.
 		if ( this.previousView===view )
-			this.previousView	= null; // unset it
+			this.previousView = null; // unset it
 		//-------------------------
 		// Emit Tab Close Event
 		//-------------------------
@@ -13210,14 +13355,14 @@ class JestTabbar extends JestMenu {
 		this.emit( 'tabClose', null, view );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handling
-	// --------------------------------
+	//---------------------------------
 	// Callback when a button was clicked.
 	// RETURNS: [void].
-	// * e			- [object] MouseEvent event listener data.
-	// * action		- [string] Value of action of button.
-	// * button		- [object] JestButton serving as a clickable button.
+	// * e       - [object] MouseEvent event listener data.
+	// * action  - [string] Value of action of button.
+	// * button  - [object] JestButton serving as a clickable button.
 	btnClick( e, action, button ) {
 		// Emit an event
 		//this.emit( 'btnClick', null, e, action, button );
@@ -13235,9 +13380,9 @@ class JestTabbar extends JestMenu {
 
 	// Callback when an (x) close-button is clicked inside tab.
 	// RETURNS: [void].
-	// * e			- [object] MouseEvent event listener data.
-	// * action		- [string] Value of action of button.
-	// * button		- [object] JestButton serving as a clickable button.
+	// * e       - [object] MouseEvent event listener data.
+	// * action  - [string] Value of action of button.
+	// * button  - [object] JestButton serving as a clickable button.
 	btnClose( e, action, button ) {
 		// Close the tab view.
 		this.views.forEach(
@@ -13268,9 +13413,9 @@ class JestSidebar extends JestElement {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -13278,9 +13423,9 @@ class JestSidebar extends JestElement {
 		super( client );
 	}
 	
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -13341,9 +13486,9 @@ class JestCanvas extends JestElement {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -13351,9 +13496,9 @@ class JestCanvas extends JestElement {
 		super( client );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -13414,9 +13559,9 @@ class JestStatusbar extends JestElement {
 	// Object properties
 	status			= null;				// [object] Panel used for general text status display.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -13424,9 +13569,9 @@ class JestStatusbar extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -13435,9 +13580,9 @@ class JestStatusbar extends JestElement {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['statusbar'].mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Status Bar Display(s)
-		// --------------------------------
+		//---------------------------------
 		// Create statusbar & status display.
 		const status	= new JestDisplay( this );
 		status.build( 'status', ['status'] );	// build display
@@ -13468,9 +13613,9 @@ class JestStatusbar extends JestElement {
 		return super.jot( key, val ); // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Log & Display Status-Text
-	// --------------------------------
+	//---------------------------------
 	// Log the message inside the status bar (without updating).
 	// RETURNS: [void]
 	// * text	- [string] Content to save as the status bar status.
@@ -13492,21 +13637,21 @@ class JestStatusbar extends JestElement {
 	// RETURNS: [void]
 	// * text	- [string] Content to display in the status bar.
 	update() {
-		// --------------------------------
+		//---------------------------------
 		// Get Initial Message & Parse
-		// --------------------------------
+		//---------------------------------
 		// Parse the message & emit an event (for optional additional parsing).
 		const message	= this.skim( 'message' );
 		this.jot( 'parsed', message ); // raw message
-		// --------------------------------
+		//---------------------------------
 		// Emit Parse Event (for external parsing)
-		// --------------------------------
+		//---------------------------------
 		// Emit queued event.
 		this.emit( 'parsed', null, message );
 		const parsed	= this.skim( 'parsed' );
-		// --------------------------------
+		//---------------------------------
 		// Update Statusbar Visible Message
-		// --------------------------------
+		//---------------------------------
 		// Display status inside statusbar DOM.
 		if ( this.status?.panel?.el )
 			this.status.panel.setHTML( parsed );
@@ -13557,16 +13702,16 @@ class JestTooltip extends JestElement {
 	// * name    - unique [string] value of component name in the system.
 	// * classes - [array] of classes to add to panel element.
 	build( name='tooltip', classes=[] ) {
-		// --------------------------------
+		//---------------------------------
 		// Construct Main Panel
-		// --------------------------------
+		//---------------------------------
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-tooltip'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Tooltip Content Box
-		// --------------------------------
+		//---------------------------------
 		// Add internal box to display text.
 		this.panel.addElements([{
 			name     : 'box',
@@ -13577,9 +13722,9 @@ class JestTooltip extends JestElement {
 		// Append DOM element to the document.
 		document.body.appendChild( this.panel.el );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Mouse Follower
-		// --------------------------------
+		//---------------------------------
 		// Construct the mouse follower [object].
 		this.mouseFollower =
 			new JestMouseFollower(
@@ -13826,9 +13971,9 @@ class JestList extends JestElement {
 	header			= null;			// Panel [object] containing the list header(s).
 	container		= null;			// Panel [object] containing the body of list items.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client  - client [object] that this piece belongs to.
@@ -13980,9 +14125,9 @@ class JestList extends JestElement {
 	// RETURNS: [bool] true if valid and selected
 	// * index – [int]
 	selectItemAt( index ) {
-		// -----------------------------
+		//------------------------------
 		// If index is invalid (-1), deselect all
-		// -----------------------------
+		//------------------------------
 		// If index is less than 0, all items are deactivated.
 		if ( index<0 ) {
 			// Reset both selection references.
@@ -13996,9 +14141,9 @@ class JestList extends JestElement {
 			return true; // success
 		}
 
-		// -----------------------------
+		//------------------------------
 		// Index Range Sanity Check
-		// -----------------------------
+		//------------------------------
 		// Clamp index.
 		if ( index>=this.items.length ) return false;
 
@@ -14408,7 +14553,7 @@ class JestListItem extends JestElement {
 
 	//--------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -14418,9 +14563,9 @@ class JestListItem extends JestElement {
 		if ( classes===null ) classes = [];
 		super.build( "div", name, ['jest-list-item'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Creating List Item
-		// --------------------------------
+		//---------------------------------
 		// Create item as Panel [object].
 		//const icon	= new Panel({ tag: 'img', classes: ['item-icon'], attributes: { src: this.data?.iconURL ?? 'default.png' } });
 		//this.panel.addPanel( 'icon',  icon );
@@ -14683,9 +14828,9 @@ class JestListColumnatedItem extends JestListItem {
 	columns		= [];
 	values		= {};
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -15103,9 +15248,9 @@ class JestFileViewer extends JestElement {
 	listView	= null;			// [JestListColumnated]
 	client		= null;			// CMS client
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -15206,8 +15351,8 @@ class JestInput extends JestElement {
 			classes:	[ 'hidden' ],
 			attributes:	{ for: this.id }
 			}]);
-		this.label		= this.panel.refs.label;	// quick-ref
-		this.setLabel( this.labelText );			// set initial label
+		this.label		= this.panel.refs.label; // quick-ref
+		this.setLabel( this.labelText );         // set initial label
 		this.hideLabel(); // hide the label by default
 
 		//--------------------------------
@@ -15905,9 +16050,9 @@ class JestInputNumber extends JestInput {
 		}
 	}
 
-	// -------------------------
+	//--------------------------
 	// Convenient Method(s)
-	// -------------------------
+	//--------------------------
 	// Updates the slider range to match limit(s).
 	// current selected tab's animation layer.
 	//   min – [number] minimum value (default = 0)
@@ -17389,13 +17534,13 @@ class JestInputRange extends JestInput {
 	// Constructor
 	//-------------------------
 	// Initializes a range input with limits and step.
-	// * name			- [string] optional field name
-	// * id				- [string] HTML id (auto-generated if not provided)
-	// * defaultValue	- [string] Default fallback value
-	// * labelText		- [string] label content
-	// * min			- [number|null] minimum value
-	// * max			- [number|null] maximum value
-	// * step			- [number|null] increment step
+	// * name         - [string] optional field name
+	// * id           - [string] HTML id (auto-generated if not provided)
+	// * defaultValue - [string] Default fallback value
+	// * labelText    - [string] label content
+	// * min          - [number|null] minimum value
+	// * max          - [number|null] maximum value
+	// * step         - [number|null] increment step
 	constructor( client, name=null, id=null, defaultValue=null, labelText=null,
 				 min=0, max=100, step=1 ) {
 		super( client );
@@ -17572,9 +17717,9 @@ class JestInputRange extends JestInput {
 		return this.min;
 	}
 
-	// -------------------------
+	//--------------------------
 	// setMin()
-	// -------------------------
+	//--------------------------
 	// Sets minimum and clamps max if needed.
 	// * val – [number]
 	setMin( val ) {
@@ -17602,9 +17747,9 @@ class JestInputRange extends JestInput {
 		return this.max;
 	}
 
-	// -------------------------
+	//--------------------------
 	// setMax()
-	// -------------------------
+	//--------------------------
 	// Sets maximum and clamps max if needed.
 	// * val – [number]
 	setMax( val ) {
@@ -17622,9 +17767,9 @@ class JestInputRange extends JestInput {
 		this.setValue( this.getValue() );
 	}
 
-	// -------------------------
+	//--------------------------
 	// Convenient Method(s)
-	// -------------------------
+	//--------------------------
 	// Updates the slider range to match limit(s).
 	// current selected tab's animation layer.
 	//   min – [number] minimum value (default = 0)
@@ -17705,25 +17850,25 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestForm.js loaded' );
 // Create a form for grouping input field(s).
 class JestForm extends JestMenu {
 	// Object properties
-	fields		= {};			// [object] Input fields included in the form.
+	fields = {};   // [object] Input fields included in the form.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- client [object] that this piece belongs to.
+	// * client - client [object] that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='form', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -18152,9 +18297,9 @@ class JestCurator extends JestElement {
 		this.panel.refs.selectwrap.addPanel( 'items', this.selectBox.panel );
 		// Select a default item.
 		this.typeBox.setValue( this.typeSelected );
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar
@@ -19304,6 +19449,7 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestModal.js loaded' );
 // Extends: JestElement
 class JestModal extends JestElement {
 	// Object properties
+	opened          = false;            // [boolean] Whether modal is open or closed
 	titleText		= '';				// [string] title of modal
 	bodyText		= '';				// [string] body content
 	noticeText		= '';				// [string] modal notice message
@@ -19362,6 +19508,9 @@ class JestModal extends JestElement {
 		this.box = this.panel.refs.box;
 		// Close on overlay click
 		this.panel.refs.overlay.register( 'click', 'close', ()=>this.close(), 'dom' );
+		// Auto-hide the modal for on-demand basis.
+		this.hide();         // hidden
+		this.opened = false; // not open
 	}
 
 	//--------------------------------
@@ -19490,11 +19639,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a dropdown [select] input to the modal.
 	// RETURNS: [JestInputSelect]
-	// * name			- [string] unique field key
-	// * id				- [string|null] HTML id override
-	// * defaultValue	- [string|null] selected value
-	// * options		- [array] list of value options
-	// * labelText		- [string|null] visible label
+	// * name         - [string] unique field key
+	// * id           - [string|null] HTML id override
+	// * defaultValue - [string|null] selected value
+	// * options      - [array] list of value options
+	// * labelText    - [string|null] visible label
 	addSelect( name, id=null, defaultValue=null, options=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -19524,11 +19673,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a radio button group to the modal.
 	// RETURNS: [JestInputRadioSet]
-	// * name			- [string] field name
-	// * id				- [string|null] HTML id
-	// * defaultValue	- [string|null] selected value
-	// * options		- [array] set of string labels
-	// * labelText		- [string|null] group label
+	// * name         - [string] field name
+	// * id           - [string|null] HTML id
+	// * defaultValue - [string|null] selected value
+	// * options      - [array] set of string labels
+	// * labelText    - [string|null] group label
 	addRadioSet( name, id=null, defaultValue=null, options=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -19550,10 +19699,10 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a numeric slider input (0–100 default).
 	// RETURNS: [JestInputRange]
-	// * name			- [string] unique name key
-	// * id				- [string|null] HTML id
-	// * defaultValue	- [number] initial slider value
-	// * labelText		- [string|null] field label
+	// * name         - [string] unique name key
+	// * id           - [string|null] HTML id
+	// * defaultValue - [number] initial slider value
+	// * labelText    - [string|null] field label
 	addRange( name, id=null, defaultValue=0, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -19575,11 +19724,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a numeric [step input] field.
 	// RETURNS: [JestInputNumber]
-	// * name			- [string] unique field key
-	// * id				- [string|null] optional HTML id
-	// * defaultValue	- [number] initial value
-	// * placeholder	- [string|null] placeholder hint
-	// * labelText		- [string|null] visible label
+	// * name         - [string] unique field key
+	// * id           - [string|null] optional HTML id
+	// * defaultValue - [number] initial value
+	// * placeholder  - [string|null] placeholder hint
+	// * labelText    - [string|null] visible label
 	addNumber( name, id=null, defaultValue=0, placeholder=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -19601,10 +19750,10 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a file picker input (open file dialog).
 	// RETURNS: [JestInputFileSelect]
-	// * name			- [string] unique field name
-	// * id				- [string|null] HTML id override
-	// * defaultValue	- [string|null] initial file path
-	// * labelText		- [string|null] field label
+	// * name         - [string] unique field name
+	// * id           - [string|null] HTML id override
+	// * defaultValue - [string|null] initial file path
+	// * labelText    - [string|null] field label
 	addFileSelect( name, id=null, defaultValue=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -19685,8 +19834,8 @@ class JestModal extends JestElement {
 	//	• If the key already exists, remove the old button cleanly first.
 	//	• Uses a per-instance counter for id sequencing (no array .length hacks).
 	// RETURNS: [JestButton]
-	// * key	- [string] button key name (e.g., 'ok','cancel','overwrite')
-	// * label	- [string] button text
+	// * key      - [string] button key name (e.g., 'ok','cancel','overwrite')
+	// * label    - [string] button text
 	// * callback - [function|null] click handler
 	addButton( key, label, callback=null ) {
 		// If a button with this key exists, remove it before adding a new one.
@@ -19707,8 +19856,8 @@ class JestModal extends JestElement {
 		// Optional SFX (leave exactly as you had it)
 		button.register( 'mousedown', 'sfx',
 			() => this.client.soundboard.playSound( 'jest_mouse_down', 'mp3', 1.1 ) );
-		button.register( 'mouseup', 'sfx',
-			() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
+		//button.register( 'mouseup', 'sfx',
+			//() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
 
 		// Append into footer container
 		this.box.refs.buttons.addPanel( key, button.panel );
@@ -19766,25 +19915,29 @@ class JestModal extends JestElement {
 		// Reset the panel.
 		this.close(); // remove from visibility
 		// Clear the input.
-		this.setText( '' );		// clear input field
-		this.setTitle( '' );	// clear title
-		this.resetInputs();		// clear all input values
+		this.setText( '' );   // clear input field
+		this.setTitle( '' );  // clear title
+		this.resetInputs();   // clear all input values
 	}
 
 	// Close the dialog.
 	// RETURNS: [void]
-	// * data	- [any] optional override payload (if different from open)
+	// * data - [any] optional override payload (if different from open)
 	close( data=null ) {
+		// Prevent dialog from double-closing.
+		if ( !this.opened ) return; // abort
 		// Hide the panel.
 		this.hide(); // remove from visibility
 		// Emit close event.
 		this.emit( 'close', null, this.payload, data ); // emit close event
-		this.payload	= null; // clear context
+		this.payload = null; // clear context
 	}
 
 	// Hide the dialog.
 	// RETURNS: [void]
 	hide() {
+		// Set open-state to `false`.
+		this.opened = false; // log state
 		// Hide the panel.
 		this.panel.addClass( 'hidden' ); // hide the dialog
 	}
@@ -19794,14 +19947,16 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Open the dialog.
 	// RETURNS: [void]
-	// * data	- [any] optional payload for event context
+	// * data - [any] optional payload for event context
 	open( data=null ) {
+		// Prevent dialog from double-opening.
+		if ( this.opened ) return; // abort
 		// Store optional payload (accessible via open & close events).
-		this.payload	= data;	// store context
+		this.payload = data; // store context
 		// Emit pre-open event.
 		this.emit( 'preopen', null, this.payload );
 		// Open the panel.
-		this.show();			// show the dialog
+		this.show(); // show the dialog
 		// Play a "prompt" sound-effect for affirmation.
 		this.client.soundboard.playSound( 'jest_prompt', 'mp3', 1.1 );
 		// Emit open event.
@@ -19811,9 +19966,15 @@ class JestModal extends JestElement {
 	// Show the dialog.
 	// RETURNS: [void]
 	show() {
+		// Set open-state to `true`.
+		this.opened = true; // log state
 		// Hide the panel.
 		this.panel.removeClass( 'hidden' ); // show the dialog
 	}
+
+	// Determine if dialog is currently open or closed.
+	// REUTRNS: [boolean] `true` if dialog open, else `false`.
+	isOpened() { return this.opened; }
 }
 
 /* --- BEGIN js/apps/jest/components/ui/JestLiveOptionCache.js --- */
@@ -19952,14 +20113,14 @@ class JestLiveOptionCache extends JestGamepiece {
 		}
 	}
 
-	// ------------------------------
+	//-------------------------------
 	// Apply Options to Watcher
-	// ------------------------------
+	//-------------------------------
 	// Applies filtered options to the watcher.
 	// RETURNS: [void]
 	// * input		– [object] select input element (watcher)
 	// * filterFn	– [function|null] optional per-call filter (from emit)
-	// ------------------------------
+	//-------------------------------
 	_applyToWatcher( input, filterFn=null ) {
 		// Skip if static filter fails.
 		const staticFilter	= this.watcherFilters.get( input );
@@ -20087,9 +20248,9 @@ class JestScreen extends JestDisplay {
 	active			= null;			// [bool] whether button is active.
 	timeToLive		= null;			// [int|null] Time to live (in cycles) before light clean-up.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -20097,9 +20258,9 @@ class JestScreen extends JestDisplay {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -20210,9 +20371,9 @@ class JestSpline extends JestElement {
 		super( client );		// call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -20395,9 +20556,9 @@ class JestNotice extends JestElement {
 					);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -20629,9 +20790,9 @@ class JestNoticer extends JestElement {
 	container		= null;			// [Panel] Container panel for notifications.
 	notices			= [];			// [array] Active JestNotice instances.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -20639,9 +20800,9 @@ class JestNoticer extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -20744,9 +20905,9 @@ class JestFileLoader extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getKey( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
 			return false; // abort
@@ -20756,33 +20917,33 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Generate Key Value [string]
-		// --------------------------------
+		//---------------------------------
 		const prefix	= network==='local' ? 'loc' : 'url';
 		const key		= `${prefix}:${address}`;
 		return key; // key [string]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// File Handling
-	// --------------------------------
+	//---------------------------------
 	// Download a file & generate a file [object].
 	// RETURNS: File [object] or [bool] `false` on fail.
 	// * address	- [string] Full address to file (e.g. 'head/head1.png')
 	//   forceReload	- [bool] If true, skips cache and reloads all.
 	async loadFile( address, forceReload=false ) {
-		// -------------------------
+		//--------------------------
 		// Validate Argument
-		// -------------------------
+		//--------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
 			return false; // abort
 		}
 
-		// -------------------------
+		//--------------------------
 		// Load File via Multi-Loader
-		// -------------------------
+		//--------------------------
 		// Load result, passing `name` as [array].
 		const result	= await this.loadFiles( [address], forceReload );
 		const key		= this.getKey( address, 'remote' );
@@ -20794,9 +20955,9 @@ class JestFileLoader extends JestGamepiece {
 	// * addresses	- [array] Full address names (e.g. 'heads/head1.png').
 	//   forceReload	- [bool] If true, skips cache and reloads all.
 	async loadFiles( addresses, forceReload=false ) {
-		// -------------------------
+		//--------------------------
 		// Validate Arguments
-		// -------------------------
+		//--------------------------
 		if ( !jsos.argues({addresses:[addresses,'array']}) ) {
 			if ( jsos.argues({addresses:[addresses,'string']}) )
 				addresses = [addresses]; // wrap single address
@@ -20813,9 +20974,9 @@ class JestFileLoader extends JestGamepiece {
 		const toLoad	= [];			// array of [address] to be downloaded
 		const groups	= {};			// map of [ext → address[]] for batch secretary load
 
-		// -------------------------
+		//--------------------------
 		// Group by Extension
-		// -------------------------
+		//--------------------------
 		// Map: extension → [filename stem]
 		for ( const address of addresses ) {
 			// Get file info using the address.
@@ -20856,9 +21017,9 @@ class JestFileLoader extends JestGamepiece {
 			await this.client.secretary.loadFiles( extGroup );
 		}
 
-		// -------------------------
+		//--------------------------
 		// Generate File Objects
-		// -------------------------
+		//--------------------------
 		// Iterate all addresses & create [object].
 		for ( const address of toLoad ) {
 			// Render downloaded data into proper [object].
@@ -20934,9 +21095,9 @@ class JestFileLoader extends JestGamepiece {
 		}
 		else console.log( `Local file data read successfully!` );
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Render File
-		// --------------------------------
+		//---------------------------------
 		// Render the remote data into a file [object].
 		const file	= await this._generateFile( fileInfo.address, 'local' );
 		return file; // return file result
@@ -20948,9 +21109,9 @@ class JestFileLoader extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _generateFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Check whether arguments are right data type.
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
@@ -20961,9 +21122,9 @@ class JestFileLoader extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path Information
-		// --------------------------------
+		//---------------------------------
 		// Get file info using the address.
 		const fileInfo	= this.client.getFileInfo( address, null, null, null, network );
 
@@ -20977,25 +21138,25 @@ class JestFileLoader extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Access Loaded File Data
-		// --------------------------------
+		//---------------------------------
 		//console.warn( fileInfo );
 		// Attempt to access the loaded file data [object].
 		//console.log( this.client.secretary );
 		const remote	= network==='local' ? false : true; // whether local or web file
 		const record	= this.client.secretary.getRecord(address,network) ?? null;
 
-		// -------------------------
+		//--------------------------
 		// Attempt to Create File [object]
-		// -------------------------
+		//--------------------------
 		// Continue to create file [object].
 		const file		= await this._createFileObject( record, fileInfo, address, network );
 		if ( !file ) return null; // file not created
 
-		// --------------------------------
+		//---------------------------------
 		// Store Result & Return It
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		// Store reference to created file data in this.files container.
@@ -21027,17 +21188,17 @@ class JestFileLoader extends JestGamepiece {
 	//   file		- (optional) File [object].
 	//   network	- [string] One of: 'local', 'remote'
 	async addFile( address, file, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Propert(ies)
-		// --------------------------------
+		//---------------------------------
 		if ( this.getFile(address) ) {
 			console.warn( `addFile() cannot overwrite existing file: ${address}.` );
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `addFile() invalid argument for 'address': ${address}` );
 			return false; // abort
@@ -21047,9 +21208,9 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path Information
-		// --------------------------------
+		//---------------------------------
 		// Get file info using the address.
 		const fileInfo	= this.client.getFileInfo( address, null, null, null, network );
 
@@ -21063,9 +21224,9 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt Download (if requested)
-		// --------------------------------
+		//---------------------------------
 		// Determine if file [object] exists.
 		if ( file===null ) {
 			const file	= await this.loadFile( address );
@@ -21075,9 +21236,9 @@ class JestFileLoader extends JestGamepiece {
 			}
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Store File [object] Reference
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		// Set file [object].
@@ -21085,23 +21246,23 @@ class JestFileLoader extends JestGamepiece {
 		return file; // return [object]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Access File [object] from Registry
-	// --------------------------------
+	//---------------------------------
 	// Retrieves a file [object] by its name, if it exists and is valid.
 	// RETURNS: File [object] on success, else `null`.
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) )
 			return null; // abort
 
-		// --------------------------------
+		//---------------------------------
 		// Return File [object] or [null]
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		const file		= this.files?.[key] ?? null;
@@ -21118,23 +21279,23 @@ class JestFileLoader extends JestGamepiece {
 		return (this.files?.[key] instanceof this.fileClass);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Remove File [object] from Registry
-	// --------------------------------
+	//---------------------------------
 	// Deletes a file [object] by name from the registry.
 	// RETURNS: [boolean] `true` if removed, else `false` if not found or invalid.
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	removeFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) )
 			return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt Removal
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key	= this.getKey( address, network ); // key [string]
 		const exists = (this.files?.[key] instanceof this.fileClass);
@@ -21143,15 +21304,15 @@ class JestFileLoader extends JestGamepiece {
 		return exists; // return result
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Retrieve All Registered File Names
-	// --------------------------------
+	//---------------------------------
 	// Gets an [array] of all registered file addresses in fantascope.
 	// RETURNS: [array] of [string] addresses of loaded file [objects].
 	getAllKeys() {
-		// --------------------------------
+		//---------------------------------
 		// Gather All Keys from Registry
-		// --------------------------------
+		//---------------------------------
 		return Object.keys( this.files )
 			.filter( key => this.files[key] instanceof this.fileClass );
 	}
@@ -21230,9 +21391,9 @@ class JestGallery extends JestGamepiece {
 	// RETURNS: [boolean] True if fallback was successfully set, false otherwise.
 	// * category	- [string] Name of the category to set as fallback.
 	setFallbackCategory( category ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Allow category to be [null].
 		if ( category===null ) {
 			this.fallbackCategory = null; // reset
@@ -21244,9 +21405,9 @@ class JestGallery extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Set Fallback Category
-		// --------------------------------
+		//---------------------------------
 		// Check if category already exists.
 		if ( !this.hasCategory(category) ) {
 			console.warn( `Cannot set fallback: category "${category}" does not exist.` );
@@ -21259,9 +21420,9 @@ class JestGallery extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// getFallbackCategory()
-	// -------------------------
+	//--------------------------
 	// Get the current fallback category.
 	// RETURNS: [string|null] Fallback category name, or null if not set.
 	getFallbackCategory() {
@@ -21273,18 +21434,18 @@ class JestGallery extends JestGamepiece {
 	// RETURNS: [string|null] Valid category name or null if not found.
 	// * category - [string] The requested category to resolve.
 	resolveCategory( category ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Require category to be a [string].
 		if ( !jsos.argues({category:[category,'string']}) ) {
 			console.warn( `JestGallery resolveCategory(), invalid argument for 'category': ${category}` );
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Check Fallback Category
-		// --------------------------------
+		//---------------------------------
 		// Check if category has been registered.
 		if ( this.hasCategory(category) )
 			return category; // [string|null] value
@@ -21298,9 +21459,9 @@ class JestGallery extends JestGamepiece {
 		return null; // return [null]
 	}
 
-	// -------------------------
+	//--------------------------
 	// Asset Handling
-	// -------------------------
+	//--------------------------
 	// Adds an asset to an existing category.
 	// * category	- [string] Name of the category.
 	// * id			- [string] Unique identifier for the asset.
@@ -21335,9 +21496,9 @@ class JestGallery extends JestGamepiece {
 	//     > autoLoad   - [boolean] If true, attempts to add/load missing asset.
 	//     > extension  - [string] File extension (only used if autoLoad=true).
 	async getAsset( category, id, { autoLoad=false, extension='png' } = {} ) {
-		// --------------------------------
+		//---------------------------------
 		// Resolve and validate category
-		// --------------------------------
+		//---------------------------------
 		// Attemp to resolve the category.
 		const resolved	= this.resolveCategory( category );
 		if ( !resolved ) return null; // not found
@@ -21348,14 +21509,14 @@ class JestGallery extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Try to find asset by ID
-		// --------------------------------
+		//---------------------------------
 		let asset	= categoryData.assets.get( id );
 
-		// --------------------------------
+		//---------------------------------
 		// Optionally auto-add the asset if not found
-		// --------------------------------
+		//---------------------------------
 		if ( !asset && autoLoad===true ) {
 			const stem		= this.client.getFilename( id );	// e.g. 'head104' from 'head104.png'
 			const ext		= this.client.getExtension( id );	// e.g. 'png'
@@ -21371,9 +21532,9 @@ class JestGallery extends JestGamepiece {
 			return null;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Lazy-load if element not yet created
-		// --------------------------------
+		//---------------------------------
 		if ( !asset.element ) {
 			asset.element	= new ElementImage( { attributes: { src: asset.url } } );
 			console.log( `JestGallery: Asset "${id}" in category "${resolved}" lazy-loading now.` );
@@ -21525,9 +21686,9 @@ class JestGallery extends JestGamepiece {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Image Handling
-	// --------------------------------
+	//---------------------------------
 	// Load multiple images dynamically using a single object argument.
 	// RETURNS: [boolean] `true` if all images load successfully, `false` if any fail.
 	// * assets		- [object] where keys are folder names & values are [arrays] of { stem, extension }
@@ -21612,18 +21773,18 @@ class JestImager extends JestFileLoader {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _createFileObject( record, fileInfo, address, network ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Record Data
-		// --------------------------------
+		//---------------------------------
 		// Check if the parsed blob data is available.
 		if ( !record?.blob || !(record.blob instanceof Blob) ) {
 			console.warn( 'Cannot find file data.' );
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Create File [object]
-		// --------------------------------
+		//---------------------------------
 		// Continue to create file [object].
 		const file		=
 			new JestGraphic(
@@ -21655,9 +21816,9 @@ class JestCabinet extends JestGamepiece {
 	openFiles		= {};				// [object] { skey: JestFile } for open file instances.
 	activeKey		= null;				// [string|null] Currently active file key.
 
-	// -------------------------------
+	//--------------------------------
 	// Constructor
-	// -------------------------------
+	//--------------------------------
 	// Construct a new JestCabinet.
 	// * game - [object] Client or app instance.
 	constructor( game ) {
@@ -21665,9 +21826,9 @@ class JestCabinet extends JestGamepiece {
 		this.openFiles	= {};			// Open file registry
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Save an Open File
-	// -------------------------------
+	//--------------------------------
 	// Accesses a file inside the cabinet & saves it.
 	// RETURNS: [bool] true on success or false if fail.
 	// * file	- [JestFile] Instance to track.
@@ -21690,9 +21851,9 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Add a New File
-	// -------------------------------
+	//--------------------------------
 	// Adds a file to the cabinet and activates it.
 	// RETURNS: [string] Key of added file.
 	// * file	- [JestFile] instance to track.
@@ -21704,9 +21865,9 @@ class JestCabinet extends JestGamepiece {
 		return key;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Switch Active File
-	// -------------------------------
+	//--------------------------------
 	// Sets a file as the active working file.
 	// RETURNS: [bool] true on success.
 	// * key	- [string] Key of the file to activate.
@@ -21717,18 +21878,18 @@ class JestCabinet extends JestGamepiece {
 		return true;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Get Active File
-	// -------------------------------
+	//--------------------------------
 	// Returns the currently active file.
 	// RETURNS: [JestFile|null].
 	getActiveFile( ) {
 		return this.openFiles[this.activeKey] || null;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Close One File
-	// -------------------------------
+	//--------------------------------
 	// Removes one open file.
 	// RETURNS: [bool] true on success.
 	// * key	- [string] Key to remove.
@@ -21750,9 +21911,9 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Close All Open Files
-	// -------------------------------
+	//--------------------------------
 	// Attempts to close all files, warns if unsaved.
 	// RETURNS: [bool] true if successful.
 	closeAll() {
@@ -21764,18 +21925,18 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Get All Open Keys
-	// -------------------------------
+	//--------------------------------
 	// Returns keys of all open files.
 	// RETURNS: [array<string>].
 	getOpenKeys() {
 		return Object.keys( this.openFiles );
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Has Unsaved Changes?
-	// -------------------------------
+	//--------------------------------
 	// Checks all files for pending changes.
 	// RETURNS: [bool].
 	hasUnsavedChanges() {
@@ -21807,9 +21968,9 @@ class JestSecretary extends JestGamepiece {
 	filetypes	= {};			// [object] Specs for supported extensions
 	records		= {};			// [object] Cached parsed data per extension
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct with a default base URL.
 	// * client		- Client [object] that this piece belongs to.
 	// * baseURL	- [string] Base URL for all image(s) / image folder(s).
@@ -21818,9 +21979,9 @@ class JestSecretary extends JestGamepiece {
 		this.baseURL	= baseURL;	// Set the global placeholder.
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Register Filetype(s)
-	// --------------------------------
+	//---------------------------------
 	// Add a new filetype dynamically.
 	// RETURNS: [void] on success, throws [object[ Error on fail.
 	// * ext	- [string] Extension (e.g. 'png', 'json')
@@ -21859,9 +22020,9 @@ class JestSecretary extends JestGamepiece {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get a Record (with Warning)
-	// --------------------------------
+	//---------------------------------
 	// Get a record full path.
 	// RETURNS: [object] of file information, else [null] on fail.
 	// * address	- [string] Full path to file, with filename + extension.
@@ -21876,15 +22037,15 @@ class JestSecretary extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Add to Queue
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const fileInfo	= this.client.getFileInfo( address );
 
-		// --------------------------------
+		//---------------------------------
 		// Validate Specs Defined for Filetype
-		// --------------------------------
+		//---------------------------------
 		// Check if specs have been defined for this filetype.
 		const specs		= this.filetypes[fileInfo.extension];
 		if ( !specs ) {
@@ -21933,9 +22094,9 @@ class JestSecretary extends JestGamepiece {
 		const prefix	= network==='local' ? 'loc' : 'web';
 		const key		= `${prefix}:${fullPath}${filename}`;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Purview & Return Data
-		// --------------------------------
+		//---------------------------------
 		// Define purview [object] return data.
 		let purview		= {
 			key:			key,
@@ -21953,9 +22114,9 @@ class JestSecretary extends JestGamepiece {
 		return purview;		// return purview
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Storing & Filing Data
-	// --------------------------------
+	//---------------------------------
 	// Store a file's result in the secretary's records.
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * ext		- [string] Value of file filetype extension.
@@ -21990,9 +22151,9 @@ class JestSecretary extends JestGamepiece {
 		}*/
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Web File Downloading
-	// --------------------------------
+	//---------------------------------
 	// Retrieves *.* file, parses it, then stores the file by stem.
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * address - [string] value of address path
@@ -22004,22 +22165,22 @@ class JestSecretary extends JestGamepiece {
 	// RETURNS: [boolean] `true` if all load, `false` if any fail.
 	// * addresses - [array] of [string] address paths
 	async loadFiles( addresses ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		// Validate argument(s)
 		if ( !jsos.prove(addresses,'array') )
 			throw new Error( 'Secretary loadFiles(): `addresses` must be [array]' );
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Data For Transfer
-		// --------------------------------
+		//---------------------------------
 		const queue = [];
 		// Iterate all addresses & load file(s).
 		for ( const address of addresses ) {
-			// --------------------------------
+			//---------------------------------
 			// Attempt to Purview Address
-			// --------------------------------
+			//---------------------------------
 			// Purview the address & queue if successful.
 			const purview	= this.getRecordPurview( address );
 			// Check if purview succeeded.
@@ -22028,15 +22189,15 @@ class JestSecretary extends JestGamepiece {
 			queue.push( purview );
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Downloading
-		// --------------------------------
+		//---------------------------------
 		// Use transmitter to load files queue in batches of 3
 		await this.client.transmitter.loadFiles( queue, 3, this.defaultCacheTime, false, false );
 
-		// --------------------------------
+		//---------------------------------
 		// Process Each Result
-		// --------------------------------
+		//---------------------------------
 		// Process results
 		let allOK	= true;
 		for ( const request of queue ) {
@@ -22075,9 +22236,9 @@ class JestSecretary extends JestGamepiece {
 		return allOK; // success status
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Local File Reading
-	// --------------------------------
+	//---------------------------------
 	// Read a File object (e.g., from drag-drop or input).
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * item		– either a File or a FileInfo [object]
@@ -22091,9 +22252,9 @@ class JestSecretary extends JestGamepiece {
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * items		– [array] of File or FileInfo [objects]
 	async readFiles( items ) {
-		// --------------------------------
+		//---------------------------------
 		// Initialize Debugging
-		// --------------------------------
+		//---------------------------------
 		// Track execution time and identify this operation in the console.
 		const debugID	= `[readFiles ${Date.now()}]`;
 		const startTime	= performance.now();
@@ -22105,9 +22266,9 @@ class JestSecretary extends JestGamepiece {
 		console.log( '📋 Registered filetypes:', this.filetypes );
 
 		try {
-			// --------------------------------
+			//---------------------------------
 			// Validate Argument(s)
-			// --------------------------------
+			//---------------------------------
 			// Ensure the supplied items are an array.
 			console.log( '🔍 Validating input array...' );
 
@@ -22118,9 +22279,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.log( '✅ Input validation passed.' );
 
-			// --------------------------------
+			//---------------------------------
 			// Prevent Re-Reading Previously Read Files
-			// --------------------------------
+			//---------------------------------
 			// Build a queue containing only files that have not already been stored.
 			const queue = [];
 
@@ -22179,9 +22340,9 @@ class JestSecretary extends JestGamepiece {
 				return true;
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Begin Reading
-			// --------------------------------
+			//---------------------------------
 			// Request the transmitter to load queued files as ArrayBuffers.
 			console.group( '📡 TRANSMITTER READ' );
 
@@ -22219,9 +22380,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.groupEnd();
 
-			// --------------------------------
+			//---------------------------------
 			// Process Each Result
-			// --------------------------------
+			//---------------------------------
 			// Track whether every file was processed successfully.
 			let allOK = true;
 
@@ -22242,9 +22403,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '📁 File object:', file );
 				console.log( '📦 Raw result:', result );
 
-				// --------------------------------
+				//---------------------------------
 				// Extract File Information
-				// --------------------------------
+				//---------------------------------
 				// Get overview of address and file information.
 				const { address, filename, path, extension: ext, stem } = request;
 
@@ -22254,9 +22415,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '🔖 Extension:', ext );
 				console.log( '🏷️ Stem:', stem );
 
-				// --------------------------------
+				//---------------------------------
 				// Resolve Record Purview
-				// --------------------------------
+				//---------------------------------
 				// Resolve the local address and extract its storage key.
 				console.log( '🔍 Calling getRecordPurview()...' );
 
@@ -22268,9 +22429,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '🗃️ Existing extension records:', this.records?.[ext] );
 				console.log( '🗃️ Existing key record:', this.records?.[ext]?.[key] );
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Filetype Registration
-				// --------------------------------
+				//---------------------------------
 				// Retrieve the registered specifications for this extension.
 				console.log( `🔍 Looking up filetype specifications for "${ext}"...` );
 
@@ -22294,9 +22455,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.log( '✅ Filetype registration found.' );
 
-				// --------------------------------
+				//---------------------------------
 				// Convert File Data
-				// --------------------------------
+				//---------------------------------
 				// Determine the conversion format required by this filetype.
 				const parseFormat = specs.parse || 'text';
 
@@ -22333,9 +22494,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.groupEnd();
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Parsed Data
-				// --------------------------------
+				//---------------------------------
 				// Reject files whose conversion returned a falsy result.
 				if ( !parsed ) {
 					console.error( `❌ Failed to read/parse file: ${filename}` );
@@ -22353,9 +22514,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.log( '✅ File data parsed successfully.' );
 
-				// --------------------------------
+				//---------------------------------
 				// Store File in Secretary Records
-				// --------------------------------
+				//---------------------------------
 				// File the converted data under its extension and resolved key.
 				console.groupCollapsed( '🗃️ RECORD STORAGE' );
 
@@ -22378,9 +22539,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.groupEnd();
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Filing Result
-				// --------------------------------
+				//---------------------------------
 				// Continue processing other files even when one filing fails.
 				if ( !filed ) {
 					console.error( `❌ Failed to store file: ${filename}` );
@@ -22406,9 +22567,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.groupEnd();
 
-			// --------------------------------
+			//---------------------------------
 			// Final Processing Summary
-			// --------------------------------
+			//---------------------------------
 			// Report the total number of successful and failed operations.
 			console.group( '📊 READ FILES SUMMARY' );
 
@@ -22448,9 +22609,9 @@ class JestSecretary extends JestGamepiece {
 			return allOK;
 		}
 		catch ( error ) {
-			// --------------------------------
+			//---------------------------------
 			// Unexpected Error Reporting
-			// --------------------------------
+			//---------------------------------
 			// Preserve the original exception while reporting diagnostic information.
 			console.error( '💥 UNEXPECTED ERROR IN readFiles()' );
 			console.error( 'Error:', error );
@@ -22463,9 +22624,9 @@ class JestSecretary extends JestGamepiece {
 			throw error;
 		}
 		finally {
-			// --------------------------------
+			//---------------------------------
 			// Close Main Debug Group
-			// --------------------------------
+			//---------------------------------
 			// Always close the outer console group, including after exceptions.
 			console.log( `${debugID} 🏁 READ FILES FINISHED` );
 			console.groupEnd();
@@ -22493,16 +22654,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Return Record
-		// --------------------------------
+		//---------------------------------
 		// Check if record exists.
 		if ( this.hasRecord(address,network) )
 			return this.records[ext][key];
@@ -22516,16 +22677,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	hasRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Check Record
-		// --------------------------------
+		//---------------------------------
 		// Validate arguments
 		if ( !jsos.prove(ext,'string') || !jsos.prove(key,'string') ) {
 			console.warn( 'Invalid argument(s). `ext` and `key` must both be of type [string].' );
@@ -22539,16 +22700,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	removeRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Remove Record
-		// --------------------------------
+		//---------------------------------
 		// Check if record already exists.
 		if ( this.hasRecord(address,network) ) {
 			delete this.records[ext][key]; // remove it
@@ -22578,9 +22739,9 @@ class JestGovernor extends JestElement {
 	stacks		= {};			// [object] { states: [ … ], index: number, limit: number }
 	queue		= {};			// [object] Map of { [key]: object } pending metadata to merge on next log
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -22590,9 +22751,9 @@ class JestGovernor extends JestElement {
 		this.jot( 'reverting', false ); // not active
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Stack Handling
-	// --------------------------------
+	//---------------------------------
 	// Initialize (or re-initialize) a stack under `key`, with an optional limit.
 	// If the stack already exists, this will override its limit and clear history.
 	// RETURNS: [void].
@@ -22610,9 +22771,9 @@ class JestGovernor extends JestElement {
 		this.emit( `init`, null, key, limit ); // emit event
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Queue Metadata for Next Log
-	// --------------------------------
+	//---------------------------------
 	// Queues extra data to be merged into the next log() snapshot.
 	// * key   – [string] The stack key
 	// * data  – [object] Metadata to merge into next log state
@@ -22622,9 +22783,9 @@ class JestGovernor extends JestElement {
 		Object.assign( this.queue[key], data );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Dequeue Metadata Before Log
-	// --------------------------------
+	//---------------------------------
 	// Removes any queued metadata waiting to be merged into the next log().
 	// * key   – [string] Stack key to clear metadata for
 	// * fields – [array] Optional [array] of specific field names to remove
@@ -22655,9 +22816,9 @@ class JestGovernor extends JestElement {
 		// Ensure the stack exists (default limit = 100)
 		if ( !this.stacks[key] ) this.init( key );
 
-		// --------------------------------
+		//---------------------------------
 		// Log New Result
-		// --------------------------------
+		//---------------------------------
 		const stack		= this.stacks[key];
 		const i			= stack.index;
 		const lastIndex	= stack.states.length - 1;
@@ -22693,18 +22854,18 @@ class JestGovernor extends JestElement {
 		// Emit new event signaling that undo is possible.
 		this.emit( `undoable`, null, key, stack.states.length );
 
-		// --------------------------------
+		//---------------------------------
 		// Clear Overflowed States
-		// --------------------------------
+		//---------------------------------
 		// Call overflow check.
 		this.overflow( key );
 		// Return snapshot.
 		return snapshot; // log [object]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Append to Current State
-	// --------------------------------
+	//---------------------------------
 	// Merge additional metadata into the *current* state (if exists).
 	// RETURNS: [bool] true if successful, else false
 	// * key		– [string] stack key
@@ -22728,9 +22889,9 @@ class JestGovernor extends JestElement {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get Current Log Reference
-	// --------------------------------
+	//---------------------------------
 	// Gets a *live reference* to the actual current snapshot object.
 	// WARNING: modifying this directly alters undo history!
 	// RETURNS: [object|null] the actual state object or null
@@ -22741,9 +22902,9 @@ class JestGovernor extends JestElement {
 		return stack.states[stack.index]; // live reference
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get Stack (if exists)
-	// --------------------------------
+	//---------------------------------
 	// Attempt to get a stack.
 	// RETURNS: [void].
 	// * key	– [string] Value of which stack to get.
@@ -22755,9 +22916,9 @@ class JestGovernor extends JestElement {
 		return this.stacks[key]; // return stack
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Revert Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Attempt to undo an action inside an open level file.
 	// RETURNS: [void].
 	// * count	- signed [int] value to iterate (negative for undo).
@@ -22889,9 +23050,9 @@ class JestGovernor extends JestElement {
 		return false; // no overflow
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Log New Result
-	// --------------------------------
+	//---------------------------------
 	// Peek at the current state without modifying anything.
 	// RETURNS: the JSON snapshot at `index`, or null if stack is empty.
 	current( key ) {
@@ -22916,9 +23077,9 @@ class JestGovernor extends JestElement {
 		this.overflow( key, newLimit );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Reporting Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Does `key` exist and have at least one recorded state?
 	hasState( key ) {
 		const stack	= this.stacks[key];
@@ -23011,9 +23172,9 @@ class JestFile extends JestElement {
 	// Contextual attachment properties
 	context			= null;			// [object] base [object] data.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -23413,9 +23574,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/type/JestFileImage.js l
 class JestFileImage extends JestFile {
 	// Object properties
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23450,9 +23611,9 @@ class JestFileJani extends JestFileImage {
 	//modes			= null;				// [array] of possible modes.
 	view			= null;				// AnimationView [object]
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23761,9 +23922,9 @@ class JestFileLevel extends JestFileImage {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23932,9 +24093,9 @@ class JestFileTileset extends JestFileImage {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23992,9 +24153,9 @@ class JestFileTileset extends JestFileImage {
 			// Use "stem" as shorthand for filename.
 			const stem		= this.stem;
 			const extension	= this.extension;
-			// --------------------------------
+			//---------------------------------
 			// Load Tileset [objects]
-			// --------------------------------
+			//---------------------------------
 			console.log( `Attempting to download tileset from server...` );
 			// Load a default tileset
 			const tileset	=
@@ -24202,9 +24363,9 @@ class JestToolbox extends JestElement {
 		this.emit( 'postequip', null, toolName );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Clear Active Tool
-	// --------------------------------
+	//---------------------------------
 	// Disables all tools except those co-opted by new activeTool.
 	// * nameOrTool – optional [string|object] Tool name or tool whose co-opted tools should NOT be disabled.
 	clearActiveTool( nameOrTool ) {
@@ -24431,9 +24592,9 @@ class JestTool extends JestElement {
 	// Tool properties
 	flags          = new Set();        // [Set<string>] App-defined tool requirements and capabilities.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -24522,9 +24683,9 @@ class JestTool extends JestElement {
 		return this._cooptedTools.includes( name );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Toggle enabled/disabled using [boolean] argument.
 	// RETURNS: [bool] true if state changed.
 	// * lever	– [bool] `true` to enable, `false` to disable.
@@ -24577,9 +24738,9 @@ class JestTool extends JestElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enabled() { return this.skim('enabled'); }
 
-	// --------------------------------
+	//---------------------------------
 	// Keyboard Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Map a [key] to switch from one tool to another when held.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * key      – [string] e.g. "Alt", "Control"
@@ -24597,9 +24758,9 @@ class JestTool extends JestElement {
 	// * key	- [string] Variable key to set
 	// * val	- [any] Value to assign
 	jot( key, val ) {
-		// --------------------------
+		//---------------------------
 		// Intercept 'mode' Changes
-		// --------------------------
+		//---------------------------
 		// Only intercept if key='mode'
 		if ( key==='mode' ) {
 			// Check for previous (existing) value.
@@ -24611,9 +24772,9 @@ class JestTool extends JestElement {
 			if ( prev!==val && val )
 				this.emit( `enter:${val}` );
 		}
-		// --------------------------
+		//---------------------------
 		// Delegate to Base Jot Method
-		// --------------------------
+		//---------------------------
 		// Call parent jot method.
 		return super.jot?.( key, val ) ?? false;
 	}
@@ -24726,17 +24887,19 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestToolCrate.js 
 // This class makes a draggable & droppable crate for "garages".
 class JestToolCrate extends JestTool {
 	// Object propert(ies)
-	garages			= [];			// [array] Array of garage Panel instances.
-	currentGarage	= null;			// [Panel|null] Garage currently hovered over.
+	garages       = [];           // [array] Array of garage Panel instances.
+	garageCanvases	= new WeakMap(); // Optional canvas wrappers paired with registered garages.
+	currentGarage = null;         // [Element|null] Garage currently hovered over.
 	// Miscellaneous variables
-	display			= null;			// [JestDisplay] object for displaying content(s).
+	display       = null;         // [JestDisplay] object for displaying content(s).
+	lastPointer   = null;         // [object|null] Latest viewport mouse coordinates.
 
 	//--------------------------------
 	// Constructor
 	//--------------------------------
 	// Construct the Crate with a Panel.
-	// * client		- [object] Application client that this piece belongs to.
-	// * name		- [string] Value of tool name.
+	// * client  - [object] Application client that this piece belongs to.
+	// * name    - [string] Value of tool name.
 	constructor( client, name ) {
 		super( client, name ); // call parent constructor
 	}
@@ -24746,22 +24909,22 @@ class JestToolCrate extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build( name='tool-crate', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-crate' ];
+		const defaultClasses = [ 'tool-crate' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 		// Tool is empty by default.
-		this.jot( 'mode', 'empty' );	// tool is idle to start
-		// --------------------------------
+		this.jot( 'mode', 'empty' ); // tool is idle to start
+		//---------------------------------
 		// Create Canvas In Crate [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a canvas to the crate for tile display.
-		const display	= new JestDisplay( this.client );
-		display.build();			// build the display panel
-		this.display	= display;	// cross-reference
+		const display = new JestDisplay( this.client );
+		display.build();          // build the display panel
+		this.display  = display;  // cross-reference
 		this.panel.addPanel( 'display', display.panel );
 		// Hide by default.
 		this.hide();
@@ -24771,8 +24934,9 @@ class JestToolCrate extends JestTool {
 	// Add/Remove Garage(s)
 	//-------------------------
 	// Add a Panel that acts as a drop target.
-	// * garage		- [JestElement] instance representing a garage.
-	addGarage( garage ) {
+	// * garage  - [JestElement] instance representing a garage.
+	//   canvas  - [ElementCanvas] to attach to the garage.
+	addGarage( garage, canvas=null ) {
 		// Validate argument(s).
 		if ( !(garage instanceof HTMLElement) ) {
 			console.warn( `Crate Add Garage: argument must be of type JestElement.` );
@@ -24781,6 +24945,9 @@ class JestToolCrate extends JestTool {
 		// Avoid duplicates
 		if ( this.garages.includes(garage) ) return false;
 		this.garages.push( garage ); // add to [array]
+		// Use the editable bounds when the garage has a matching canvas wrapper.
+		if ( canvas?.el===garage )
+			this.garageCanvases.set( garage, canvas );
 		return true; // success
 	}
 
@@ -24795,7 +24962,56 @@ class JestToolCrate extends JestTool {
 		}
 		// Remove garage from [array].
 		this.garages.splice( index, 1 );
+		this.garageCanvases.delete( garage );
 		return true; // success
+	}
+
+	//--------------------------------
+	// Find Garage Under Pointer
+	//--------------------------------
+	// RETURNS: [object|null] Garage, local pixels, and snapped tile coordinates.
+	// * e - [MouseEvent] Pointer event in viewport coordinates.
+	getGarageHit( e ) {
+		// Search the elements under the pointer in visual stacking order.
+		const units = this.anchor.getUnitsZoomed();
+		for ( const garage of document.elementsFromPoint(e.clientX,e.clientY) ) {
+			if ( !this.garages.includes(garage) ) continue;
+
+			// Resolve the same origin for hit testing, snapping, and dropping.
+			const canvas = this.garageCanvases.get( garage );
+			let bounds;
+			if ( canvas ) {
+				bounds = canvas.getRinkClientBounds();
+				// Neighbor previews and padding are outside the level garage.
+				if ( !bounds || e.clientX<bounds.left || e.clientX>=bounds.right ||
+					 e.clientY<bounds.top || e.clientY>=bounds.bottom )
+					continue; // skip
+			}
+			else {
+				// Swatches and other DOM garages keep their border-adjusted origin.
+				const rect = garage.getBoundingClientRect();
+				bounds = {
+					left   : rect.left + garage.clientLeft,
+					top    : rect.top + garage.clientTop,
+					scaleX : 1,
+					scaleY : 1
+					};
+			}
+
+			// Convert the pointer to garage-local pixels before snapping.
+			const x = (e.clientX-bounds.left) / bounds.scaleX;
+			const y = (e.clientY-bounds.top) / bounds.scaleY;
+			let lx  = Math.round( x / units );
+			let ly  = Math.round( y / units );
+
+			// Keep a hit near the far edge on the level's last tile.
+			const edit = canvas?.getRinkBounds();
+			if ( edit?.cols>0 ) lx = Math.min( lx, edit.cols-1 );
+			if ( edit?.rows>0 ) ly = Math.min( ly, edit.rows-1 );
+
+			return { garage, ...bounds, x, y, lx, ly };
+		}
+		return null;
 	}
 
 	//-------------------------
@@ -24855,16 +25071,18 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Finalize drop: leave element where it is
 		this.hide(); // hide the crate
-		this.panel.el.style.cursor		= 'grab';	// set cursor to default
-		this.panel.el.style.zIndex		= '';		// reset z-index
-		//this.panel.el.innerHTML		= '';		// empty content
+		this.panel.el.style.cursor = 'grab';  // set cursor to default
+		this.panel.el.style.zIndex = '';      // reset z-index
+		//this.panel.el.innerHTML  = '';      // empty content
+		// Clear the remembered pointer after dragging finishes.
+		this.lastPointer = null;
 		//-------------------------
 		// Reset Mode & Listener(s)
 		//-------------------------
 		// Tear down all listener(s).
-		this.removeTargetListeners();	// remove target events
-		this.removeGlobalListeners();	// remove window events
-		this.jot( 'mode', 'empty' );	// change mode
+		this.removeTargetListeners();  // remove target events
+		this.removeGlobalListeners();  // remove window events
+		this.jot( 'mode', 'empty' );   // change mode
 		// Add mousedown event (begin lifting).
 		this.panel.register( 'mousedown', 'lift', e=>this.lift(e), 'dom' );
 	}
@@ -24949,6 +25167,9 @@ class JestToolCrate extends JestTool {
 
 	// Begin dragging the crate.
 	beginDrag( globalX, globalY, offsetX, offsetY ) {
+		//-------------------------
+		// Gatekeep Depending on Mode
+		//-------------------------
 		//console.log( 'begin crate drag' );
 		// Mode / enableability requirement
 		const enabled	= this.skim( 'enabled' );
@@ -24957,16 +25178,28 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Compute Location
 		//-------------------------
-		// Update offset(s)
-		this.offsetX	= offsetX; // update offset of click x pos
-		this.offsetY	= offsetY; // update offset of click y pos
+		// Update both coordinate offsets.
+		this.offsetX   = offsetX; // update offset of click x pos
+		this.offsetY   = offsetY; // update offset of click y pos
+		//--------------------------------
+		// Remember Current Pointer Position
+		//--------------------------------
+		// Convert the supplied page coordinates back into viewport coordinates so
+		// the crate can be repositioned if its grid changes before the mouse moves.
+		this.lastPointer = {
+			clientX : globalX - window.scrollX,
+			clientY : globalY - window.scrollY
+			};
+		//--------------------------------
+		// Absolute Position Panel Element
+		//--------------------------------
 		// Ensure element is absolute positioned.
-		const elStyle	= window.getComputedStyle( this.panel.el );
+		const elStyle  = window.getComputedStyle( this.panel.el );
 		if ( elStyle.position!=='absolute' )
 			this.panel.el.style.position = 'absolute';
 		// Move crate to mouse location.
-		const left		= globalX - offsetX - parseFloat(elStyle.borderLeftWidth);
-		const top		= globalY - offsetY - parseFloat(elStyle.borderTopWidth);
+		const left     = globalX - offsetX - parseFloat(elStyle.borderLeftWidth);
+		const top      = globalY - offsetY - parseFloat(elStyle.borderTopWidth);
 		this.panel.move( top, left );
 		//-------------------------
 		// Change Style(s)
@@ -24976,13 +25209,13 @@ class JestToolCrate extends JestTool {
 		//-------------------------
 		// Event Handler(s)
 		//-------------------------
-		// Add global listeners for move & drop
+		// Add global listeners for move & drop.
 		this.panel.register( 'mousemove', 'dragging', e=>this.move(e), 'window' );
 		this.panel.register( jsos.mouseUps, 'dragged', e=>this.drop(e), 'window' );
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------
-		// Notify start
+		// Notify start.
 		this.emit( 'dragStart', null, this );
 	}
 
@@ -24991,29 +25224,37 @@ class JestToolCrate extends JestTool {
 	//-------------------------
 	// * e	- [object] MouseEvent event listener data.
 	move( e ) {
+		//-------------------------
+		// Gate Keep Mode
+		//-------------------------
 		//console.log( 'moving crate' );
-		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		// Mode / enableability requirement.
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
-		e.preventDefault();		// prevent default actions underneath
-		e.stopPropagation();	// stop bubbling upward
+
+		//-------------------------
+		// Stop Domino DOM Event(s)
+		//-------------------------
+		e.preventDefault();  // prevent default actions underneath
+		e.stopPropagation(); // stop bubbling upward
+
+		//--------------------------------
+		// Remember Current Pointer Position
+		//--------------------------------
+		// Preserve the latest pointer location so zoom changes can immediately
+		// reposition the crate without waiting for another mousemove event.
+		this.lastPointer = {
+			clientX : e.clientX,
+			clientY : e.clientY
+			};
+
 		//-------------------------
 		// Check If Inside Garage
 		//-------------------------
-		// Get all elements under the cursor, topmost first.
-		const els = document.elementsFromPoint( e.clientX, e.clientY );
-		let hoveredGarage = null;
-		// Walk the array in order; pick the first garage we find.
-		for ( const el of els ) {
-			for ( const garage of this.garages ) {
-				if ( el===garage ) {
-					hoveredGarage = garage;
-					break;
-				}
-			}
-			if ( hoveredGarage ) break;
-		}
+		// Find the garage that accepts this exact pointer position.
+		const hit = this.getGarageHit( e );
+		const hoveredGarage = hit?.garage ?? null;
 		// If hoveredGarage changed vs this.currentGarage, fire enter/leave.
 		if ( hoveredGarage!==this.currentGarage ) {
 			if ( this.currentGarage ) {
@@ -25031,46 +25272,71 @@ class JestToolCrate extends JestTool {
 				this.panel.addClass( 'active' );
 			}
 		}
+
 		//-------------------------
 		// Move Crate
 		//-------------------------
 		// Calculate page absolute position so crate follows mouse.
 		let px, py; // new coordinates
-		const units = this.client.config.tileGrid;
-		// Snap x & y to grid if inside garage.
-		if ( this.currentGarage!==null ) {
-			// Snap inside the garage’s bounding box
-			const el	= this.currentGarage;
-			const gRect	= el.getBoundingClientRect();
-			// borderLeft & borderTop (in pixels) for this element
-			const borderLeft	= el.clientLeft;
-			const borderTop		= el.clientTop;
-			// “rawX” = distance from left edge of garage to cursor
-			const rawX	= e.clientX - (gRect.left + borderLeft);
-			const rawY	= e.clientY - (gRect.top  + borderTop);
-			// Round that local coordinate to nearest tile
-			const tileX	= Math.round( rawX/units );
-			const tileY	= Math.round( rawY/units );
-			// Convert back to page coords by adding gRect.left/top
-			px	= gRect.left + borderLeft + tileX * units;
-			py	= gRect.top  + borderTop  + tileY * units;
+		// Use this crate's current display-space grid size.
+		const units = this.anchor.getUnitsZoomed();
+		// Convert the snapped tile back to viewport coordinates for the crate.
+		if ( hit ) {
+			px  = hit.left + hit.lx*units*hit.scaleX;
+			py  = hit.top  + hit.ly*units*hit.scaleY;
 		}
-		else { // Free-move: follow the cursor (no snapping)
-			px	= e.clientX - this.offsetX;
-			py	= e.clientY - this.offsetY;
+		else {
+			// Follow the pointer freely outside every garage.
+			px  = e.clientX - this.offsetX;
+			py  = e.clientY - this.offsetY;
 		}
 		// Update element position
 		this.anchor.move( px, py );	// update anchor coordinates to track motion
 		// Offset px & py to compensate, visually, for border.
-		const elStyle	= window.getComputedStyle( this.panel.el );
+		const elStyle = window.getComputedStyle( this.panel.el );
 		px -= parseFloat( elStyle.borderLeftWidth );
 		py -= parseFloat( elStyle.borderTopWidth );
 		this.panel.move( py+window.scrollY, px+window.scrollX ); // crate visual
+
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------
 		// Notify move.
 		this.emit( 'dragMove', null, { px, py } );
+	}
+
+	//--------------------------------
+	// Refresh Crate Position
+	//--------------------------------
+	// Recalculate the crate position using the last known mouse coordinates.
+	// This allows live zoom changes to update snapping without requiring the
+	// physical mouse to move again.
+	// RETURNS: [boolean] `true` when refreshed else `false`.
+	refreshPosition() {
+		//--------------------------------
+		// Validate Current Drag State
+		//--------------------------------
+		// Require a remembered pointer position and an active drag.
+		if ( !this.lastPointer )
+			return false; // nothing to refresh
+
+		if ( this.skim('mode')!=='dragging' )
+			return false; // crate is not being carried
+
+		//--------------------------------
+		// Reprocess Current Pointer
+		//--------------------------------
+		// Reuse move() so garage detection, snapping, borders, anchors, and
+		// visual positioning all follow the same calculation path.
+		this.move({
+			clientX : this.lastPointer.clientX,
+			clientY : this.lastPointer.clientY,
+			// Supply the MouseEvent methods used by move().
+			preventDefault()  {},
+			stopPropagation() {}
+			});
+
+		return true; // success
 	}
 
 	//-------------------------
@@ -25079,36 +25345,41 @@ class JestToolCrate extends JestTool {
 	// Drop the crate & emit an event about location / garage information.
 	// * e	- [object] MouseEvent event listener data.
 	drop( e ) {
+		//--------------------------------
+		// Validate Argument(s)
+		//--------------------------------
 		//console.warn( 'dropping crate' );
 		// Validate argument(s).
 		if ( !e ) {
 			console.warn( '[Crate] Cannot Drop: arg 1 must be [object] of type MouseEvent.' );
-			return;
+			return; // abort
 		}
+
+		//--------------------------------
+		// Ensure Valid Mode (Gatekeep)
+		//--------------------------------
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
-		e.preventDefault();		// prevent default actions underneath
-		e.stopPropagation();	// stop bubbling upward
-		// Calculate local (x,y) within garage if found
-		let localPos	= null;
-		if ( this.currentGarage!==null ) {
-			// Inside drop(e):
-			const pageX		= e.pageX;
-			const pageY		= e.pageY;
-			// Suppose `this.currentGarage` is the <div> or <canvas> you dropped into:
-			const rect		= this.currentGarage.getBoundingClientRect();
-			const elemDocX	= rect.left + window.scrollX;
-			const elemDocY	= rect.top  + window.scrollY;
-			localPos	= {
-				x:	pageX - elemDocX,
-				y:	pageY - elemDocY
-				};
-		}
-		const pos	= { x: this.anchor.x, y: this.anchor.y };
-		// Emit drop event with garage and local position (or null if none)
-		this.emit( 'dropped', null, this.currentGarage, localPos );
+
+		//--------------------------------
+		// Block Domino DOM Action(s)
+		//--------------------------------
+		e.preventDefault();   // prevent default actions underneath
+		e.stopPropagation();  // stop bubbling upward
+
+		//--------------------------------
+		// Calculate Garage-Local Position
+		//--------------------------------
+		// Recheck the release position in case the canvas moved or resized.
+		const hit = this.getGarageHit( e );
+
+		//--------------------------------
+		// Emit Drop Crate Event & Reset
+		//--------------------------------
+		// Send the same tile coordinates used by the visual snap.
+		this.emit( 'dropped', null, hit?.garage ?? null, hit );
 		this.reset(); // reset the crate
 	}
 
@@ -25140,6 +25411,195 @@ class JestToolCrate extends JestTool {
 	//   alongside mouse events (with proper preventDefault).
 }
 
+/* --- BEGIN js/apps/jest/components/editing/tools/JestFileRelationship.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileRelationship.js loaded' );
+
+//-------------------------
+// JestFileRelationship Class
+//-------------------------
+// Stores named links from one open file view to other open file views.
+class JestFileRelationship {
+	// Reference propert(ies)
+	owner   = null;         // [JestFileView|null] View that owns the links.
+	views   = new Map();    // [Map<string,JestFileView>] Target view by slot.
+
+	//--------------------------------
+	// Constructor
+	//--------------------------------
+	// Assign the view that owns these relationships.
+	// * owner - [JestFileView] Source view of the links.
+	constructor( owner ) {
+		// Keep the source view available for validation and subclasses.
+		this.owner = owner;
+	}
+
+	//--------------------------------
+	// Assign a View
+	//--------------------------------
+	// Set a target view in a named slot, or clear the slot with null.
+	// RETURNS: [boolean] `true` when the assignment was accepted.
+	// * slot  - [string] Name of the relationship slot.
+	// * view  - [JestFileView|null] Target view.
+	setView( slot, view ) {
+		// Require a live owner and a named slot.
+		if ( !this.owner || typeof slot!=='string' || !slot )
+			return false; // abort
+
+		// Allow the caller to clear a slot even when it is already empty.
+		if ( view===null ) {
+			this.views.delete( slot );
+			return true; // success
+		}
+
+		// Accept other file views and prevent links back to this view.
+		if ( !(view instanceof JestFileView) || view===this.owner )
+			return false; // fail
+
+		// Replace the target for this slot.
+		this.views.set( slot, view );
+		return true; // success
+	}
+
+	//--------------------------------
+	// Get a Linked View
+	//--------------------------------
+	// RETURNS: [JestFileView|null] Current target for the slot.
+	// * slot - [string] Name of the relationship slot.
+	getView( slot ) {
+		// Empty slots resolve to null.
+		return this.views.get( slot ) ?? null;
+	}
+
+	// RETURNS: [int] Number of occupied slots.
+	get size() {
+		// Count the current links.
+		return this.views.size;
+	}
+
+	//--------------------------------
+	// Remove Links to a View
+	//--------------------------------
+	// Clear every slot pointing to a view that just closed.
+	// * view - [JestFileView] Target view being removed.
+	removeView( view ) {
+		// One target may occupy multiple slots.
+		for ( const [slot, target] of this.views )
+			if ( target===view )
+				this.views.delete( slot );
+	}
+
+	//--------------------------------
+	// Teardown Method(s)
+	//--------------------------------
+	// Release the owner and all linked views.
+	destroy() {
+		// Drop references held by the closing view.
+		this.views.clear();
+		this.owner = null;
+	}
+}
+
+/* --- BEGIN js/apps/jest/components/editing/tools/JestFileRelationshipLevel.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileRelationshipLevel.js loaded' );
+
+//-------------------------
+// JestFileRelationshipLevel Class
+//-------------------------
+// Links open level views and draws their adjoining edges.
+class JestFileRelationshipLevel extends JestFileRelationship {
+	// Grid offsets relative to the active level. Positive Y moves south.
+	static directions =
+		Object.freeze({
+			northwest   : [ -1, -1 ],
+			north       : [  0, -1 ],
+			northeast   : [  1, -1 ],
+			west        : [ -1,  0 ],
+			east        : [  1,  0 ],
+			southwest   : [ -1,  1 ],
+			south       : [  0,  1 ],
+			southeast   : [  1,  1 ]
+			});
+
+	//--------------------------------
+	// Assign a Neighbor
+	//--------------------------------
+	// Set or clear a level view at a compass direction.
+	// RETURNS: [boolean] `true` when the assignment was accepted.
+	// * direction - [string] Compass direction relative to the owner.
+	// * view      - [JestFileViewEditorPainterLevel|null] Target view.
+	setView( direction, view ) {
+		// Require a known direction and a level view when assigning a target.
+		if ( !Object.hasOwn(JestFileRelationshipLevel.directions,direction) )
+			return false; // fail
+		if ( view!==null && !(view instanceof JestFileViewEditorPainterLevel) )
+			return false; // fail
+
+		// Let the parent validate and store the link.
+		return super.setView( direction, view );
+	}
+
+	//--------------------------------
+	// Draw a Neighbor Edge
+	//--------------------------------
+	// Composite the visible part of the neighbor into a preview canvas.
+	// RETURNS: [boolean] `true` when a linked level was available.
+	// * direction   - [string] Compass direction of the linked view.
+	// * destination - [ElementCanvas] Canvas for this edge or corner.
+	// * edge        - [int] Preview depth in unzoomed pixels.
+	drawNeighbor( direction, destination, edge ) {
+		// Resolve the level through the current target view.
+		const level = this.getView(direction)?.file?.context;
+		if ( !level ) return false; // fail
+
+		//--------------------------------
+		// Calculate Source Crop
+		//--------------------------------
+		// Keep the full span on axes that line up with the active level.
+		const [x,y] = JestFileRelationshipLevel.directions[direction];
+		const span  = this.owner.client.config.levelSpan;
+		const w     = x===0 ? span : edge;
+		const h     = y===0 ? span : edge;
+
+		// West uses the neighbor's right edge. North uses its bottom edge.
+		const sx    = x<0 ? span-w : 0;
+		const sy    = y<0 ? span-h : 0;
+
+		//--------------------------------
+		// Draw Visible Layers
+		//--------------------------------
+		// Keep the backing canvas at the crop's original pixel size.
+		if ( destination.width!==w || destination.height!==h )
+			destination.resize( w, h );
+
+		// Clear the old preview, then composite layers from bottom to top.
+		destination.clear(); // clear canvas
+		for ( const layer of level.getLayers() ) {
+			// Skip hidden layers and layers whose canvas is unavailable.
+			if ( !layer.visible || !layer.canvas?.width || !layer.canvas?.height )
+				continue; // skip
+
+			// Copy only the part of this layer facing the active level.
+			destination.draw(
+				layer.canvas, false, false,
+				0, 0, sx, sy,
+				w, h
+				);
+		}
+
+		return true; // success
+	}
+}
+
 /* --- BEGIN js/apps/jest/components/editing/tools/JestFileView.js --- */
 //-------------------------------------------------------
 // JEST ® All Rights Reserved
@@ -25157,15 +25617,19 @@ class JestFileView extends JestTool {
 	canvas       = null;     // [object] ElementCanvas for drawing.
 	// Reference propert(ies)
 	file         = null;     // [object] JestFile being viewed.
+	// Reference propert(ies)
+	relationship = null;     // [JestFileRelationship] Links owned by this view.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
+		// Construct the relationship object owned by this view.
+		this.relationship = this.createRelationship();
 	}
 
 	//-------------------------
@@ -25174,6 +25638,8 @@ class JestFileView extends JestTool {
 	// Destroy the view [object]
 	// RETURNS: [void].
 	destroy() {
+		// Release all outgoing links when the view closes.
+		this.relationship?.destroy();
 		// Remove all event(s).
 		this.unregisterAll();
 	}
@@ -25183,16 +25649,16 @@ class JestFileView extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build( name='file-view', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		const defaultClasses = [ 'file-view' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering [canvas]
 		const canvas = new ElementCanvas();
 		this.canvas  = canvas;
@@ -25201,30 +25667,56 @@ class JestFileView extends JestTool {
 		//this.panel.addPanel( 'canvas', canvas ); // add canvas to element
 		// Add canvas to palette element
 		this.panel.el.appendChild( canvas.el );
-		// Add resize event handler for canvas updating
-		this.anchor.register( 'resize', 'canvas', (w,h)=>this.resize(w,h) );
+		// Attach event(s) to re-scale the canvas to match its zoomed dimensions.
+		this.anchor.register( ['resize','zoom'], 'canvas', ()=>this.resize() );
+	}
+
+	//--------------------------------
+	// Create File Relationship
+	//--------------------------------
+	// Create a generic file relationship [object].
+	// RETURNS: [JestFileRelationship] Relationship object for this view.
+	createRelationship() {
+		// Give generic file views named relationship slots.
+		return new JestFileRelationship( this );
 	}
 
 	//-------------------------
 	// Canvas Methods
 	//-------------------------
-	// Resize the canvas element.
-	// NOTE: This is a callback method.
-	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * width   - [int] Value of custom width span of canvas.
-	// * height  - [int] Value of custom height span of canvas.
-	resize( width, height ) {
+	// Resize the canvas to match its raw dimensions at a requested magnification.
+	// NOTE: This is an event callback method.
+	// RETURNS: [void].
+	/*resize() {
 		// Get real dimensions (after zoom).
 		const bounds = this.anchor.getZoomed();
 		// Update canvas dimensions
-		if ( this.canvas )
-			this.canvas.resize( bounds.display.w, bounds.display.h );
-		// Reapply display zoom after the backing canvas is resized.
-		//this.applyZoom();
-		return true; // success
+		this.canvas?.resize( bounds.display.w, bounds.display.h );
+		console.log( `Resizing canvas to: ${bounds.display.w}x${bounds.display.h}` );
+		// Emit the resized event.
+		this.emit( 'resize', null, bounds.display.w, bounds.display.h );
+	}*/
+
+	// Resize the canvas to match its raw dimensions.
+	// NOTE: This is an event callback method.
+	// RETURNS: [void].
+	resize() {
+		// Read logical dimensions before the workspace applies zoom.
+		const canvas = this.canvas;
+		if ( !canvas ) return;
+
+		// Obtain the canvas dimensions
+		const { w, h } = this.anchor.getBounds();
+		if ( canvas.width===w && canvas.height===h ) return;
+
+		// Reallocate only when the level's actual dimensions change.
+		console.log( `Resizing canvas to: ${w}x${h}` );
+		canvas.resize( w, h );
+		// Emit the resized event.
+		this.emit( 'resize', null, w, h );
 	}
 
-	//--------------------------------
+	/*//--------------------------------
 	// Apply View Zoom
 	//--------------------------------
 	// Set the canvas's displayed size while preserving its backing dimensions.
@@ -25287,11 +25779,11 @@ class JestFileView extends JestTool {
 			x: Math.floor( position.x / units ),
 			y: Math.floor( position.y / units )
 			};
-	}
+	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Open File
-	// --------------------------------
+	//---------------------------------
 	// Opens the file and triggers its view/render logic.
 	// RETURNS: [void].
 	// * file  - [object] JestFile being viewed.
@@ -25329,9 +25821,9 @@ class JestFileView extends JestTool {
 		return this.file;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void].
 	initView() {
@@ -25342,9 +25834,9 @@ class JestFileView extends JestTool {
 		this.anchor.graticulate( units ); // set grid size
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Render File
-	// --------------------------------
+	//---------------------------------
 	// Visualizes the file data onto the panel.
 	// RETURNS: [void].
 	renderFile() {
@@ -25373,8 +25865,8 @@ class JestFileView extends JestTool {
 
 	// Copies the source canvas to the destination canvas at (0,0).
 	// RETURNS: [void]
-	// * sourceCanvas	- [HTMLCanvasElement] Source canvas.
-	// * destCanvas		- [HTMLCanvasElement] Destination canvas.
+	// * sourceCanvas  - [HTMLCanvasElement] Source canvas.
+	// * destCanvas    - [HTMLCanvasElement] Destination canvas.
 	/*refreshCanvas( sourceCanvas, destCanvas ) {
 		// Require file to be set.
 		if ( !this.file ) return;
@@ -25411,9 +25903,9 @@ class JestFileViewEditor extends JestFileView {
 	governor		= null;				// [JestGovernor] object for state changes.
 	history			= null;				// [JestList] for visually logging state changes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -25621,9 +26113,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainter extends JestFileViewEditor {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -25661,14 +26153,14 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
+	// * client - [object] Application client that this piece belongs to.
 	constructor( client ) {
-		super( client );		// call parent constructor
+		super( client ); // call parent constructor
 	}
 
 	//-------------------------
@@ -25676,8 +26168,8 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build ( name='file-view-editor-painter-jani', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -25687,9 +26179,9 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 		// Copy jani canvas content to this canvas.
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void]
 	// * file - [JestFile] The file to assign.
@@ -25703,9 +26195,9 @@ class JestFileViewEditorPainterJani extends JestFileViewEditorPainter {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {
@@ -25764,12 +26256,12 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
+	// * client - [object] Application client that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
 	}
@@ -25779,8 +26271,8 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build ( name='file-view-editor-painter-level', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -25790,11 +26282,20 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Copy level canvas content to this canvas.
 	}
 
-	// --------------------------------
+	//--------------------------------
+	// Create Level Relationship
+	//--------------------------------
+	// RETURNS: [JestFileLevelRelationship] Neighbor links for this level view.
+	createRelationship() {
+		// Give this view compass directions and level edge rendering.
+		return new JestFileRelationshipLevel( this );
+	}
+
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
-	// RETURNS: [void]
+	// RETURNS: [void].
 	// * file - [JestFile] The file to assign.
 	setFile( file ) {
 		// Validate argument(s)
@@ -25806,11 +26307,11 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
-	// RETURNS: [void]
+	// RETURNS: [void].
 	initView() {
 		// Initialize the base view and its tile measurement.
 		super.initView();
@@ -25825,36 +26326,6 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		this.anchor.resize( levelGrid*units, levelGrid*units );
 	}
 
-	//-------------------------
-	// Copy Canvas Content
-	//-------------------------
-	// Copies the source canvas to the destination canvas at (0,0).
-	// RETURNS: [void]
-	// * sourceCanvas	- [HTMLCanvasElement] Source canvas.
-	// * destCanvas		- [HTMLCanvasElement] Destination canvas.
-	/*refreshCanvas() {
-		// Require file to be set.
-		if ( !this.file ) return;
-		super.refreshCanvas(); // call parent method
-		// Obtain file canvas context & copy contents to canvas.
-		const render		= this.getViewRender();
-		if ( !render ) {
-			console.error( '[JestFileViewEditorPainterLevel] Could not access level layer canvas.' );
-			return false;
-		}
-		const sourceCanvas	= render.el; // canvas element
-		const destCanvas	= this.canvas.el;
-		const ctx			= destCanvas.getContext('2d');
-		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height ); // optional clear
-		ctx.drawImage(
-			sourceCanvas, // image contents being copied
-			0, 0, // source crop x,y
-			sourceCanvas.width, sourceCanvas.height, // source W x H
-			0, 0, // destination x,y
-			destCanvas.width, destCanvas.height // destination W x H
-			);
-	}*/
-
 	//--------------------------------
 	// Refresh Level Canvas
 	// RETURNS: [boolean]
@@ -25864,6 +26335,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// NOTE: Layers are stored bottom-to-top, so drawing
 	// them sequentially produces the correct visual stack.
 	//--------------------------------
+	// RETURNS: [boolean] `true` on success else `false` if fail.
 	refreshCanvas() {
 		//--------------------------------
 		// Validate Current File
@@ -25878,10 +26350,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Resolve Level and Destination
 		//--------------------------------
 		// Retrieve the level represented by this file.
-		const level      = this.file.context;
-		// Retrieve the destination canvas.
-		const destCanvas = this.canvas;
-
+		const level = this.file.context;
 		// Validate the required rendering objects.
 		if ( !level ) return false;
 
@@ -25889,7 +26358,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Clear Previous Preview
 		//--------------------------------
 		// Remove the previous composite before rebuilding.
-		destCanvas.clear();
+		this.canvas.clear();
 
 		//--------------------------------
 		// Composite Visible Layers
@@ -25897,22 +26366,20 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Iterate from the bottom layer to the top layer.
 		for ( const layer of level.getLayers() ) {
 			// Hidden layers must not appear in the preview.
-			if ( !layer.visible ) continue; // skip
-
-			// Retrieve this layer's rendered canvas.
-			const sourceCanvas = layer.canvas;
-			// Skip layers without an initialized canvas.
-			if ( !sourceCanvas ) continue; // skip
+			if ( !layer.visible || !layer.canvas ) continue; // skip
 
 			// Draw the layer over the existing composite.
-			destCanvas.draw(
-				sourceCanvas, false, false, 0, 0, 0, 0,
-				null, null, destCanvas.width, destCanvas.height
+			this.canvas.draw(
+				layer.canvas,
+				false, // do not clear
+				false, // do not resize
+				0, 0, 0, 0,
+				null, null, this.canvas.width, this.canvas.height
 				);
 		}
 
 		// Rendering completed.
-		return true;
+		return true; // success
 	}
 
 	// Get level rendering canvas.
@@ -25940,9 +26407,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client - [object] Application client that this piece belongs to.
@@ -25976,9 +26443,9 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 		// Copy level canvas content to this canvas.
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void]
 	// * file - [JestFile] The file to assign.
@@ -25992,9 +26459,9 @@ class JestFileViewEditorPainterTileset extends JestFileViewEditorPainter {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {
@@ -26086,9 +26553,9 @@ class JestFileViewEditorPalette extends JestFileViewEditor {
 		super.build( name, defaultClasses.mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void]
 	// * file - [JestFile] The file to assign.
@@ -26102,9 +26569,9 @@ class JestFileViewEditorPalette extends JestFileViewEditor {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {
@@ -26332,9 +26799,9 @@ class JestTiledefs extends JestSavable {
 	// Object properties
 	defs			= null;				// [object] of tileset definitions.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client that this piece belongs to.
 	// * name		- [string] Value of overworld tileset (e.g. 'pics1').
@@ -26351,13 +26818,13 @@ class JestTiledefs extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}
@@ -26513,9 +26980,9 @@ class JestTileset extends JestSavable {
 	image			= null;				// [object] ElementImage of loaded image
 	tiledefs		= null;				// [object] JestTiledefs used to define tileset tile properties.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client that this piece belongs to.
 	// * name		- [string] Value of overworld tileset (e.g. 'pics1').
@@ -26530,13 +26997,13 @@ class JestTileset extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}
@@ -26584,9 +27051,9 @@ class JestTileset extends JestSavable {
 			throw new Error( `Argument "stem" must be of type [string].` );
 		}
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
-		// --------------------------------
+		//---------------------------------
 		// Load Tileset Image Data
-		// --------------------------------
+		//---------------------------------
 		// Try loading tileset image into gallery
 		await this.client.imager.loadFile( `tilesets/${stem}.png` )
 			.then(
@@ -26611,17 +27078,17 @@ class JestTileset extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * stem	- [string] Value of URL filename stem to load, without filetype (e.g. 'pics1')
 	async setTiledefs( stem ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.prove(stem,'string') )
 			throw new Error( `Argument 'stem' must be of type [string].` );
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
 		const filename	= `${stem}.tdefs`;
 
-		// --------------------------------
+		//---------------------------------
 		// Load Tileset Tiledefs Data
-		// --------------------------------
+		//---------------------------------
 		// Load tile definitions *.tdefs file
 		await this.client.secretary.loadFile( filename )
 			.then(
@@ -26646,9 +27113,9 @@ class JestTileset extends JestSavable {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// Tile‐Object Utilities
-	// -------------------------
+	//--------------------------
 	// Build a “generic” tile data object.
 	// RETURNS: { ts, tx, ty }
 	// * tileset	– [string] key used in this.client.gameboard.tilesets (e.g. "pics1").
@@ -26909,9 +27376,9 @@ class JestFantascope extends JestFileLoader {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _createFileObject( record, fileInfo, address, network ) {
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Create File [object]
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the return variable.
 		let jani	= null; // initially jani is [null]
 		// Validate the loaded data.
@@ -27373,22 +27840,22 @@ console.log( 'jestAlert: js/apps/jest/components/sound/JestSoundboard.js loaded'
 // Handles preloading, caching, and playing sound from downloaded sources.
 class JestSoundboard extends JestSavable {
 	// Properties
-	filetypes			= [ 'wav', 'mp3' ];	// [array] of filetype extension(s).
-	mute				= false;		// [bool] Whether sounds are on or off.
-	sounds				= {};			// [object] Preloaded sound objects to play.
-	soundCache			= {};			// [Object] Stores preloaded sound files.
-	defaultVolume		= 0.2;			// [float] Default volume (20%).
-	volume				= 100;			// [float] Volume multiplier value (100%).
+	filetypes     = [ 'wav', 'mp3' ]; // [array] of filetype extension(s).
+	mute          = false;            // [bool] Whether sounds are on or off.
+	sounds        = {};               // [object] Preloaded sound objects to play.
+	soundCache    = {};               // [Object] Stores preloaded sound files.
+	defaultVolume = 0.2;              // [float] Default volume (20%).
+	volume        = 100;              // [float] Volume multiplier value (100%).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
-	// * client		- [object] Application client creating the object.
-	// * name		- [string] Value of soundboard name (e.g. 'primary').
+	// * client  - [object] Application client creating the object.
+	// * name    - [string] Value of soundboard name (e.g. 'primary').
 	constructor( client, name ) {
 		// Call the parent object constructor
-		super( client, name );			// construct the parent
+		super( client, name ); // construct the parent
 	}
 
 	//-------------------------
@@ -27396,7 +27863,7 @@ class JestSoundboard extends JestSavable {
 	//-------------------------
 	// Obtain a sound key.
 	// RETURNS: [void].
-	// * stem		- [string] Sound filename stem (e.g. 'footstep').
+	// * stem  - [string] Sound filename stem (e.g. 'footstep').
 	soundKey( stem ) { return `${stem}`; }
 
 	//-------------------------
@@ -27404,12 +27871,12 @@ class JestSoundboard extends JestSavable {
 	//-------------------------
 	// Download sound file(s) asynchronously & store as JestSound [objects] for playback.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * addresses	- [array] Full address names (e.g. 'jump.wav').
-	//   network	- [string] One of: 'local', 'remote'
+	// * addresses  - [array] Full address names (e.g. 'jump.wav').
+	//   network    - [string] One of: 'local', 'remote'
 	async preload( addresses, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate argument(s)
-		// --------------------------------
+		//---------------------------------
 		// 'addresses' must be an [array<string>].
 		if ( !jsos.prove(addresses,'stray') )
 			throw new Error( `Argument 'filenames' must be of type [stray].` );
@@ -27417,9 +27884,9 @@ class JestSoundboard extends JestSavable {
 		if ( !jsos.prove(addresses,'array') )
 			addresses = [ addresses ]; // [array]
 
-		// --------------------------------
+		//---------------------------------
 		// Validate & Build Queue
-		// --------------------------------
+		//---------------------------------
 		// Iterate requested sound file(s) & verify request type(s).
 		const queue	= [];
 		for ( const address of addresses ) {
@@ -27441,15 +27908,15 @@ class JestSoundboard extends JestSavable {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Process Queue & Download
-		// --------------------------------
+		//---------------------------------
 		// Attempt to load requested sound files(s).
 		await this.client.secretary.loadFiles( queue );
 
-		// --------------------------------
+		//---------------------------------
 		// Render Downloaded Sound File(s)
-		// --------------------------------
+		//---------------------------------
 		// Iterate sound file data & create [objects]
 		for ( const address of queue ) {
 			// Create a new JestSound instance & render parsed sound data.
@@ -27461,9 +27928,9 @@ class JestSoundboard extends JestSavable {
 			// Continue to create sound [object].
 			const sound  = new JestSound( this.client, address );
 			const key    = this.soundKey( address );
-			this.sounds[key] = sound;		// store sound [object]
-			sound.setup();					// call any necessary setup
-			sound.render( record.blob );	// render blob into JestSound [object]
+			this.sounds[key] = sound;     // store sound [object]
+			sound.setup();                // call any necessary setup
+			sound.render( record.blob );  // render blob into JestSound [object]
 		}
 		console.log( this.sounds );
 		return true; // success
@@ -27492,8 +27959,9 @@ class JestSoundboard extends JestSavable {
 		const sound	= this.sounds?.[key] || null; // get sound [object]
 		if ( !sound ) {
 			console.error( `Sound not found in cache: ${key}` );
-			return;
+			return; // abort
 		}
+		//console.error( `Sound playing: ${key}` );
 		// Multiply sound by soundboard volume
 		volume *= this.volume/100;
 		// Attempt to play the sound
@@ -27545,22 +28013,22 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestHuman.js loaded' );
 //-------------------------
 // Represents a human character [object] with animations for different parts (head, sword, body).
 class JestHuman extends JestWorldling {
-	// --------------------------------
+	//---------------------------------
 	// Human Properties
-	// --------------------------------
+	//---------------------------------
 	type			= null;				// [string] Value of [object] taxonomic type (e.g. "human").
-	// --------------------------------
+	//---------------------------------
 	// Core [objects] & Input/Output
-	// --------------------------------
+	//---------------------------------
 	// Movement propert(ies)
 	collider		= null;				// [object] Anchor used to test for collision movement (x,y) location(s).
 	// Animation / graphical avatar propert(ies)
 	head			= null;				// [object] Sprite for the human's head (spritesheet-based).
 	body			= null;				// [object] Sprite for the human's body (spritesheet-based).
 	sword			= null;				// [object] Animation for the human's sword (spritesheet-based).
-	// --------------------------------
+	//---------------------------------
 	// Motion Variable(s)
-	// --------------------------------
+	//---------------------------------
 	gears			= null;				// [object] of actual possible gears that the user can be in.
 	// Directions: 0=up, 1=left, 2=down, 3=right
 	dir				= 2;				// [int] Current facing direction
@@ -27572,9 +28040,9 @@ class JestHuman extends JestWorldling {
 	// Sound propert(ies)
 	soundStep		= 0;				// [number] Value of current sound step: 0 through n
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the Human.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -27604,17 +28072,17 @@ class JestHuman extends JestWorldling {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Setup Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Setup the human [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Call parent setup method(s)
 		await super.setup();		// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Setup Human Definitions
-		// --------------------------------
+		//---------------------------------
 		this.anchor.graticulate( this.client.config.tileGrid );		// human level anchor is in tile-based units
 		this.anchor.resize( 1, 1 );									// human body is 1x1 tiles width/height
 		return true; // successfully setup
@@ -27623,9 +28091,9 @@ class JestHuman extends JestWorldling {
 	// Setup a collision detection anchor [object].
 	// RETURNS: [void].
 	setupCollider() {
-		// --------------------------------
+		//---------------------------------
 		// Create Collision Detection [object]
-		// --------------------------------
+		//---------------------------------
 		// Create collision anchor [object] for user on-wall detection
 		const collider	= new Anchor();									// create collider point
 		this.collider	= collider;										// store anchor as property
@@ -27638,10 +28106,10 @@ class JestHuman extends JestWorldling {
 	// Setup the human avatar animation [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setupAvatar() {
-		// --------------------------------
+		//---------------------------------
 		// Set Default Gear View(s)
 		// & Prep to Download JANI(s)
-		// --------------------------------
+		//---------------------------------
 		// Load the *.jani file(s)
 		const files		= []; // create list of files to load
 		for ( const mode in this.gears ) {
@@ -27650,9 +28118,9 @@ class JestHuman extends JestWorldling {
 			const name	= `${mode}.jani`;
 			files.push( name ); // push to download JANI by name
 		}
-		// --------------------------------
+		//---------------------------------
 		// Load Default JestJani [object(s)]
-		// --------------------------------
+		//---------------------------------
 		// Load jani(s) using fantascope.
 		const janis		= await this.client.fantascope.loadFiles( files, 'remote' );
 		// Iterate all jani(s) & set parent as human anchor point.
@@ -27683,9 +28151,9 @@ class JestHuman extends JestWorldling {
 			// Throw error if JANI didn't load.
 			else console.warn( `Human JANI failed to load: ${name}.` );
 		}
-		// --------------------------------
+		//---------------------------------
 		// Set Visual(s)
-		// --------------------------------
+		//---------------------------------
 		// Set the current JAni
 		this.view	= this.gears.idle.view; // set default avatar JANI view
 		// Set all default image(s).
@@ -27705,9 +28173,9 @@ class JestHuman extends JestWorldling {
 		return true; // succees
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Avatar Handling
-	// --------------------------------
+	//---------------------------------
 	// Change the character's avatar JAnimation.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of loaded JAni to use for the human display.
@@ -27720,38 +28188,38 @@ class JestHuman extends JestWorldling {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of loaded JAni to use for the human display.
 	setJani( name ) {
-		// --------------------------------
+		//---------------------------------
 		// Remove Current Avatar
-		// --------------------------------
+		//---------------------------------
 		// Turn off existing avatar
 		this.view.reset();						// Reset the current JAni
-		// --------------------------------
+		//---------------------------------
 		// Setup New Avatar
-		// --------------------------------
+		//---------------------------------
 		// Equip new avatar
 		const view		= this.gears[name].view;
 		// Configure new JAni to match pertinent current human stats
 		view.reset().enable().play();			// Reset, enable, then play the new JAni
-		// --------------------------------
+		//---------------------------------
 		// Change Human Avatar
-		// --------------------------------
+		//---------------------------------
 		this.view		= view;					// Change human avatar to new JAni
 		this.setDirection( false, this.dir );	// Synch player's direction to view
 		//console.log( avatar );
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Graphic Skin Handling
-	// --------------------------------
+	//---------------------------------
 	// Set the human's image for a given type ('head', 'body', 'sword')
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * attr	- [string] The attribute of skin to change ('head', 'body', 'sword').
 	// * path	- [string] The filename of the image asset (e.g. 'heads/head104.png').
 	skin( attr, path ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Get allowable skin type
 		const attrs		= [ 'sprites', 'head', 'body', 'hair', 'sword' ];
 		if ( !attrs.includes(attr) ) {
@@ -27929,16 +28397,16 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestPlayer.js loaded' );
 //-------------------------
 // Represents a root player [object] with animations for different parts (head, sword, body).
 class JestPlayer extends JestHuman {
-	// --------------------------------
+	//---------------------------------
 	// Account Propert(ies)
-	// --------------------------------
+	//---------------------------------
 	// World data
 	id				= null;				// [int] Value of guest account ID (e.g. 120145).
 	username		= null;				// [string] Value of user username (e.g. 'Antago').
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the Guest.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -27994,9 +28462,9 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestGuest.js loaded' );
 //-------------------------
 // Represents an external guest object with animations for different parts (head, sword, body).
 class JestGuest extends JestPlayer {
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the Guest.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -28016,39 +28484,39 @@ class JestGuest extends JestPlayer {
 		super.teardown(); // call parent destructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Setup Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Setup the guest [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Call parent setup method(s)
 		await super.setup();		// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Graphical Setup
-		// --------------------------------
+		//---------------------------------
 		await this.setupAvatar();
-		// --------------------------------
+		//---------------------------------
 		// Setup Listener(s)
-		// --------------------------------
+		//---------------------------------
 		// Set other event(s)
 		this.register( 'gearshift', 'avatar', (e)=>this.changeJani(e) ); // change avatar animation
-		// --------------------------------
+		//---------------------------------
 		// Start Worldling [object]
-		// --------------------------------
+		//---------------------------------
 		super.start();		// start the worldling [object]
-		// --------------------------------
+		//---------------------------------
 		// Set Guest Mode
-		// --------------------------------
+		//---------------------------------
 		this.jot( false, 'mode', 'idle' );
 		//this.emit( 'gearshift',null,true );
 		this.status	= 2; // ready
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Visual Rendering
-	// --------------------------------
+	//---------------------------------
 	// Set the guest's avatar JAnimation.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of loaded JAni to use for the human display.
@@ -28056,9 +28524,9 @@ class JestGuest extends JestPlayer {
 		super.setJani( name );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Loop
-	// --------------------------------
+	//---------------------------------
 	// Central guest timeout loop.
 	// RETURNS: [void].
 	// * e	- [object] of central pulse tick event data.
@@ -28072,15 +28540,15 @@ class JestGuest extends JestPlayer {
 	// Handle guest input.
 	// RETURNS: [void].
 	update() {
-		// --------------------------------
+		//---------------------------------
 		// Determine Active Keycode(s)
-		// --------------------------------
+		//---------------------------------
 		// Generate [object] of modes guest is actively trying to shift into (by keypress)
 		// Get current time
 		const now			= performance.now();
-		// --------------------------------
+		//---------------------------------
 		// Check For Guest Gear Change
-		// --------------------------------
+		//---------------------------------
 		// Determine current guest mode & make move(s)
 		const currentMode	= this.skim( 'mode' );
 		//const gearshifts	= this.gears[currentMode].gearshifts; // get current guest gear
@@ -28103,16 +28571,16 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestUser.js loaded' );
 //-------------------------
 // Represents a user object with animations for different parts (head, sword, body).
 class JestUser extends JestPlayer {
-	// --------------------------------
+	//---------------------------------
 	// Core [objects] & Input/Output
-	// --------------------------------
+	//---------------------------------
 	// Track keys
 	keysListen		= [];				// [array] of registered keyboard inputs the user can input
 	keys			= {};				// [object] of actual keyboard keys being pressed
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the User.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -28179,24 +28647,24 @@ class JestUser extends JestPlayer {
 		super.teardown(); // call parent destructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Setup Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Setup the user [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Call parent setup method(s)
 		await super.setup();		// call parent setup method
 
-		// --------------------------------
+		//---------------------------------
 		// Boundaries Checking
-		// --------------------------------
+		//---------------------------------
 		// Setup onwall collider.
 		this.setupCollider();
 
-		// --------------------------------
+		//---------------------------------
 		// Graphical Setup
-		// --------------------------------
+		//---------------------------------
 		// Setup the user avatar.
 		await this.setupAvatar();
 			/*.catch(
@@ -28204,31 +28672,31 @@ class JestUser extends JestPlayer {
 					console.warn( `User avatar failed to setup: ${err}` );
 				});*/
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Listener(s)
-		// --------------------------------
+		//---------------------------------
 		// Set other event(s)
 		this.register( 'gearshift', 'avatar', (e)=>this.changeJani(e) ); // change avatar animation
 		// Setup key event listener(s)
 		this.client.io.register( 'keyPress', 'userKeyListener', this.keyPress.bind(this) );
 		this.client.io.register( 'keyRelease', 'userKeyListener', this.keyRelease.bind(this) );
 
-		// --------------------------------
+		//---------------------------------
 		// Start Worldling [object]
-		// --------------------------------
+		//---------------------------------
 		super.start();		// start the worldling [object]
 
-		// --------------------------------
+		//---------------------------------
 		// Set User Mode
-		// --------------------------------
+		//---------------------------------
 		this.jot( false, 'mode', 'idle' );
 		this.status	= 2; // ready
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Key Listener(s) & Handling
-	// --------------------------------
+	//---------------------------------
 	// Register key presses.
 	// * data	- [object] Data passed from keyboard listener event.
 	keyPress( data ) {
@@ -28255,9 +28723,9 @@ class JestUser extends JestPlayer {
 		//console.log( `Key released: ${data.key} (Mapped: ${key})`, this.keys );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Loop
-	// --------------------------------
+	//---------------------------------
 	// Central user timeout loop.
 	// * e	- [object] of central pulse event data.
 	// RETURNS: [void].
@@ -28272,9 +28740,9 @@ class JestUser extends JestPlayer {
 	// Handle user input.
 	// RETURNS: [void].
 	input() {
-		// --------------------------------
+		//---------------------------------
 		// Determine Active Keycode(s)
-		// --------------------------------
+		//---------------------------------
 		// Generate [object] of modes user is actively trying to shift into (by keypress)
 		// Get current time
 		const now			= performance.now();
@@ -28293,9 +28761,9 @@ class JestUser extends JestPlayer {
 				this.gears[mode].signaled		= null;			// 🚨 Reset signaled on release
 			}
 		}
-		// --------------------------------
+		//---------------------------------
 		// Check For User Gear Change
-		// --------------------------------
+		//---------------------------------
 		// Determine current user mode & make move(s)
 		const currentMode	= this.skim( 'mode' );
 		const gearshifts	= this.gears[ currentMode ].gearshifts; // get current user gear
@@ -28465,16 +28933,16 @@ class JestUser extends JestPlayer {
 	// * dx		- [float] Value of how much to move the user's x.
 	// * dy		- [float] Value of how much to move the user's y.
 	move( remote, dx, dy ) {
-		// --------------------------------
+		//---------------------------------
 		// Interrupt For Remote Change
-		// --------------------------------
+		//---------------------------------
 		// If serverside change, automove player
 		if ( remote )
 			return super.move( true, dx, dy );	// delegate movement to parent
 
-		// --------------------------------
+		//---------------------------------
 		// Continue For Local Change
-		// --------------------------------
+		//---------------------------------
 		// Declare variable(s)
 		let testX, testY;
 		const tileGrid	= this.client.config.tileGrid;
@@ -28601,9 +29069,9 @@ class JestGameboard extends JestSavable {
 		// Call the parent object constructor
 		super( client );				// construct the parent
 		this.client		= client;		// store the client [object] reference
-		// --------------------------------
+		//---------------------------------
 		// Setup object
-		// --------------------------------
+		//---------------------------------
 		this.setup(); // setup the object
 	}
 
@@ -28613,13 +29081,13 @@ class JestGameboard extends JestSavable {
 	// Setup the object [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();			// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();		// load the data
 		return true; // success
 	}
@@ -28627,9 +29095,9 @@ class JestGameboard extends JestSavable {
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create Display [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the display for render viewing
 		const display	= new JestDisplay();
 		display.build(); // build the display
@@ -28817,9 +29285,9 @@ class JestGameboard extends JestSavable {
 	// * id			- [int] value of guest id to add to the gameboard.
 	// * username	- [string] Value of user username (e.g. 'Antago').
 	async addGuest( id, username ) {
-		// --------------------------------
+		//---------------------------------
 		// Create a guest [object]
-		// --------------------------------
+		//---------------------------------
 		if ( this.guests?.[id] ) return false;			// guest exists
 		const guest		= new JestGuest( this.client ); // guest character
 		await guest.setup();
@@ -28870,9 +29338,9 @@ class JestOverworld extends JestSavable {
 	matrix			= null;				// 2D [array] JestLevel [objects] being connected
 	width			= null;
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of overworld name (e.g. 'map1').
@@ -28888,13 +29356,13 @@ class JestOverworld extends JestSavable {
 	// Setup the object [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// render the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true;					// success
 	}
@@ -28902,15 +29370,15 @@ class JestOverworld extends JestSavable {
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering [canvas]
 		const canvas	= new ElementCanvas();
 		this.canvas		= canvas;
-		// --------------------------------
+		//---------------------------------
 		// Setup Sizing Method(s) [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'overworld', (w,h)=>this.resize(w,h) );
 		// Set tile size
@@ -29366,21 +29834,21 @@ console.log( 'jestAlert: js/apps/jest/components/sound/JestSound.js loaded' );
 // JestSound instance that encapsulates the parsed audio data.
 class JestSound extends JestSavable {
 	// Container properties
-	audios			= [];			// [array] of currently active Audio instances.
+	audios     = [];         // [array] of currently active Audio instances.
 	// Default audio properties
-	volume			= 0.2;			// [float] Default volume (20%).
-	maxload			= 10;			// [int] maximum ElementAudio [objects]
-	objectURL		= null;			// [string] value of objectURL for preloaded data.
+	volume     = 0.2;        // [float] Default volume (20%).
+	maxload    = 10;         // [int] maximum ElementAudio [objects]
+	objectURL  = null;       // [string] value of objectURL for preloaded data.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
-	// * client		- [object] Application client creating the object.
-	// * name		- [string] Value of level name (e.g. 'level1').
+	// * client  - [object] Application client creating the object.
+	// * name    - [string] Value of level name (e.g. 'level1').
 	constructor( client, name ) {
 		// Call the parent object constructor
-		super( client, name );			// construct the parent
+		super( client, name ); // construct the parent
 	}
 
 	//-------------------------
@@ -29389,21 +29857,21 @@ class JestSound extends JestSavable {
 	// Setup the object [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
-		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
+		this.build();       // build the object
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
-		await this.load();				// load the data
-		return true;					// success
+		//---------------------------------
+		await this.load();  // load the data
+		return true;        // success
 	}
 
 	// Build the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		return true;		// success
+		return true; // success
 	}
 
 	//-------------------------
@@ -29412,21 +29880,21 @@ class JestSound extends JestSavable {
 	// Load the data.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async load() {
-		super.load();			// call parent load start method
-		this.complete();		// call complete method
-		return true;			// success
+		super.load();     // call parent load start method
+		this.complete();  // call complete method
+		return true;      // success
 	}
 
 	// Complete data load.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	complete() {
-		super.complete();		// call parent complete method
-		return true;			// success
+		super.complete(); // call parent complete method
+		return true;      // success
 	}
 
 	// Receive and store blob as sound.
 	// RETURNS: ElementAudio [object] on success else [null] on fail.
-	// * blob		- [object] Blob of loaded audio data.
+	// * blob  - [object] Blob of loaded audio data.
 	render( blob ) {
 		if ( !jsos.prove(blob,'object') ) {
 			throw new Error( 'Invalid parsed defs. Must be an object.' );
@@ -29439,36 +29907,59 @@ class JestSound extends JestSavable {
 	}
 
 	//-------------------------
-	// Create Audio [object]
+	// Create Audio Instance
 	//-------------------------
-	// Creates a new HTMLAudioElement using the stored objectURL.
-	// RETURNS: [object] ElementAudio, else `false` on fail.
-	// * volume		- [float] Playback volume (default: this.volume).
+	// Creates a dormant ElementAudio using the stored object URL.
+	// RETURNS: [object] ElementAudio on success.
+	// * volume	- [float] Initial playback volume.
 	createInstance( volume=this.volume ) {
-		// --------------------------------
-		// Create Audio [object]
-		// --------------------------------
-		// Create the audio element [object]
-		const audio		= new ElementAudio( { objectURL: this.objectURL, queued: true } );
-		audio.setVolume( volume );	// ensures volume is stored and applied properly
-		const instance	= { audio, playing: false };
-		this.audios.push( audio );	// store audio in stack
+		//---------------------------------
+		// Create Dormant Audio
+		//---------------------------------
+		// Queue automatic playback during construction.
+		const audio = new ElementAudio({
+			objectURL : this.objectURL,
+			queued    : true
+			});
+
+		// Store the requested volume before playback begins.
+		audio.setVolume( volume );
+
+		// Retain the instance for recycling and simultaneous playback.
+		this.audios.push( audio );
+
 		return audio;
 	}
 
 	//-------------------------
 	// Playback Handling
 	//-------------------------
-	// Finds an available instance or creates a new one.
-	// * volume		- [float] Playback volume.
+	// Reuses an available audio instance or creates a queued instance.
+	// * volume       - [float] Playback volume.
+	// * simultaneous - [bool] Whether another instance may be created.
 	play( volume=null, simultaneous=true ) {
-		// Check for an existing idle audio instance
+		//---------------------------------
+		// Find Recyclable Audio
+		//---------------------------------
+		// Reuse an existing instance only when it is no longer playing.
 		let audio	= this.audios.find( a=>this.recyclable(a) );
-		// Create new instance if needed
-		if ( !audio && (simultaneous || this.audios.length<1) )
-			audio	= this.createInstance( volume );
-		// Play the audio if available
-		if ( audio ) audio.play( volume );
+		let created	= false;
+
+		//---------------------------------
+		// Create Queued Audio
+		//---------------------------------
+		// A new instance will start automatically when its data becomes ready.
+		if ( !audio && (simultaneous || this.audios.length<1) ) {
+			audio   = this.createInstance( volume );
+			created = true;
+		}
+
+		//---------------------------------
+		// Play Recycled Audio
+		//---------------------------------
+		// Only recycled instances need an explicit play call.
+		if ( audio && !created )
+			audio.play( volume );
 	}
 
 	// Pauses all currently playing instances.
@@ -29490,9 +29981,9 @@ class JestSound extends JestSavable {
 	//-------------------------
 	recyclable( audio ) {
 		// Get HTMLAudioElement
-		const { el } 	= audio;
+		const { el }   = audio;
 		// Access audio playback status
-		const playback	= audio.skim( 'playback' );
+		const playback = audio.skim( 'playback' );
 		// Determine if audio is playing
 		return playback!=='playing' && ( el.ended || el.paused || el.currentTime===0 );
 	}
@@ -29517,7 +30008,7 @@ class JestSound extends JestSavable {
 	destroy() {
 		clearInterval( this.cleanupInterval ); // Stop automatic cleanup
 		// Stop all audio files
-		this.audios.forEach( a=>a.el.stop() );
+		this.audios.forEach( a => a.el.stop() );
 		// Remove audio [objects] from [array]
 		this.audios	= [];
 		// Release objectURL
@@ -29558,9 +30049,9 @@ class JestLevelLayer extends JestMatrix {
 	chunks      = null;        // [array] Tile map of level compressed into chunks.
 	tiledefs    = null;        // [object] Tiledefs aligned to specific tile indices.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client  - [object] Application client creating the object.
 	constructor( client ) {
@@ -29593,10 +30084,10 @@ class JestLevelLayer extends JestMatrix {
 		// Remove layer canvas from the DOM, if attached.
 		this.canvas?.remove?.();
 		// Nullify [object] reference propert(ies).
-		this.level		= null; // nullify level property
+		this.level   = null; // nullify level property
 		// Null out large fields
-		this.tilemap	= this.chunks = this.tiledefs = null;
-		this.canvas		= this.stamp  = null;
+		this.tilemap = this.chunks = this.tiledefs = null;
+		this.canvas  = this.stamp  = null;
 		// Call parent destroy if it exists
 		if ( super.destroy ) super.destroy();
 	}
@@ -29608,18 +30099,18 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Check if setup is possible.
-		const status	= this.skim( 'status' );
+		const status = this.skim( 'status' );
 		if ( status!=='constructed' ) return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'building' );	// set status
 		this.build();						// build the object
 
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'empty' );		// set status
 		return true; // success
 	}
@@ -29628,24 +30119,24 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
 		// Check if setup is possible.
-		const status	= this.skim( 'status' );
+		const status    = this.skim( 'status' );
 		if ( status!=='building' ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering element canvas [object]
-		const canvas		= new ElementCanvas();
-		this.canvas			= canvas;
+		const canvas    = new ElementCanvas();
+		this.canvas     = canvas;
 		// Update canvas dimensions
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan = this.client.config.levelSpan;
 		canvas.resize( levelSpan, levelSpan );
 		// Create a canvas for clip stamping onto level element canvas [object]
-		const stamp			= new ElementCanvas();
-		this.stamp			= stamp;
+		const stamp     = new ElementCanvas();
+		this.stamp      = stamp;
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Sizing Method(s) [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'level', (w,h)=>this.resize(w,h) );
 		// Set tile size
@@ -29655,9 +30146,9 @@ class JestLevelLayer extends JestMatrix {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Tile Type Registry & Handling
-	// --------------------------------
+	//---------------------------------
 	// Build tileTypes: 2D array of Sets storing tile types per (x,y).
 	// RETURNS: [Set] of types, or empty Set if none exist.
 	// * tiles		- Ordered 2D [array] of tile tileset indices.
@@ -29699,19 +30190,19 @@ class JestLevelLayer extends JestMatrix {
 		return this.tiledefs[y]?.[x] ?? new Set();
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Level Rendering
-	// --------------------------------
+	//---------------------------------
 	// Clear the level board.
 	// RETURNS: [boolean] success or fail.
 	clear() {
 		// Empty the level first.
-		this.tilemap	= null;		// empty tilemap
-		this.chunks		= null;		// empty chunks
-		this.tiledefs	= null;		// empty tile definitions
+		this.tilemap  = null;       // empty tilemap
+		this.chunks   = null;       // empty chunks
+		this.tiledefs = null;       // empty tile definitions
 		// Clear the canvas.
 		if ( this.canvas?.el ) {
-			const ctx	= this.canvas.el.getContext( '2d' );
+			const ctx = this.canvas.el.getContext( '2d' );
 			ctx.clearRect( 0, 0, this.canvas.el.width, this.canvas.el.height );
 		}
 		// Revert mode to empty.
@@ -29740,8 +30231,8 @@ class JestLevelLayer extends JestMatrix {
 		if ( status!=='empty' && status!=='rendered' ) return false;
 		this.jot( 'status', 'rendering' ); // set status
 		// Collect all known tile-types on board.
-		this.tilemap  = tiles;		// store tiles 2D [array]
-		this.buildTileTypes( tiles );	// store tile def types
+		this.tilemap  = tiles; // store tiles 2D [array]
+		this.buildTileTypes( tiles ); // store tile def types
 		// Organize tile types into chunks for blitting.
 		const chunks  = this.encodeRawLevelToChunks( tiles );
 		this.chunks   = chunks; // save chunks
@@ -29775,7 +30266,7 @@ class JestLevelLayer extends JestMatrix {
 	//-------------------------
 	// Encode a 2D array of tiles into a compact string format.
 	// RETURNS: [string] Encoded tile string representation.
-	// * grid		- [array] 2D array of tiles, where each tile has `ts`, `tx`, and `ty` properties.
+	// * grid - [array] 2D array of tiles, where each tile has `ts`, `tx`, and `ty` properties.
 	encodeMatrixID( grid ) {
 		return grid.map(
 			row => row.map(
@@ -29789,7 +30280,7 @@ class JestLevelLayer extends JestMatrix {
 
 	// Decode a string-encoded tile representation back into a 2D tile array.
 	// RETURNS: [array] 2D array of tile objects `{ ts, tx, ty }`.
-	// * encoded	- [string] Encoded tile string representation.
+	// * encoded - [string] Encoded tile string representation.
 	decodeMatrixID( encoded ) {
 		return encoded.split('_').map(
 			row =>
@@ -29804,28 +30295,28 @@ class JestLevelLayer extends JestMatrix {
 
 	// Encode an object `{ x, y }` into a 4-character hex string.
 	// RETURNS: [string] Encoded hex position.
-	// * pos		- [object] `{ x, y }` position object.
+	// * pos  - [object] `{ x, y }` position object.
 	encodePosition( pos ) {
 		return pos.x.toString(16).padStart(2,'0') + pos.y.toString(16).padStart(2,'0');
 	}
 
 	// Decode an array of hex tile positions into `{ x, y }` objects.
 	// RETURNS: [array] Array of `{ x, y }` positions.
-	// * positions	- [array] Array of hex strings representing positions.
+	// * positions - [array] Array of hex strings representing positions.
 	decodeMatrixXY( positions ) {
 		return positions.map( pos => this.decodePosition(pos) );
 	}
 
 	// Decode a 4-character hex position string into `{ x, y }`.
 	// RETURNS: [object] `{ x, y }` position object.
-	// * encoded	- [string] Encoded hex position (4 characters).
+	// * encoded - [string] Encoded hex position (4 characters).
 	decodePositionString( encoded ) {
 		return encoded.match(/.{4}/g).map( pos => this.decodePosition(pos) );
 	}
 
 	// Decode a 4-character hex position string into `{ x, y }`.
 	// RETURNS: [object] `{ x, y }` position object.
-	// * encoded	- [string] Encoded hex position (4 characters).
+	// * encoded - [string] Encoded hex position (4 characters).
 	decodePosition( encoded ) {
 		return {
 			x: parseInt( encoded.substring(0,2), 16 ),
@@ -29837,10 +30328,10 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	genLevel( fillTile=null ) {
 		// Validate level width/height
-		const tiles        = []; // [array] of tiles
-		const levelGrid    = this.client.config.levelGrid;
+		const tiles     = []; // [array] of tiles
+		const levelGrid = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
-			const row      = [];
+			const row   = [];
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create tile & add to row
 				row.push( fillTile ? { ...fillTile } : null );
@@ -29857,7 +30348,7 @@ class JestLevelLayer extends JestMatrix {
 
 	// Encodes raw 2D [array] of tiles to level chunks [array]
 	// RETURNS: [array] of chunks or `false` on fail.
-	// * tiles		- 2D [array] of raw tiles comprising the level.
+	// * tiles  - 2D [array] of raw tiles comprising the level.
 	encodeRawLevelToChunks( tiles ) {
 		if ( !tiles || !tiles.length ) return false
 		// Group positions by tileId
@@ -29895,8 +30386,8 @@ class JestLevelLayer extends JestMatrix {
 
 	// Compare two tiles.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * tileA		- [object] first tile to compare.
-	// * tileB		- [object] second tile to compare.
+	// * tileA  - [object] first tile to compare.
+	// * tileB  - [object] second tile to compare.
 	sameTile( tileA, tileB ) {
 		if ( !tileA || !tileB ) return false;
 		return tileA.ts===tileB.ts && tileA.tx===tileB.tx && tileA.ty===tileB.ty;
@@ -29907,31 +30398,31 @@ class JestLevelLayer extends JestMatrix {
 	//-------------------------
 	// Render tilemap chunks using pre-rendered tile matrices.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * chunks   - [object] Tilemap chunks dictionary `{ matrix: [positions] }`.
+	// * chunks - [object] Tilemap chunks dictionary `{ matrix: [positions] }`.
 	blit( chunks ) {
 		// Validate argument(s)
 		if ( !chunks ) return false;
 		// Select tileset (by index)
-		let units		= this.client.config.tileGrid;
-		let tileset		= this.client.gameboard.tilesets['pics1'];
+		let units   = this.client.config.tileGrid;
+		let tileset = this.client.gameboard.tilesets['pics1'];
 		// Get the main level canvas to draw on
-		const ctx		= this.canvas.el.getContext( '2d' );
+		const ctx   = this.canvas.el.getContext( '2d' );
 		// Iterate the chunks & draw tile(s)
 		Object.entries(chunks).forEach(
 			( [ encodedMatrix, encodedPositions ] ) => {
 				// Get matrix.
-				const matrix		= this.decodeMatrixID( encodedMatrix );
+				const matrix  = this.decodeMatrixID( encodedMatrix );
 				// Resize stamp to fit matrix.
-				const width			= matrix[0].length * units;
-				const height		= matrix.length * units;
+				const width   = matrix[0].length * units;
+				const height  = matrix.length * units;
 				this.stamp.resize( width, height );		// resize stamp to match matrix dimensions
 				// Deboss the matrix onto the stamp.
 				tileset.deboss( this.stamp, matrix );	// imprint matrix into this.stamp
-				let positions		= this.decodePositionString( encodedPositions );
+				let positions = this.decodePositionString( encodedPositions );
 				positions.forEach(
 					( { x: levelX, y: levelY } ) => {
-						let dxPos	= levelX * units;
-						let dyPos	= levelY * units;
+						let dxPos = levelX * units;
+						let dyPos = levelY * units;
 						ctx.drawImage( this.stamp.el, dxPos, dyPos );
 					});
 			});
@@ -29954,9 +30445,9 @@ class JestLevelLayer extends JestMatrix {
 
 	// Check whether a 1D interval [origin, origin+length) lies fully inside [0, max)
 	// RETURNS: true if entirely in-bounds, false otherwise.
-	// * origin		– starting coordinate (in tiles)
-	// * length		– size of the interval (in tiles)
-	// * max		– the maximum size (in tiles), e.g. level width or height
+	// * origin  – starting coordinate (in tiles)
+	// * length  – size of the interval (in tiles)
+	// * max     – the maximum size (in tiles), e.g. level width or height
 	inBounds1D( origin, length=0, max=null ) {
 		// Default max to level grid if not set
 		if ( max===null ) {
@@ -29972,14 +30463,14 @@ class JestLevelLayer extends JestMatrix {
 	//   • newOrigin ≥ 0
 	//   • newOrigin+newLength ≤ max
 	//   • If the original region was completely outside, newLength becomes 0.
-	// * origin		– starting coordinate (in tiles)
-	// * length		– size of the interval (in tiles)
-	// * max		– the maximum size (in tiles), e.g. level width or height
+	// * origin  – starting coordinate (in tiles)
+	// * length  – size of the interval (in tiles)
+	// * max     – the maximum size (in tiles), e.g. level width or height
 	clip1D( origin, length, max ) {
 		// clamp the start to at least 0
-		const start	= Math.max( 0, origin );
+		const start = Math.max( 0, origin );
 		// clamp the end to at most max
-		const end	= Math.min( origin+length, max );
+		const end   = Math.min( origin+length, max );
 		// if end≤start, region is out-of-bounds (or zero-width)
 		const newLength = end>start ? end - start : 0;
 		return { origin: start, length: newLength };
@@ -29988,16 +30479,16 @@ class JestLevelLayer extends JestMatrix {
 	// Get a rectangle region at a location on the map with image bitmap.
 	// RETURNS: [object] with matrix [array] & ElementCanvas.
 	// Uses `deboss()` to stamp tiles into a temporary canvas.
-	// * x		– left of region rectangle to crop in the level grid.
-	// * y		- top of region rectangle to crop in the level grid.
-	// * w, h	– width & height in tiles
+	// * x     – left of region rectangle to crop in the level grid.
+	// * y     - top of region rectangle to crop in the level grid.
+	// * w, h  – width & height in tiles
 	snapshotRegion( x, y, w, h ) {
 		// Pull the tile sub-matrix
-		const matrix	= this.cloneRegion( x, y, w, h );
+		const matrix  = this.cloneRegion( x, y, w, h );
 		if ( !matrix.length ) return null;
 		// Create a new temporary ElementCanvas for the region
-		const tileset	= this.client.gameboard.tilesets['pics1'];
-		const stamp		= tileset.createStamp( matrix );
+		const tileset = this.client.gameboard.tilesets['pics1'];
+		const stamp   = tileset.createStamp( matrix );
 		// Return copied data.
 		return { matrix, stamp };
 	}
@@ -30029,9 +30520,9 @@ class JestLevelLayer extends JestMatrix {
 		return matrix; // region WxH 2D [array]
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Get Composite Marquee Region
-	// -----------------------------
+	//------------------------------
 	// Copy a composite masked region (not just rectangular).
 	// RETURNS: [object|null] contents data, or null if invalid.]
 	// * x, y  - [int] Values of mask top-left x,y coordinates on canvas.
@@ -30107,7 +30598,7 @@ class JestLevelLayer extends JestMatrix {
 	// Paste a 2D tile‐matrix into tilemap at (originX, originY).
 	// RETURNS: [bool] true on success, else false.
 	// * originX, originY – top‐left tile coords to overwrite in tilemap.
-	// * matrix          – 2D [array] (h rows × w cols) of tile objects.
+	// * matrix  – 2D [array] (h rows × w cols) of tile objects.
 	overwriteRegion( originX, originY, matrix ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -30136,8 +30627,8 @@ class JestLevelLayer extends JestMatrix {
 
 	// Fill a rectangular region (w×h) at (originX, originY) with a single tile.
 	// * originX, originY – top-left tile coords of region to fill, in level grid.
-	// * w, h		– width & height of region to fill (in tile units).
-	// * tile		– object { ts, tx, ty } specifying the tile to fill with.
+	// * w, h   – width & height of region to fill (in tile units).
+	// * tile   – object { ts, tx, ty } specifying the tile to fill with.
 	fillRegion( originX, originY, w, h, tile ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -30190,7 +30681,7 @@ class JestLevelLayer extends JestMatrix {
 	// Does NOT modify tilemap—draws pixels only.
 	// RETURNS: [bool] true on success, else false.
 	// * originX, originY – top‐left tile coords on the level canvas.
-	// * matrix          – 2D [array] of tile objects to stamp.
+	// * matrix – 2D [array] of tile objects to stamp.
 	stampRegionOnLevel( originX, originY, matrix ) {
 		// Require the level canvas and a non‐empty matrix
 		if ( !this.canvas || !matrix || !matrix.length ) return false;
@@ -30212,8 +30703,8 @@ class JestLevelLayer extends JestMatrix {
 				// Draw image at area
 				ctx.drawImage(
 					tileset.image.file.el,
-					sx, sy, units, units,	// source rect
-					dx, dy, units, units	// dest rect
+					sx, sy, units, units,  // source rect
+					dx, dy, units, units   // dest rect
 					);
 			}
 		}
@@ -30223,8 +30714,8 @@ class JestLevelLayer extends JestMatrix {
 	// High‐level: Update tilemap & immediately stamp onto the level canvas.
 	// RETURNS: [bool] true if both overwriteRegion & drawImage succeed; else false.
 	// * originX, originY	– top‐left tile coords on the map.
-	// * matrix		– 2D [array] of tile objects.
-	// * stamp		– [ElementCanvas] object to stamp @ loc; use [null] to autogenerate.
+	// * matrix  – 2D [array] of tile objects.
+	// * stamp   – [ElementCanvas] object to stamp @ loc; use [null] to autogenerate.
 	dropRegion( originX, originY, matrix, stamp=null ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -30242,8 +30733,8 @@ class JestLevelLayer extends JestMatrix {
 				  h     = stamp.el.height;
 			// Draw the stamp at the desired location.
 			ctx.drawImage(
-				stamp.el, 0, 0, w, h,	// source rect
-				x, y, w, h				// dest rect
+				stamp.el, 0, 0, w, h,  // source rect
+				x, y, w, h             // dest rect
 				);
 		}
 		else {
@@ -30277,9 +30768,9 @@ class JestLevelLayer extends JestMatrix {
 			return false;
 
 		// Access the tile grid, tileset and drawing context.
-		const units		= this.client.config.tileGrid;
-		const tileset	= this.client.gameboard.tilesets['pics1'];
-		const ctx		= this.canvas.el.getContext('2d');
+		const units   = this.client.config.tileGrid;
+		const tileset = this.client.gameboard.tilesets['pics1'];
+		const ctx     = this.canvas.el.getContext('2d');
 
 		//--------------------------------
 		// Apply Individual Tile Changes
@@ -30329,19 +30820,19 @@ class JestLevelLayer extends JestMatrix {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// Tile‐Object Utilities
-	// -------------------------
+	//--------------------------
 	// Build a “generic” tile data object.
 	// RETURNS: { ts, tx, ty }
-	// * tileset	– [string] key used in this.client.gameboard.tilesets (e.g. "pics1").
-	// * tx, ty		– [ints] column & row (in tiles) within that tileset.
+	// * tileset  – [string] key used in this.client.gameboard.tilesets (e.g. "pics1").
+	// * tx, ty   – [ints] column & row (in tiles) within that tileset.
 	getTileData( tileset, tx, ty ) {
 		// Return a new object with keys matching { ts, tx, ty }
 		return {
-			ts: tileset,	// tileset identifier used in this.client.gameboard.tilesets
-			tx: tx,			// column index of the tile within that tileset
-			ty: ty			// row index of the tile within that tileset
+			ts: tileset,  // tileset identifier used in this.client.gameboard.tilesets
+			tx: tx,       // column index of the tile within that tileset
+			ty: ty        // row index of the tile within that tileset
 			};
 	}
 }
@@ -30366,9 +30857,9 @@ class JestLevel extends JestSavable {
 	layers        = [];        // Ordered collection of level layers
 	activeLayerId = null;      // [int] Value of active layer (the id).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of level name (e.g. 'level1').
@@ -30408,14 +30899,14 @@ class JestLevel extends JestSavable {
 		// Check if setup is possible.
 		const status = this.skim( 'status' );
 		if ( status!=='constructed' ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'building' );	// set status
 		this.build();						// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'loading' );	// set status
 		await this.load();					// load the data
 		this.jot( 'status', 'empty' );		// set status
@@ -30569,7 +31060,7 @@ class JestLevel extends JestSavable {
 		// Resolve Target Level Layer
 		//--------------------------------
 		// Attempt to get layer by id.
-		let layer	= this.layers.find(layer=>layer.id===id) ?? null;
+		let layer = this.layers.find(layer=>layer.id===id) ?? null;
 
 		// If layer does not exist, check for fallback.
 		//if ( !layer && fallback===true )
@@ -30648,9 +31139,9 @@ class JestLevel extends JestSavable {
 		return true; // layer order changed
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Level Rendering
-	// --------------------------------
+	//---------------------------------
 	// Clear all boards belonging to each layer.
 	// RETURNS: [void].
 	clear() {
@@ -30681,9 +31172,9 @@ class JestLevel extends JestSavable {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// State‐Snapshot Utilities
-	// -------------------------
+	//--------------------------
 	// Export the entire level’s state as a JSON‐serializable object.
 	// RETURNS: { tilemap: [ [ {ts,tx,ty}, … ], … ] }  or null if tilemap is not set.
 	exportState() {
@@ -30929,13 +31420,13 @@ class JestWorld extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}
@@ -30975,16 +31466,16 @@ class JestWorld extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * stem	- [string] Value of URL filename stem to load, without extension (e.g. 'jest')
 	async loadData( stem ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.prove(stem,'string') )
 			throw new Error( `Argument 'stem' must be of type [string].` );
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
 		const filename	= `presets/worlds/${stem}.json`;
-		// --------------------------------
+		//---------------------------------
 		// Load World Presets Data
-		// --------------------------------
+		//---------------------------------
 		// Use the Secretary to download a remote file's data.
 		const ok	= await this.client.loadWorldData( filename );
 		if ( ok===null ) {
@@ -30998,9 +31489,9 @@ class JestWorld extends JestSavable {
 			console.warn( 'Cannot find world data.' );
 			return false; // fail
 		}
-		// --------------------------------
+		//---------------------------------
 		// Process World Presets Data
-		// --------------------------------
+		//---------------------------------
 		// Load tileset(s) from data.
 		console.log( 'Attempting to load all game-world tileset(s)...' );
 		if ( record?.tilesets ) {
@@ -31052,9 +31543,9 @@ class JestCamera extends JestMatrix {
 	// Object properties
 	padding			= 0;			// [int] Optional padding around the viewport (in pixels).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * padding	- [int] Optional extra padding (in pixels) around the viewport.
@@ -31066,9 +31557,9 @@ class JestCamera extends JestMatrix {
 		this.anchor.move( 0, 0 );	// [object] Anchor is inherited
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get [object] Coordinates
-	// --------------------------------
+	//---------------------------------
 	// Get level positioning for user's current level.
 	// RETURNS: [object|null] `{ ... }` if found, else `null`.
 	//		Returns the world & global coordinates of the user's current level.
@@ -31117,9 +31608,9 @@ class JestCamera extends JestMatrix {
 			};
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Screen Calculating
-	// --------------------------------
+	//---------------------------------
 	// Get the viewport dimensions (in pixels) directly from gameboard's anchor.
 	// RETURNS: [object] { width, height }
 	//		Gets the viewport (visible area) width/height, pulled from the gameboard.anchor.
@@ -31173,9 +31664,9 @@ class JestCamera extends JestMatrix {
 			};
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Coordinate Conversion Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Convert a point from global space to screen space (relative to the camera’s viewport).
 	// RETURNS: [object] { x, y } Screen coordinates.
 	// * globalX	- [int] X coordinate in global space.
@@ -31319,9 +31810,9 @@ class JestCamera extends JestMatrix {
 			: { level: level.name, x: newX, y: newY };
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Rendering Loop
-	// --------------------------------
+	//---------------------------------
 	// Update the camera position so that the given global coordinate (typically the user's position)
 	// is centered, clamped to the world boundaries.
 	update() {
@@ -31563,9 +32054,9 @@ class JestInspector extends JestGamepiece {
 	anchors			= null;			// [array] Of [objects] to visually render.
 	running			= false;		// [bool] whether inspector is running.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the game piece [object].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
@@ -31574,9 +32065,9 @@ class JestInspector extends JestGamepiece {
 		this.anchors	= new Set();	// make anchors a set of [objects]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Debug Handling
-	// --------------------------------
+	//---------------------------------
 	// Turn the debugger on.
 	// RETURNS: [void].
 	// * options [object] of options to turn on
@@ -31595,9 +32086,9 @@ class JestInspector extends JestGamepiece {
 		//this.client.timeout.register( 'tick', 'debugging' );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Debug Option Toggling
-	// --------------------------------
+	//---------------------------------
 	// Turn the debugger on.
 	// RETURNS: [void].
 	// * options [object] of options to turn on
@@ -31632,9 +32123,9 @@ class JestInspector extends JestGamepiece {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the debugger ElementCanvas [object]
 	// * canvas		- [object] ElementCanvas object to draw debugging options onto
 	set canvas( canvas ) {
@@ -31758,18 +32249,18 @@ class Jest extends Application {
 	noticer			= null;					// JestNoticer [object] for
 	//modal			= null;					// Modal [object] for action confirmation handling.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Creates the application.
 	// * options	- [object] Configuration options for the application.
 	constructor() {
 		super(); // call the parent application constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Check if the client type matches value.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of client name.
@@ -31778,9 +32269,9 @@ class Jest extends Application {
 		return name===this.id ? true : false;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the application.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
@@ -31794,23 +32285,23 @@ class Jest extends Application {
 		// call parent launch method
 		if ( !super.launch() ) return false; // failed
 
-		// --------------------------------
+		//---------------------------------
 		// Create State Handler [objects]
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the settings [object].
 		this.settings	= {}; // fresh empty settings [object] to start
 		// Instantiate the governor.
 		this.governor	= new JestGovernor( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Validation Handler(s)
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the parser [object].
 		this.parser		= new JestParser( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Window [object]
-		// --------------------------------
+		//---------------------------------
 		// Initialize modal-specific components
 		const title		= this.name+' '+this.version+' Window';
 		const windowObj	=
@@ -31821,9 +32312,9 @@ class Jest extends Application {
 				});
 		if ( windowObj===null ) return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Application Window
-		// --------------------------------
+		//---------------------------------
 		console.log( 'jestAlert: Application `'+this.name+'` launch() opening application window ...' );
 		let open		= this.setupWindow( windowObj );
 		if ( open!==true ) {
@@ -31831,26 +32322,26 @@ class Jest extends Application {
 			return false; // fail
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Open the window
-		// --------------------------------
+		//---------------------------------
 		// Open application window.
 		windowObj.open();			// open window
 		// App open, idle window
 		this.gearshift( 'idle' );	// idle window
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Building Application [object]
-		// --------------------------------
+		//---------------------------------
 		this.suspend();		// mark application as busy
 		//try { await this.build(); }
 		//catch ( err ) { throw new Error(`${this.name} v. ${this.version} build failed: ${err}`); }
 		await this.build();
 		this.resume();		// mark application available
 
-		// --------------------------------
+		//---------------------------------
 		// Shift Application Into Gear
-		// --------------------------------
+		//---------------------------------
 		// Change mode to running.
 		this.jot( 'mode', 'idle' );				// 🚫 pause everything first
 		this.jot( 'enabled', false );			// 🚫 pause everything first
@@ -31866,9 +32357,9 @@ class Jest extends Application {
 		// Require windowObj to be part of application windows
 		if ( !this.windows.includes(windowObj) )
 			return false; // "window" not part of application
-		// --------------------------------
+		//---------------------------------
 		// Setup Windo Header
-		// --------------------------------
+		//---------------------------------
 		// Configure the window panel(s)
 		// Build the header
 		/*const header	=
@@ -31877,9 +32368,9 @@ class Jest extends Application {
 				classes:	[ 'jest-window-header', 'jest-style-harlequin', 'jest-freezeframe' ],
 				elements:	JestEnvironment.librarian.libs.HarlequinWindow.windowHeaderConfig( this.icon, this.name+' '+this.version )
 			};*/
-		// --------------------------------
+		//---------------------------------
 		// Setup Window Body
-		// --------------------------------
+		//---------------------------------
 		// Build the body
 		const body		=
 			{
@@ -31888,9 +32379,9 @@ class Jest extends Application {
 			};
 		if ( this.id!==null )
 			body.classes.push( `jest-viewport-${this.id}` );
-		// --------------------------------
+		//---------------------------------
 		// Setup Window Footer
-		// --------------------------------
+		//---------------------------------
 		// Build the footer
 		/*const footer	=
 			{
@@ -31900,9 +32391,9 @@ class Jest extends Application {
 			};*/
 		// Add window elements
 		windowObj.addElements( [ /*header,*/ body, /*footer*/ ] );
-		// --------------------------------
+		//---------------------------------
 		// Setup [JestSpline] Viewport (simply fills body)
-		// --------------------------------
+		//---------------------------------
 		// Create a JestSpline for screen management.
 		this.spline		= new JestSpline( this );
 		this.spline.build(); // build it
@@ -31918,9 +32409,9 @@ class Jest extends Application {
 	// Build the configuration, inspector, timer, i/o, etc.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async build() {
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Build
-		// --------------------------------
+		//---------------------------------
 		// Determine logic based upon requested status change
 		const currentMode   = this.skim( 'status' );
 		if ( currentMode!=='idle' )
@@ -31931,20 +32422,20 @@ class Jest extends Application {
 		// Instantiate some variables
 		this.parsers        = {}; // Being the blank parsers [object] for storing parser [objects]
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Pane [object]
-		// --------------------------------
+		//---------------------------------
 		console.log( 'jestAlert: Application `'+this.name+'` building interface ...' );
 
-		// --------------------------------
+		//---------------------------------
 		// Configuration [object]
-		// --------------------------------
+		//---------------------------------
 		const config        = new JestConfiguration( this );
 		this.config         = config;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Default Screen
-		// --------------------------------
+		//---------------------------------
 		// Register the default application loading screen.
 		const screenLoad    = new JestScreen( this );
 		screenLoad.build( 'screen', ['jest-screen-loading-default'] ); // build it
@@ -31997,9 +32488,9 @@ class Jest extends Application {
 		// Default application to show the loading screen.
 		this.spline.goToScreen( 'loading' );
 
-		// --------------------------------
+		//---------------------------------
 		// Algorithmic [object]
-		// --------------------------------
+		//---------------------------------
 		const grapher       = new Grapher();
 		this.grapher        = grapher;
 		// Setup the graph matrix.
@@ -32007,72 +32498,79 @@ class Jest extends Application {
 		const length        = config.levelGrid;			// get default level W x H
 		grapher.resize( length, length );				// set graph W x H
 
-		// --------------------------------
+		//---------------------------------
 		// Core Interraction [object]
-		// --------------------------------
+		//---------------------------------
 		// Mouse-event delegation.
 		this.delegator      = new Delegator();
 		// Create context listener (for window / lost context).
 		this.interactor     = new JestInteractor( this );
 		this.interactor.enable(); // enable it
 
-		// --------------------------------
+		//---------------------------------
 		// Inspector / Debugging [object]
-		// --------------------------------
+		//---------------------------------
 		const inspector     = new JestInspector( this );
 		this.inspector      = inspector;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Internal Timer [object]
-		// --------------------------------
+		//---------------------------------
 		// Central game timeout loop
 		this.timers['ani']  = new Timeout( 'raf' );		// Intervals are 16.67ms delay for ~60 FPS (1000ms / 60 ≈ 16.67ms).
 		this.timers['ani'].start();						// start ticking
 		//timers['ani'].register( 'tick', 'game', this.update.bind(this,...args) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Input-Output Handler [object]
-		// --------------------------------
+		//---------------------------------
 		const io            = new JestInputOutput();	// input-output handling
 		this.io             = io;						// set cross-reference to [object] property
 		this.timers['ani'].register( 'tick', 'input-output', e=>io.update(e) );
 
-		// --------------------------------
+		//---------------------------------
 		// File Handling [objects]
-		// --------------------------------
+		//---------------------------------
 		this.transmitter    = new JestTransmitter( this );
 
-		// --------------------------------
+		//---------------------------------
 		// File Handling [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the cabinet [object] for file [object] organization.
-		this.cabinet        = new JestCabinet( this );
+		this.cabinet     = new JestCabinet( this );
 		// Create the secretary [object] for file handling
-		this.secretary      = new JestSecretary( this, `${this.config.webfiles}` );
+		this.secretary   = new JestSecretary( this, `${this.config.webfiles}` );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Main Screen [object]
-		// --------------------------------
+		//---------------------------------
 		// Register the main application screen.
-		const screenMain    = new JestScreen( this );
+		const screenMain = new JestScreen( this );
 		screenMain.build(); // build it
 		// Build the panel
-		this.panel          = screenMain.panel;			// assign main screen as the main panel
+		this.panel       = screenMain.panel; // assign main screen as the main panel
 		this.spline.registerScreen( 'application', screenMain );
 
-		// --------------------------------
-		// Login Handler [object]
-		// --------------------------------
-		// Create the login handler [object] for account interfacing.
-		const login         = new JestLogin( this );
-		this.login          = login; // keep ref
+		//---------------------------------
+		// Sound Handling [object]
+		//---------------------------------
+		// Create primary game soundboard (early) for registering system SFX playback.
+		const soundboard = new JestSoundboard( this, 'primary' );
+		this.soundboard  = soundboard;
 
-		// --------------------------------
+		//---------------------------------
+		// Login Handler [object]
+		//---------------------------------
+		// Create the login handler [object] for account interfacing.
+		const login      = new JestLogin( this );
+		this.login       = login; // keep ref
+
+		//---------------------------------
 		// Cloud Handler [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the cloud handler [object] for backing up data.
-		const cloud         = new JestCloud( this );
-		this.cloud          = cloud; // keep ref
+		const cloud      = new JestCloud( this );
+		this.cloud       = cloud; // keep ref
 
 		/*console.log('TEST: plugin types attached per class');
 		console.log('OSConfigurable.plugins:', Object.keys(OSConfigurable.plugins));
@@ -32082,9 +32580,9 @@ class Jest extends Application {
 		console.log('OSConfigurable.plugins === JestTiler.plugins:', OSConfigurable.plugins === JestTiler.plugins);
 		console.log('JestTiler.plugins === JestAnimator.plugins:', JestTiler.plugins === JestAnimator.plugins);*/
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize parser plugins.
 		await Jest.initPlugins( 'parsers', this );
 		// Add recognized filetype(s) to secretary
@@ -32139,19 +32637,19 @@ class Jest extends Application {
 		this.secretary.addFiletype(	// json filetype handler
 			'json', { extension: 'json', parse: 'json', parser: 'json' } );
 		// Create parser [objects]
-		this.parsers.sound		= new JestParserSound( this );
-		this.parsers.jani		= new JestParserJani( this );
+		this.parsers.sound    = new JestParserSound( this );
+		this.parsers.jani     = new JestParserJani( this );
 		await this.parsers.jani.setup(); // setup the janis parser
-		this.parsers.tiledefs	= new JestParserTiledefs( this );
-		this.parsers.level		= new JestParserLevel( this );
-		this.parsers.image		= new JestParserImage( this );
+		this.parsers.tiledefs = new JestParserTiledefs( this );
+		this.parsers.level    = new JestParserLevel( this );
+		this.parsers.image    = new JestParserImage( this );
 		await this.parsers.level.setup(); // setup the level parser
 
-		// --------------------------------
+		//---------------------------------
 		// Image File Organizing Handler
-		// --------------------------------
-		this.gallery		= new JestGallery( this, `${this.config.webfiles}/images`, 'images/default-placeholder.png', 5 );
-		this.imager			= new JestImager( this ); // downloads images
+		//---------------------------------
+		this.gallery = new JestGallery( this, `${this.config.webfiles}/images`, 'images/default-placeholder.png', 5 );
+		this.imager  = new JestImager( this ); // downloads images
 
 		//-------------------------
 		// Preload Core Graphics
@@ -32178,9 +32676,9 @@ class Jest extends Application {
 		        console.warn( `Failed to preload graphic: ${file}` );
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Register Image Directories
-		// --------------------------------
+		//---------------------------------
 		/*// Register & set default fallback image directory.
 		this.gallery.registerCategory( 'WEB', 'web' );
 		this.gallery.setFallbackCategory( 'WEB' ); // make fallback
@@ -32193,33 +32691,26 @@ class Jest extends Application {
 		this.gallery.registerCategory( 'SHIELD', 'shields' );
 		this.gallery.registerCategory( 'SWORD', 'swords' );*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Gameboard [object] (useful for organization)
-		// --------------------------------
-		this.gameboard		= new JestGameboard( this );
+		//---------------------------------
+		this.gameboard   = new JestGameboard( this );
 		//this.gameboard.anchor.resize( 480, 270 );		// set board width & height
 
-		// --------------------------------
+		//---------------------------------
 		// Animation Handler [object]
-		// --------------------------------
+		//---------------------------------
 
 		// Create the fantascope [object] for jani handling
-		this.fantascope		= new JestFantascope( this );
+		this.fantascope  = new JestFantascope( this );
 		// Create the animator for animation rendering
-		this.animator		= new AnimationAnimator();	// Create a single Animator instance.
+		this.animator    = new AnimationAnimator();	// Create a single Animator instance.
 
-		// --------------------------------
-		// Sound Handling [object]
-		// --------------------------------
-		// Create primary game soundboard for handling SFX
-		const soundboard	= new JestSoundboard( this, 'primary' );
-		this.soundboard		= soundboard;
-
-		// --------------------------------
+		//---------------------------------
 		// Default Sound Effect(s)
-		// --------------------------------
+		//---------------------------------
 		// Preload default sounds.
-		const preloadMP3	=
+		const preloadMP3 =
 			[
 			'jest_complete.mp3', 'jest_success.mp3',
 			'jest_alert.mp3', 'jest_error.mp3',
@@ -32229,10 +32720,11 @@ class Jest extends Application {
 			'jest_swatch_add.mp3', 'jest_swatch_remove.mp3',
 			'jest_deflect.mp3', 'jest_login.mp3',
 			'jest_mouse_down.mp3', 'jest_mouse_up.mp3',
-			'jest_tab.mp3', 'jest_collapse.mp3'
+			'jest_tab.mp3', 'jest_collapse.mp3',
+			'jest_select0.mp3', 'jest_none.mp3'
 			];
 		await this.soundboard.preload( preloadMP3 );
-		const preloadWAV	=
+		const preloadWAV =
 			[
 			'jest_copy.wav', 'jest_undo.wav', 'jest_redo.wav', 'jest_delete.wav',
 			'jest_paste.wav', 'jest_float.wav', 'jest_unfloat.wav', 'jest_eyedrop.wav',
@@ -32240,31 +32732,31 @@ class Jest extends Application {
 			];
 		await this.soundboard.preload( preloadWAV );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Tooltip
-		// --------------------------------
+		//---------------------------------
 		// Initialize loader plugins.
-		this.tooltip		= new JestTooltip( this );
+		this.tooltip  = new JestTooltip( this );
 		this.tooltip.build(); // build the element
 		this.tooltip.enableLiveMode();
 
-		// --------------------------------
+		//---------------------------------
 		// Create Messaging System(s)
-		// --------------------------------
+		//---------------------------------
 		// Create a notification handler.
-		this.noticer		= new JestNoticer( this );
+		this.noticer  = new JestNoticer( this );
 		this.noticer.build(); // build the notification handler
 		this.spline.panel.addPanel( 'noticer', this.noticer.panel );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize loader plugins.
 		await Jest.initPlugins( 'loaders', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Register Window Event(s)
-		// --------------------------------
+		//---------------------------------
 		// Add window blur / focus events.
 		this.windows[0].register( 'visibilitychange', 'app',
 			( e ) => {
@@ -32279,7 +32771,7 @@ class Jest extends Application {
 		this.disable(); // disable app
 
 		// Create a generic modal message.
-		//const modal			= new JestModal();
+		//const modal = new JestModal();
 		return true; // success
 	}
 
@@ -32292,9 +32784,9 @@ class Jest extends Application {
 		return super.jot( key, val ); // success
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// UI / Modal Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Snapshot current status flags, then switch into an idle state
 	// (e.g. during window unfocus or modal operation).
 	// RETURNS: [void].
@@ -32408,9 +32900,9 @@ class Jest extends Application {
 		else return !stack.includes(false) && !stack.includes( allowed );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the button.
 	// RETURNS: [void].
 	enable() {
@@ -32467,18 +32959,18 @@ while (ptr1) {
 //-------------------------------------------------------
 console.log( 'jestAlert: js/apps/jest/includes/prototype/expressions.prototype.js loaded' );
 
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // fornest( root, pathArray, handler )
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // Iterates a nested iterable by following a chain of
 // string keys inside an object. When the final nested
 // container is reached, iterate its entries and call handler.
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // * root			[object] Root object container.
 // * pathArray		[array]  Array of string keys representing
 //							the nested lookup path.
 // * handler		[func]   Function receiving (key, val).
-// ---------------------------------------------------------
+//----------------------------------------------------------
 function fornest( root, pathArray, handler ) {
 	//-----------------------------------------------------
 	// Validate input
@@ -32869,6 +33361,17 @@ Jest.prototype.cloneObray = function( list ) {
 	return list.map( o => ({ ...o }) ); // shallow clone per object
 }
 
+//-------------------------
+// Handle Text Case
+//-------------------------
+// Capitalize the first letter.
+// RETURNS: Mutated [string] with the first character (if alphabetical) capitalized.
+// * str - [string] To capitalize.
+Jest.prototype.capitalize = function( str ) {
+  if (!str) return ""; // Prevents errors on empty strings
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 /* --- BEGIN js/apps/jest/includes/prototype/modal.prototype.js --- */
 //-------------------------------------------------------
 // JEST ® All Rights Reserved
@@ -33024,18 +33527,18 @@ console.log( 'jestAlert: js/apps/jest/includes/prototype/drawing.prototype.js lo
 // RETURNS: [bool] if canvas is ready / readable.
 // * canvas - [HTMLCanvasElement] to check
 Jest.prototype.isCanvasEmpty = function( canvas ) {
-	// --------------------------------
+	//---------------------------------
 	// Validate Argument(s)
-	// --------------------------------
+	//---------------------------------
 	// Check if canvas is a valid type.
 	if ( !(canvas instanceof HTMLCanvasElement) ) {
 		console.warn( `Canvas is not of type HTMLCanvasElement` );
 		return true; // empty
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Determine If Canvas Is Empty
-	// --------------------------------
+	//---------------------------------
 	// Get the internal width and height
 	const width		= canvas.width;
 	const height	= canvas.height;
@@ -33047,18 +33550,18 @@ Jest.prototype.isCanvasEmpty = function( canvas ) {
 // RETURNS: [bool] if canvas is empty picture.
 // * canvas - [HTMLCanvasElement] to check
 Jest.prototype.isCanvasBlank = function( canvas ) {
-	// --------------------------------
+	//---------------------------------
 	// Validate Argument(s)
-	// --------------------------------
+	//---------------------------------
 	// Check if canvas is a valid type.
 	if ( !(canvas instanceof HTMLCanvasElement) ) {
 		console.warn( `Canvas is not of type HTMLCanvasElement` );
 		return false; // abort
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Determine If Canvas Is Empty
-	// --------------------------------
+	//---------------------------------
 	// Access the canvas drawable context.
 	const context	= canvas.getContext( '2d' );
 	// Get all pixel data as a Uint32Array for better performance
@@ -33094,9 +33597,9 @@ class JestWebsocket extends OSCallback {
 	connected		= false;			// true only when socket is fully open
 	trying			= false;			// true only during each individual connect attempt
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	constructor() {
 		// Call the parent object constructor
@@ -33439,23 +33942,23 @@ class JestOnline extends JestSavable {
 	// Connection session data
 	user			= {};				// [object] Value of user session data: id
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of server name (e.g. 'primary').
 	constructor( client, name="primary" ) {
 		// Call the parent object constructor
 		super( client, name );	// construct the parent
-		// --------------------------------
+		//---------------------------------
 		// Create the server connect [object]
-		// --------------------------------
+		//---------------------------------
 		const websocket	= new JestWebsocket( this ); // server interactor
 		this.websocket	= websocket;
-		// --------------------------------
+		//---------------------------------
 		// Setup Listener(s)
-		// --------------------------------
+		//---------------------------------
 		// Set other event(s)
 		this.websocket.register( 'message:init', 'init', (e)=>this.init(e) );
 		this.websocket.register( 'message:guestJoin', 'guestJoin', (e)=>this.guestJoin(e) );
@@ -33506,9 +34009,9 @@ class JestOnline extends JestSavable {
 		this.reserve( data );
 		// Emit event.
 		this.emit( 'selfJoin', null, data, data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Add all guest [objects]
-		// --------------------------------
+		//---------------------------------
 		console.log( "user session loading players..." );
 		// Iterate all guests & add to client.
 		for ( const [id,info] of Object.entries(data.clients) ) {
@@ -33527,9 +34030,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		if ( data.id===this.client.user.id ) return false; // ignore user
-		// --------------------------------
+		//---------------------------------
 		// Add new guest [object]
-		// --------------------------------
+		//---------------------------------
 		console.log( "loading new guest..." );
 		await this.addGuest( data ); // add guest
 		return true; // success
@@ -33544,9 +34047,9 @@ class JestOnline extends JestSavable {
 		//console.log( e );
 		//console.log( data.id );
 		//console.log( this.client.gameboard.guests );
-		// --------------------------------
+		//---------------------------------
 		// Handle Guest Update Action
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestUpdate', null, data, data.id, data.action );
 		//console.log( data );
@@ -33560,9 +34063,9 @@ class JestOnline extends JestSavable {
 		// Log some information
 		//console.log( data );
 		if ( data.id===this.client.user.id ) return false; // ignore user
-		// --------------------------------
+		//---------------------------------
 		// Remove guest player [object]
-		// --------------------------------
+		//---------------------------------
 		await this.removeGuest( data ); // remove guest
 		return true; // success
 	}
@@ -33596,9 +34099,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		console.log( "Adding Guest:", data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Add Player [object]
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestJoin', null, data, data.id, data.username );
 		return true; // success
@@ -33612,9 +34115,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		console.log( "Removing Guest:", data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Remove Player [object]
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestLeft', null, data, data.id, data.username );
 		return true; // success
@@ -33683,9 +34186,9 @@ class JestLogin extends JestElement {
 	// Generate the top right login-badge.
 	// RETURNS: [void].
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create User Login UI
-		// --------------------------------
+		//---------------------------------
 		// Create a brand logo inside the system bar.
 		const badge =
 			new Panel({
@@ -33887,7 +34390,13 @@ class JestLogin extends JestElement {
 				// Attempt to login using username & password.
 				this.login( username, password );
 			});
-		modal.addButton( 'cancel', 'Close', () => modal.close() );
+		modal.addButton(
+			'cancel', 'Close',
+			() => {
+				// Close the dialog & play closed "cancel" SFX.
+				modal.close(); // close dialog
+				this.client.soundboard.playSound( 'jest_close0', 'mp3', 1.1 );
+			});
 
 		// Add modal to the DOM & close it.
 		document.body.appendChild( modal.panel.el ); // attach to DOM
@@ -34112,9 +34621,9 @@ class JestLogin extends JestElement {
 		return hasFieldError;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Reusable Login Requirement
-	// --------------------------------
+	//---------------------------------
 	// Check the current login state and explain why authentication is needed.
 	// RETURNS: [boolean] True when the requested action may continue.
 	// * options.action		- [string] Short action name shown in the notice.
@@ -34310,9 +34819,9 @@ class JestCloud extends JestElement {
 		this.initModalRename();    // create rename modal
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -34351,9 +34860,9 @@ class JestCloud extends JestElement {
 		// Add file browser to the cloud panel.
 		this.container.addPanel( 'browser', fileViewer.panel );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar  = new JestToolbar( this );
 		this.toolbar   = toolbar; // set toolbar
@@ -34875,9 +35384,9 @@ JestAppsRegistry.AppJestPlay =
 		board			= null;				// [JestElement] Board for editing the file.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -34885,9 +35394,9 @@ JestAppsRegistry.AppJestPlay =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -34898,9 +35407,9 @@ JestAppsRegistry.AppJestPlay =
 		// Build the gameboard, user, components, etc.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async build() {
-			// --------------------------------
+			//---------------------------------
 			// Call Super
-			// --------------------------------
+			//---------------------------------
 			//await super.build();
 			try { await super.build(); }
 			catch ( err ) {
@@ -34908,17 +35417,17 @@ JestAppsRegistry.AppJestPlay =
 				throw err;
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			// Update progress bar to show a tool has loaded.
 			loadbar.update( 1, 3 ); // step 1 (initialization)
 
-			// --------------------------------
+			//---------------------------------
 			// Create Application Interface [object]
-			// --------------------------------
+			//---------------------------------
 			// Build the panels for the main application screen.
 			this.panel.addElements([
 				// Build the panel
@@ -34936,14 +35445,14 @@ JestAppsRegistry.AppJestPlay =
 				}]);
 			loadbar.update();
 
-			// --------------------------------
+			//---------------------------------
 			// Define Propert(ies)
-			// --------------------------------
+			//---------------------------------
 			const self		= this;
 
-			// --------------------------------
+			//---------------------------------
 			// Load Default Game Image(s)
-			// --------------------------------
+			//---------------------------------
 			// Load available skins
 			/*const imageFiles	= [];
 			for ( let i=0; i<=31; i++ ) {
@@ -34960,15 +35469,15 @@ JestAppsRegistry.AppJestPlay =
 					])
 				);*/
 
-			// --------------------------------
+			//---------------------------------
 			// Create Camera [object]
-			// --------------------------------
+			//---------------------------------
 			const camera		= new JestCamera( this );
 			this.camera			= camera;					// cross-ref JestCamera [object] reference
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Gameboard [object]
-			// --------------------------------
+			//---------------------------------
 			const gameboard		= this.gameboard;			// get gameboard reference
 			gameboard.display.addCanvas( 'world' );			// create gameboard world canvas
 			//this.windows[0].expand( 480, 270 );			// auto-resize the window
@@ -34978,9 +35487,9 @@ JestAppsRegistry.AppJestPlay =
 			// Disable right-click on canvas.
 			canvas.el.addEventListener( 'contextmenu', e => e.preventDefault() );
 
-			// --------------------------------
+			//---------------------------------
 			// Create Editor Panel [object]
-			// --------------------------------
+			//---------------------------------
 			// Create editor panel to store the editing/playing area.
 			this.editor		=
 				this.panel.refs.interface.refs.center.createPanel({
@@ -34994,23 +35503,23 @@ JestAppsRegistry.AppJestPlay =
 			this.editor.addPanel( 'gameboard', canvas );
 			//console.log( gameboard );
 
-			// --------------------------------
+			//---------------------------------
 			// Animation Handler [object]
-			// --------------------------------
+			//---------------------------------
 			// Assign the gameboard canvas to the animator for animation rendering
 			const animator		= this.animator; // access ref
 			animator.canvas		= canvas; // Animator canvas is the world "screen"
 
-			// --------------------------------
+			//---------------------------------
 			// Sound Handling [object]
-			// --------------------------------
+			//---------------------------------
 			// Preload some sounds
 			const soundNames	= [ 'steps.wav', 'steps2.wav', 'sword.wav' ];
 			await this.soundboard.preload( soundNames );
 
-			// --------------------------------
+			//---------------------------------
 			// Load Tileset [objects]
-			// --------------------------------
+			//---------------------------------
 			// Load a default tileset.
 			const tileset		=
 				await gameboard.addTileset( 'pics1' )
@@ -35021,16 +35530,16 @@ JestAppsRegistry.AppJestPlay =
 			//console.log( tileset ); return;
 			// Add canvas to window viewport.
 
-			// --------------------------------
+			//---------------------------------
 			// Create Overworld [objects]
-			// --------------------------------
+			//---------------------------------
 			// Create overworld
 			const overworld		= new JestOverworld( this, 'map1' );
 			await overworld.setup();
 
-			// --------------------------------
+			//---------------------------------
 			// Load Level [object]
-			// --------------------------------
+			//---------------------------------
 			// Load the *.nw file(s)
 			const levelNames	= [
 				/*'destinyg_a1.nw', 'destinyg_b1.nw', 'destinyg_c1.nw', 'destinyg_d1.nw',
@@ -35048,9 +35557,9 @@ JestAppsRegistry.AppJestPlay =
 						console.warn( `Not all levels were loaded: ${err.message}` );
 					});
 
-			// --------------------------------
+			//---------------------------------
 			// Create Level [objects]
-			// --------------------------------
+			//---------------------------------
 			// Load every test level using the board or layers from its file version.
 			const levels = await this.loadLevels( levelNames );
 			console.log( levels );
@@ -35080,9 +35589,9 @@ JestAppsRegistry.AppJestPlay =
 			overworld.addLevel( levels['level9.nw'],  1, 2 );  // taylor richards
 			overworld.addLevel( levels['level10.nw'], 3, 2 );  // master-li fields
 
-			// --------------------------------
+			//---------------------------------
 			// Create the server connect [object]
-			// --------------------------------
+			//---------------------------------
 			const online = new JestOnline( this );	// server interactor
 			this.online  = online;
 			// Add online mode events.
@@ -35107,9 +35616,9 @@ JestAppsRegistry.AppJestPlay =
 					this.playerLeave( e, uid, username );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create the user [object]
-			// --------------------------------
+			//---------------------------------
 			const user   = new JestUser( this, 0 ); // user character
 			await user.setup();
 				/*.catch(
@@ -35120,9 +35629,9 @@ JestAppsRegistry.AppJestPlay =
 			user.level   = /*'destinyg_b3';//*/ 'level13.nw';
 			user.anchor.move( 10, 5 );
 
-			// --------------------------------
+			//---------------------------------
 			// Add Ticker Event(s)
-			// --------------------------------
+			//---------------------------------
 			this.timers['ani'].register(
 				'tick', 'render',
 					e => {
@@ -35130,9 +35639,9 @@ JestAppsRegistry.AppJestPlay =
 						this.draw( e );
 					});
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Debugging
-			// --------------------------------
+			//---------------------------------
 			// Default inspector drawing canvas to gameboard
 			this.inspector.canvas	= canvas;
 			this.inspector.on();
@@ -35144,21 +35653,21 @@ JestAppsRegistry.AppJestPlay =
 			this.inspector.anchors.add( user.anchor );
 			user.anchor.show( '#00f', 50 );
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize the plugins.
 			//await JestPlay.initPlugins();
 
-			// --------------------------------
+			//---------------------------------
 			// Connect to the server [object]
-			// --------------------------------
+			//---------------------------------
 			await this.online.connect( this.config.server );
 			loadbar.update(); // step 2
 
-			// --------------------------------
+			//---------------------------------
 			// Successfully Exit Build
-			// --------------------------------
+			//---------------------------------
 			// Reveal the application screen.
 			this.spline.goToScreen( 'application' );
 			// App built, set built status
@@ -35166,9 +35675,9 @@ JestAppsRegistry.AppJestPlay =
 			return true;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Drawing
-		// --------------------------------
+		//---------------------------------
 		// Load test levels and register them with the gameboard.
 		// RETURNS: [object] Levels keyed by their requested filenames.
 		// * filenames - [array] Remote level filenames already loaded by Secretary.
@@ -35199,9 +35708,9 @@ JestAppsRegistry.AppJestPlay =
 			return levels; // [object]
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Drawing
-		// --------------------------------
+		//---------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
@@ -35225,9 +35734,9 @@ JestAppsRegistry.AppJestPlay =
 			/*ctx.fillStyle = "#FF00FF";
 			ctx.fillRect( 0, 0, this.canvas.el.width, this.canvas.el.height );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Render JANI Inside of Animator
-			// --------------------------------
+			//---------------------------------
 			// Draw all relevant animation view(s).
 			let views	= [];
 			for ( const worldling of this.gameboard.worldlings ) {
@@ -35308,9 +35817,9 @@ JestAppsRegistry.AppJestPlay =
 			document.body.removeChild(downloadLink);				// File: giantMap.js, line 58, char #1
 		}*/
 
-		// --------------------------------
+		//---------------------------------
 		// Online Mode Handling
-		// --------------------------------
+		//---------------------------------
 		// Current user joined the server.
 		// RETURNS: [void].
 		// * e			- player event data [object] sent from server.
@@ -36079,7 +36588,7 @@ class JestCreator extends Jest {
 	// Declare properties
 	icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
 	name			= 'Creator';		// name of application
-	version			= '0.3beta';		// application version
+	version			= 'unknown';		// application version
 	id				= 'creator';		// creator application id.
 	// Server [objects]
 	//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -36099,9 +36608,9 @@ class JestCreator extends Jest {
 	board			= null;				// [JestElement] Board for editing the file.
 	sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * options	- [object] Configuration options for the application.
 	constructor() {
@@ -36109,9 +36618,9 @@ class JestCreator extends Jest {
 		super();
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the application.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
@@ -36131,28 +36640,28 @@ class JestCreator extends Jest {
 	// Build the gameboard, user, components, etc.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async build() {
-		// --------------------------------
+		//---------------------------------
 		// Emit Initial Event(s)
-		// --------------------------------
+		//---------------------------------
 		this.emit( 'prebuild', null ); // emit a pre-build hook event
 
-		// --------------------------------
+		//---------------------------------
 		// Add Special HTML Class(es)
-		// --------------------------------
+		//---------------------------------
 		this.windows[0].refs.viewport.addClass( 'jest-viewport-creator' );
 
-		// --------------------------------
+		//---------------------------------
 		// Call Pre-Build Method (if exists)
-		// --------------------------------
+		//---------------------------------
 		try { await this.preset(); }
 		catch ( err ) {
 			console.error( `Pre-build failed: ${err}` );
 			throw err;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Call Super
-		// --------------------------------
+		//---------------------------------
 		await super.build();
 		// change mode async build() {
 		/*try { await super.build(); }
@@ -36161,31 +36670,31 @@ class JestCreator extends Jest {
 			throw err;
 		}*/
 
-		// --------------------------------
+		//---------------------------------
 		// Set & Get Quick-Refs
-		// --------------------------------
+		//---------------------------------
 		// Get loading-screen loadbar.
 		const loadbar	= this.spline.getScreen('loading').loadbar;
 		// Update progress bar to show a tool has loaded.
 		loadbar.update( 1, 10 ); // step 1 (initialization)
 		//this.windows[0].expand( 800, 300 ); // auto-resize the window
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize method plugin(s).
 		await JestCreator.initPlugins( 'methods', this );
 		loadbar.update(); // step 2
 
-		// --------------------------------
+		//---------------------------------
 		// Create Governor State(s)
-		// --------------------------------
+		//---------------------------------
 		// Instantiate some governor states.
 		this.governor.init( 'clipboard', 1 ); // clipboard has 1 history state
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Interface [object]
-		// --------------------------------
+		//---------------------------------
 		// Build the panels for the main application screen.
 		this.panel.addElements([
 			// Build the panel
@@ -36228,23 +36737,23 @@ class JestCreator extends Jest {
 			}]);
 		loadbar.update(); // step 3
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Gameboard [object]
-		// --------------------------------
+		//---------------------------------
 		this.gameboard.display.addCanvas( 'workspace' ); // create gameboard canvas
 		this.gameboard.display.addCanvas( 'sketchpad' ); // create sketchpad canvas
 		const canvas = this.gameboard.display.getCanvas( 'workspace' );
 		canvas.resize( 0, 0 );          // set default board width & height
 
-		// --------------------------------
+		//---------------------------------
 		// Animation Handler [object]
-		// --------------------------------
+		//---------------------------------
 		// Assign the gameboard canvas to the animator for animation rendering
 		this.animator.canvas = canvas;  // Animator canvas is the world "screen"
 
-		// --------------------------------
+		//---------------------------------
 		// Create File Menu [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the file menu.
 		const filemenu = new JestFileMenu( this );
 		this.filemenu  = filemenu;      // store ref
@@ -36292,9 +36801,9 @@ class JestCreator extends Jest {
 		// Trigger next update.
 		loadbar.update(); // step 4
 
-		// --------------------------------
+		//---------------------------------
 		// Create Input File Select [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const fileSelect	= new JestInputFileSelect( this, this.filetypes );
 		this.fileSelect		= fileSelect;
@@ -36316,17 +36825,17 @@ class JestCreator extends Jest {
 				this.openFile( fileInfo );
 			});
 
-		// --------------------------------
+		//---------------------------------
 		// Create Easels for File View(s)
-		// --------------------------------
+		//---------------------------------
 		// Create easel(s) list for file view(s).
 		this.easels			= {}; // [object] of easels
 		// Create an easel for viewing & editing files.
 		this.easels.files	= new JestEasel( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar		= new JestToolbar( this );
 		this.toolbar		= toolbar; // set toolbar
@@ -36342,21 +36851,21 @@ class JestCreator extends Jest {
 			});
 		loadbar.update(); // step 5
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Creator UI Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize user interface plugin(s).
 		await JestCreator.initPlugins( 'ui', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Online Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize online plugin(s).
 		await JestCreator.initPlugins( 'online', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Settings Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize settings plugin(s).
 		await JestCreator.initPlugins( 'settings', this );
 		loadbar.update(); // step 6
@@ -36374,9 +36883,9 @@ class JestCreator extends Jest {
 			classes    : ['jest-sidebar-section-header-info']
 			});*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbox
-		// --------------------------------
+		//---------------------------------
 		const toolbox	= new JestToolbox( this ); // create toolbox
 		this.toolbox	= toolbox; // keep reference
 		// Register toolbox unequip tool event.
@@ -36402,9 +36911,9 @@ class JestCreator extends Jest {
 		//--------------------------------
 		await this.configure();
 
-		// --------------------------------
+		//---------------------------------
 		// Add Ticker Event(s)
-		// --------------------------------
+		//---------------------------------
 		// Register the core animation loop using a timer.
 		this.timers['ani'].register(
 			'tick', 'render',
@@ -36420,9 +36929,9 @@ class JestCreator extends Jest {
 		this.panel.refs.system.addPanel( 'topright', topright.panel );
 		loadbar.update();				// step 10
 
-		// --------------------------------
+		//---------------------------------
 		// Successfully Exit Build
-		// --------------------------------
+		//---------------------------------
 		// Reveal the application screen.
 		this.spline.goToScreen( 'application' );
 		// App built, set built status
@@ -36445,9 +36954,9 @@ class JestCreator extends Jest {
 	// e	- Ticker event [object] data about frame.
 	update( e ) { }
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Draw the central gameboard.
 	// RETURNS: [void].
 	// e	- Ticker event [object] data about frame.
@@ -36715,8 +37224,8 @@ JestAppsRegistry.AppJestTiler =
 	class JestTiler extends JestCreator {
 		// Declare properties
 		icon			= 'images/icons/jest_settings.png'; // application icon image URL [string] value
-		name			= 'Tiler';		// name of application
-		version			= '0.3beta';		// application version
+		name			= 'Tiler';			// name of application
+		version			= '0.42';			// application version
 		id				= 'tiler';			// tiler application id.
 		// Server [objects]
 		//online			= null;			// [object] JestOnline for connection to a websocket.
@@ -36738,9 +37247,9 @@ JestAppsRegistry.AppJestTiler =
 		board			= null;				// [JestElement] Board for editing the level.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -36748,9 +37257,9 @@ JestAppsRegistry.AppJestTiler =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -36764,9 +37273,9 @@ JestAppsRegistry.AppJestTiler =
 			// call parent launch method
 			const ok = await super.launch();
 			if ( !ok ) return false; // failed
-			// --------------------------------
+			//---------------------------------
 			// Post Launch Action(s)
-			// --------------------------------
+			//---------------------------------
 			// Disable all side panels.
 			this.sidebar.disableAllSections();
 			// Click a default tool to use.
@@ -36790,12 +37299,13 @@ JestAppsRegistry.AppJestTiler =
 		// Setup the tiler work station inside the app.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async configure() {
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get the level editing canvas
 			const gameboard	= this.gameboard;	// get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
+			canvas.el.style.imageRendering = 'pixelated'; // pixel art canvas
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			const toolbar	= this.toolbar;
@@ -36806,17 +37316,17 @@ JestAppsRegistry.AppJestTiler =
 			// Initiate App-Level Settings
 			//-------------------------
 			// Initiate the tiler app as having settings.
-			client.settings.tiler = {};
+			this.settings.tiler = {};
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Tiler UI Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize user interface plugin(s).
 			await JestTiler.initPlugins( 'ui', this );
 
-			// --------------------------------
+			//---------------------------------
 			// Extend File Menu [object]
-			// --------------------------------
+			//---------------------------------
 			const tilerActions	= [
 				{ name: 'undo',     text: 'Undo'   },
 				{ name: 'redo',     text: 'Redo'   },
@@ -36849,9 +37359,9 @@ JestAppsRegistry.AppJestTiler =
 			// Delete tool tip:
 			fmBtns.delete.clicker.addAttribute( 'data-tooltip-keys', 'Delete' );
 
-			// --------------------------------
+			//---------------------------------
 			// Create Toolbar Title
-			// --------------------------------
+			//---------------------------------
 			// Create primary swatch (foreground).
 			/*const title		= new JestDisplay( this );
 			title.build( 'title', ['title'] ); // build display
@@ -36863,17 +37373,19 @@ JestAppsRegistry.AppJestTiler =
 				classes : []
 				}])*/
 
-			// --------------------------------
+			//---------------------------------
 			// Create Swatch Display(s)
-			// --------------------------------
+			//---------------------------------
 			// Create swatch(es) list of swatch display(s).
 			this.swatches	= {}; // [object] of tile swatches
+
 			// Create primary swatch (foreground).
 			const swatchFg	= new JestDisplay( this );
 			this.swatches.foreground = swatchFg;
 			swatchFg.build( 'swatch', ['swatch','swatch-fg'] ); // build display
 			toolbar.panel.addPanel( 'swatchFg', swatchFg.panel );
 			swatchFg.panel.addAttribute( 'data-tooltip', 'Foreground Tile' );
+
 			// Create secondary swatch (background).
 			const swatchBg	= new JestDisplay( this );
 			this.swatches.background = swatchBg;
@@ -36881,28 +37393,34 @@ JestAppsRegistry.AppJestTiler =
 			toolbar.panel.addPanel( 'swatchBg', swatchBg.panel );
 			swatchBg.panel.addAttribute( 'data-tooltip', 'Background Tile' );
 
-			// --------------------------------
+			//---------------------------------
 			// Load Default Game-World Presets [object]
-			// --------------------------------
+			//---------------------------------
 			// Attempt to download default game world presets.
 			await this.gameboard.addWorld( 'jest' );
 			const world		= this.gameboard.getWorld( 'jest' );
 			//console.log( `Opening new world preset file [object] "${fileInfo.stem}".` );
+
 			// Open game world tileset(s).
-			for ( const data of world.tilesets ) {
+			for ( const data of world.tilesets )
 				await this.openTilesetFile( data.stem );
-			}
 			loadbar.update(); // step 7
 
-			// --------------------------------
+			//---------------------------------
+			// Plugin App Settings Hook(s)
+			//---------------------------------
+			// Initialize user interface plugin(s).
+			await JestTiler.initPlugins( 'settings', this );
+
+			//---------------------------------
 			// Load Toolbox Tool Plugin(s)
-			// --------------------------------
+			//---------------------------------
 			// Setup temporary loadbar variable(s).
 			// NOTE: Loadbar is accessible after UI plugins.
-			let loadStep	= 0; // tracks current step
-			let loadTotal	= 0; // total steps
+			let loadStep    = 0; // tracks current step
+			let loadTotal   = 0; // total steps
 			// Determine how many tool plugin(s) to load.
-			loadTotal		= this.countPlugins( 'tools' );
+			loadTotal       = this.countPlugins( 'tools' );
 			// Condense loader screen load segments.
 			let loadScrnSteps	= 2;
 			// Begin discharging load events.
@@ -36942,9 +37460,9 @@ JestAppsRegistry.AppJestTiler =
 			toolbar.panel.reorderChild( swatchFg.panel, -1 );
 			toolbar.panel.reorderChild( swatchBg.panel, -1 );
 
-			// --------------------------------
+			//---------------------------------
 			// Governor Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Notify user about a clipboard "copy" event.
 			this.governor.register(
 				'logged', 'clipboardSuccess',
@@ -36959,7 +37477,7 @@ JestAppsRegistry.AppJestTiler =
 							//persistent: true,
 							buttons   :
 								[
-								{ label: 'Ok', click: () =>  {/*console.log('Ok pressed');*/} }
+								{ label: 'Ok', click: ()=>{/*console.log('Ok pressed');*/} }
 								]
 							//onExpire  : () => console.log('Notification expired')
 							});
@@ -36968,9 +37486,9 @@ JestAppsRegistry.AppJestTiler =
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Miscellaneous Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Register cabinet file saved event(s).
 			this.register(
 				'file:saved', 'appResponse',
@@ -37176,7 +37694,7 @@ JestAppsRegistry.AppJestTiler =
 				// Attempt to read local file if requested.
 				if ( fileInfo.network!=='none' ) { // existing level
 					// Use the Secretary to read a local file's data.
-					const ok	= await this.readLevelData( fileInfo )
+					const ok  = await this.readLevelData( fileInfo )
 					if ( ok===null ) {
 						console.warn( 'Level file could not be opened!' );
 						alert( 'Could not open level file.' );
@@ -37189,7 +37707,7 @@ JestAppsRegistry.AppJestTiler =
 				// Create Level File [object]
 				//--------------------------------
 				// Create a blank new cabinet file [object].
-				const cabFile	= new JestFileLevel( this, 'local', fileInfo.stem );
+				const cabFile = new JestFileLevel( this, 'local', fileInfo.stem );
 
 				//--------------------------------
 				// Register Event(s)
@@ -37201,6 +37719,7 @@ JestAppsRegistry.AppJestTiler =
 						// Emit an app-level "open level file" data event.
 						this.emit( 'loadFileData', null, cabFile, payload )
 					});
+
 				// Attach a saved listener when the file data has been written.
 				cabFile.register(
 					'saved', 'appResponse',
@@ -37232,42 +37751,25 @@ JestAppsRegistry.AppJestTiler =
 				// Setup File Editing View
 				//--------------------------------
 				// Create a new view panel for level.
-				const view		= new JestFileViewEditorPainterLevel( this );
-				const skey		= view.skey;		// we'll use system key for various signature(s)
-				view.build();						// build the view
-				this.easels.files.showcase( view );	// add view to "files" easel
+				const view  = new JestFileViewEditorPainterLevel( this );
+				const skey  = view.skey;            // we'll use system key for various signature(s)
+				view.build();                       // build the view
+				this.easels.files.showcase( view ); // add view to "files" easel
 				// Open the file.
-				view.openFile( cabFile );			// open the level file in the view
+				view.openFile( cabFile );           // open the level file in the view
 
 				//--------------------------------
 				// Handle File Change/Save Event(s)
 				//--------------------------------
 				// Set view mode to pre-saved (since opened file) & unchanged.
-				cabFile.jot( "saved", true );		// it has not been saved
-				cabFile.jot( "changed", false );	// it has not been changed
+				cabFile.jot( "saved", true );       // it has not been saved
+				cabFile.jot( "changed", false );    // it has not been changed
 
 				//--------------------------------
 				// Setup Undo/Redo History Management
 				//--------------------------------
 				// Set edit history state (undo/redo) limit.
 				view.governor.init( 'edit', 20 );
-
-				// Add file change event listener.
-				view.governor.register(
-					'changed', 'fileChange',
-					( state, snapshot ) => {
-						// Check if the file has changed.
-						switch ( snapshot.action ) {
-							case "dropRegion":
-							case "fillRegion":
-							case "fillTile":
-							case "sparseRegion":
-								// The file has changed.
-								view.file.jot( "changed", true );
-								break;
-							default: break;
-						}
-					});
 
 				// Listen for undo event.
 				view.register(
@@ -37300,11 +37802,11 @@ JestAppsRegistry.AppJestTiler =
 					'history:logged', 'labelItem',
 					( item, log ) => {
 						// Broadcast event to custom label history states.
-						this.emit( 'history:logged', null, item, log );
+						this.emit( 'history:logged', null, view, item, log );
 					});
 
 				// Add history panel to the sidebar menu.
-				const histMenu	= this.sidebar.getSection( 'history' );
+				const histMenu = this.sidebar.getSection( 'history' );
 				histMenu.addItem( skey, view.history.panel );
 				view.history.hide(); // hide the history
 
@@ -37312,7 +37814,7 @@ JestAppsRegistry.AppJestTiler =
 				// Add View to Tab-bar
 				//--------------------------------
 				// Open new tab for view.
-				const tab	= this.tabbarFile.addView( view );
+				const tab = this.tabbarFile.addView( view );
 				// Add filetype icon.
 				/*tab.clicker.addElements([
 					{
@@ -37503,9 +38005,9 @@ JestAppsRegistry.AppJestTiler =
 				};
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Enable & Disable
-		// --------------------------------
+		//---------------------------------
 		// Enable the tiler application.
 		// RETURNS: [void]
 		enable() {
@@ -37614,36 +38116,140 @@ JestAppsRegistry.AppJestTiler =
 			this.emit( 'postupdate', null, e, state, enabled, mode );	// emit hook
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Rendering Method(s)
-		// --------------------------------
+		//---------------------------------
+		// Size the shared workspace for the active level and its previews.
+		// * view   - [JestFileViewEditorPainterLevel] Active level view.
+		// * editor - [ElementCanvas] Shared workspace canvas.
+		// * sketch - [ElementCanvas] Existing sketchpad for editing overlays.
+		layoutLevelWorkspace( view, editor, sketch ) {
+			// Resolve the active level's zoomed dimensions.
+			const display = view.anchor.getZoomed().display;
+			const w = Math.round( display.w );
+			const h = Math.round( display.h );
+
+			// Convert the requested tile padding to canvas pixels.
+			const value    = Number( this.settings.tiler?.editor?.padding ?? 8 );
+			const padTiles = Number.isFinite(value) ? value : 8;
+			const pad      =
+				Math.min(
+					w, h, Math.max( 0, Math.round(padTiles*display.units) )
+					);
+
+			// Add space only on edges occupied by an available linked view.
+			// Diagonal views require space on both of their corresponding edges.
+			let left   = 0;
+			let right  = 0;
+			let top    = 0;
+			let bottom = 0;
+			if ( view.relationship?.size ) {
+				for ( const [direction,[dx,dy]] of Object.entries(JestFileRelationshipLevel.directions) ) {
+					// An unset direction contributes no workspace padding.
+					if ( !view.relationship.getView(direction) ) continue;
+					if ( dx<0 ) left   = pad;
+					if ( dx>0 ) right  = pad;
+					if ( dy<0 ) top    = pad;
+					if ( dy>0 ) bottom = pad;
+				}
+			}
+
+			// Place the active level after its left and top margins.
+			// The rink bounds retain the active level's size and tile grid.
+			const levelGrid  = this.config.levelGrid;
+			editor.setRinkBounds( left, top, w, h, levelGrid, levelGrid );
+
+			// Size the shared canvas to the margins actually in use.
+			const workspaceW = left+w+right;
+			const workspaceH = top+h+bottom;
+
+			if ( editor.width!==workspaceW || editor.height!==workspaceH )
+				editor.resize( workspaceW, workspaceH );
+
+			// Keep editing overlays in active-level coordinates.
+			if ( sketch.width!==w || sketch.height!==h )
+				sketch.resize( w, h );
+		}
+
+		// Paint the linked levels and the active level into the same canvas.
+		// * view   - [JestFileViewEditorPainterLevel] Active level view.
+		// * editor - [ElementCanvas] Shared workspace canvas.
+		// * sketch - [ElementCanvas] Existing sketchpad for editing overlays.
+		drawLevelWorkspace( view, editor, sketch ) {
+			// Size and clear the workspace before drawing the current tab.
+			this.layoutLevelWorkspace( view, editor, sketch );
+			const { x, y, w, h } = editor.getRinkBounds();
+			editor.clear(); // wipe canvas clear
+			if ( !w || !h ) return;
+
+			//--------------------------------
+			// Draw Linked Level Layers
+			//--------------------------------
+			// Position each linked level relative to the active level.
+			const alpha = Number( this.settings.tiler?.editor?.paddingAlpha ?? 8 );
+			editor.setAlpha( alpha ); // soft translucent neighbor preview
+			const relationship = view.relationship;
+			if ( relationship?.size )
+				for ( const [direction,[dx,dy]] of Object.entries(JestFileRelationshipLevel.directions) )
+					this.drawView(
+						editor, relationship.getView(direction),
+						x+dx*w, y+dy*h, w, h
+						);
+
+			// Draw the active level at the editable origin.
+			editor.setAlpha( 1 ); // solid interior editor rendering
+			this.drawView( editor, view, x, y, w, h );
+		}
+
+		// Composite a level at native resolution and scale it onto the workspace.
+		// RETURNS: [void].
+		// * canvas     - [ElementCanvas] Destination canvas to draw upon.
+		// * sourceView - [JestFileview] to draw onto the editor canvas.
+		// * dx,dy      - [Number] Value of destination coordinates.
+		// * w,h        - [Number] Values of dimensions width x height
+		drawView( canvas, sourceView, dx, dy, w, h ) {
+			// Refresh the bitmap so it includes the latest layer edits.
+			if ( !sourceView?.refreshCanvas() ) return;
+			const image = sourceView.getViewRender();
+			if ( !image?.width || !image?.height ) return;
+
+			// Scale the complete bitmap to the active tab's display dimensions.
+			canvas.draw(
+				image,
+				false, // do not clear
+				false, // do not resize
+				dx, dy, 0, 0,
+				null, null, w, h
+				);
+		}
+
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e - Ticker event [object] data about frame.
 		draw( e ) {
-			// --------------------------------
+			//---------------------------------
 			// Check State & Status
-			// --------------------------------
+			//---------------------------------
 			// Get active state info.
-			let state	= this.getState(); // get current program state
-			let snapshot, report, mode, enabled, key;
+			let state     = this.getState(); // get current program state
 			// If no selection is made, return null.
-			enabled		= this.skim( 'enabled' );
-			mode		= this.skim( 'mode' );
+			const enabled = this.skim( 'enabled' );
+			const mode    = this.skim( 'mode' );
 			if ( !enabled ) return null;
-			// --------------------------------
+
+			//---------------------------------
 			// Check If Canvas Is Available
-			// --------------------------------
+			//---------------------------------
 			// Determine if editor canvas is set.
-			const editor     = this.gameboard.display.getCanvas( 'workspace' );
+			const editor = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
 				console.warn( 'Workspace canvas is not set or invalid' );
 				return; // abort
 			}
-			const editorCtx  = editor.el.getContext( '2d' );
+			const editorCtx = editor.el.getContext( '2d' );
 
 			// Determine if palette canvas is set.
-			const palette    = this.gameboard.display.getCanvas( 'palette' );
+			const palette   = this.gameboard.display.getCanvas( 'palette' );
 			if ( !palette || !palette.el ) {
 				console.warn( 'Palette canvas is not set or invalid' );
 				return; // abort
@@ -37651,79 +38257,116 @@ JestAppsRegistry.AppJestTiler =
 			const paletteCtx = palette.el.getContext( '2d' );
 
 			// Determine if sketchpad canvas is set.
-			const sketch     = this.gameboard.display.getCanvas( 'sketchpad' );
+			const sketch    = this.gameboard.display.getCanvas( 'sketchpad' );
 			if ( !sketch || !sketch.el ) {
 				console.warn( 'Sketchpad canvas is not set or invalid' );
 				return; // abort
 			}
-			const sketchCtx  = sketch.el.getContext( '2d' );
+			const sketchCtx = sketch.el.getContext( '2d' );
 
 			// Emit pre-draw hooks.
-			this.emit( 'predraw', null,
+			this.emit(
+				'predraw', null,
 				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
+				editor, palette, sketch
+				);
 
-			// --------------------------------
+			//---------------------------------
 			// Draw Depending Upon Mode
-			// --------------------------------
+			//---------------------------------
+			// Access the state properties.
+			const levelView   = state.levelView;    // level view
+			const tilesetView = state.tilesetView;  // tileset view
 			// Handle mode.
 			switch ( mode ) {
+				// App running.
 				case 'running':	// application is running
-					// --------------------------------
+					//---------------------------------
 					// Render the Editor Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
-					if ( state.levelView!==null ) {
-						// Set the fill color to blue
-						//editorCtx.fillStyle = '#000';
-						// Clear the canvas with an empty screen.
-						editorCtx.clearRect( 0, 0, editor.el.width, editor.el.height );
+					if ( levelView!==null ) {
+						// Draw the active tab and its linked neighbors.
+						this.drawLevelWorkspace( levelView, editor, sketch );
+					}
+					/*// Require a file to be open.
+					if ( levelView!==null ) {
 						//editorCtx.fillStyle = 'transparent';
 						// --------------------------------
 						// Draw Level Board on Editor
 						// --------------------------------
 						// Draw active view on editor.
-						state.levelView.refreshCanvas(); // refresh composite render
-						const levelImage = state.levelView.getViewRender(); // get canvas
-						editorCtx.drawImage(
-							levelImage.el,   // image contents being copied
-							0, 0,            // source crop x,y
-							levelImage.width, levelImage.height, // source W x H
-							0, 0,            // destination x,y
-							editor.width, editor.height // destination W x H
+						levelView.refreshCanvas(); // refresh composite render
+						const levelImage = levelView.getViewRender(); // get canvas
+						// Copy the level canvas and scale it to fill the editor canvas.
+						editor.draw(
+							levelImage,   // Source ElementCanvas
+							true,         // Clear the canvas first
+							true,         // Resize the canvas
+							0, 0,         // Destination x, y
+							0, 0,         // Source x, y
+							levelImage.width, levelImage.height // source WxH
+							//editor.width, editor.height // destination WxH
 							);
-					}
+					}*/
 
-					// --------------------------------
+					//---------------------------------
 					// Render the Palette Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
-					if ( state.tilesetView!==null ) {
-						// Clear the canvas with an empty screen.
-						paletteCtx.clearRect( 0, 0, palette.el.width, palette.el.height );
-						// --------------------------------
+					if ( tilesetView!==null ) {
+						//---------------------------------
 						// Draw Tileset Board on Palette
-						// --------------------------------
+						//---------------------------------
 						// Draw active view on palette.
-						const tilesetImage	= state.tilesetView.getViewRender();
-						paletteCtx.drawImage(
-							tilesetImage.el,	// image contents being copied
-							0, 0,				// source crop x,y
-							tilesetImage.el.width, tilesetImage.el.height, // source W x H
-							0, 0,				// destination x,y
-							palette.width, palette.height // destination W x H
+						tilesetView.refreshCanvas(); // refresh render
+						const tilesetImage = tilesetView.getViewRender(); // get canvas
+						// Copy the tileset canvas and scale it to fill the palette canvas.
+						palette.draw(
+							tilesetImage, // Source ElementCanvas
+							true,         // Clear the canvas first
+							true,         // Resize the canvas
+							0, 0,         // Destination x, y
+							0, 0,         // Source x, y
+							tilesetImage.width, tilesetImage.height // source WxH
+							//palette.width, palette.height // destination WxH
 							);
 					}
 					break;
+				// Unknown mode.
 				default: break; // no mode to draw
 			}
-			// Emit post-draw hooks.
-			this.emit( 'draw', null,
-				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
-			this.emit( 'postdraw', null,
-				e, state, enabled, mode,
-				editorCtx, paletteCtx, sketchCtx );
+
+			//---------------------------------
+			// Draw Active Level Overlays
+			//---------------------------------
+			// Translate level-local plugin drawing into the active workspace rectangle.
+			editorCtx.save();
+			try {
+				// Require the application to be running + active level.
+				if ( mode==='running' && levelView!==null ) {
+					// Constrain editing visuals to the active level.
+					const { x, y, w, h } = editor.getRinkBounds();
+					editorCtx.translate( x, y );
+					editorCtx.beginPath();
+					editorCtx.rect( 0, 0, w, h );
+					editorCtx.clip();
+					editorCtx.beginPath();
+				}
+
+				// Run the existing grid, marquee, and Hook drawing callbacks.
+				this.emit( 'draw', null, e, state, enabled, mode, editor, palette, sketch );
+			}
+			finally {
+				// Restore workspace coordinates for the next drawing pass.
+				editorCtx.restore();
+			}
+			//this.emit( 'draw', null, e, state, enabled, mode, editor, palette, sketch );
+
+			//---------------------------------
+			// Emit Post-Draw Event(s)
+			//---------------------------------
+			this.emit( 'postdraw', null, e, state, enabled, mode, editor, palette, sketch );
 		}
 
 		//--------------------------------
@@ -37732,22 +38375,22 @@ JestAppsRegistry.AppJestTiler =
 		// Store some selection to clipboard for paste.
 		copy() {
 			// Emit copy event(s).
-			this.emit( 'copy', null );		// emit hook
+			this.emit( 'copy', null );     // emit hook
 		}
 
 		// Store some selection to clipboard for paste & remove it.
 		cut() {
 			// Emit cut event(s).
-			this.emit( 'copy', null );		// emit hook
-			this.emit( 'delete', null );	// emit hook
+			this.emit( 'copy', null );     // emit hook
+			this.emit( 'delete', null );   // emit hook
 		}
 
 		// Paste an item from the clipboard.
 		paste() {
 			// Access application state & current clipboard.
-			const state		= this.getState(); // get current program state
+			const state    = this.getState(); // get current program state
 			// Look for a snapshot on the clipboard.
-			const snapshot 	= this.governor.current( 'clipboard' ); // clipboard data
+			const snapshot = this.governor.current( 'clipboard' ); // clipboard data
 			if ( !snapshot ) return;
 			// Emit paste event(s).
 			this.emit( 'paste', null, snapshot ); // emit hook
@@ -37756,8 +38399,8 @@ JestAppsRegistry.AppJestTiler =
 		// Delete a selected item.
 		delete() {
 			// Access application state & emit event.
-			const state		= this.getState(); // get current program state
-			this.emit( 'delete', null ); // emit hook
+			const state = this.getState(); // get current program state
+			this.emit( 'delete', null );   // emit hook
 		}
 
 		//--------------------------------
@@ -37769,25 +38412,25 @@ JestAppsRegistry.AppJestTiler =
 		// * key	- [string] Value of swatch to sample to (e.g. 'foreground').
 		toolSetTileSwatch( tile, key ) {
 			// Block action if app is busy.
-			if ( this.busy() ) return;	// app busy‐gate
+			if ( this.busy() ) return; // app busy‐gate
 			// Get active state info.
-			const state		= this.getState();				// get current program state
+			const state   = this.getState();           // get current program state
 			//console.log( state );
 			// Validate an active view is open.
-			if ( !state.tilesetView ) return false;			// no active tileset
-			if ( !this.swatches?.[key] ) return false;		// no swatch
-			// --------------------------------
+			if ( !state.tilesetView ) return false;    // no active tileset
+			if ( !this.swatches?.[key] ) return false; // no swatch
+			//---------------------------------
 			// Get Double-Clicked Tile
-			// --------------------------------
+			//---------------------------------
 			const { tx, ty } = tile;
 			// Grab the tile snapshot & store in display backend contents data.
-			const data		= state.tileset.getTileData( tx, ty );
-			const display	= this.swatches[key];
+			const data    = state.tileset.getTileData( tx, ty );
+			const display = this.swatches[key];
 			display.contents = data;
 			// Render the tile in the swatch display
-			const canvas	= state.tileset.getTileStamp( tx, ty );
-			display.addCanvas( 'tile' );		// add a canvas to display
-			display.render( 'tile', canvas );	// render tile on canvas
+			const canvas  = state.tileset.getTileStamp( tx, ty );
+			display.addCanvas( 'tile' );        // add a canvas to display
+			display.render( 'tile', canvas );   // render tile on canvas
 			// Highlight the swatch.
 			if ( display ) {
 				display.panel.addClass( 'signal' );
@@ -37804,11 +38447,11 @@ JestAppsRegistry.AppJestTiler =
 			// Check If Paste Possible
 			//--------------------------------
 			// Validate an active view is open.
-			const state		= this.getState();		// get current program state
-			if ( !state.tilesetView ) return false;	// no active level
-			const tileset	= state.tilesetView.file.context;	// active [JestTileset] instance
+			const state   = this.getState();        // get current program state
+			if ( !state.tilesetView ) return false; // no active level
+			const tileset = state.tilesetView.file.context; // active [JestTileset] instance
 			// Convert the region to a stamp.
-			const stamp		= tileset.createStamp( matrix );	// convert to stamp
+			const stamp   = tileset.createStamp( matrix );  // convert to stamp
 			return stamp; // return stamp
 		}
 	};
@@ -37846,9 +38489,9 @@ JestAppsRegistry.AppJestAnimator =
 		board			= null;				// [JestElement] Board for editing the jani.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -37856,9 +38499,9 @@ JestAppsRegistry.AppJestAnimator =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -37872,9 +38515,9 @@ JestAppsRegistry.AppJestAnimator =
 			// call parent launch method
 			const ok = await super.launch();
 			if ( !ok ) return false; // failed
-			// --------------------------------
+			//---------------------------------
 			// Post Launch Action(s)
-			// --------------------------------
+			//---------------------------------
 			// Disable all side panels.
 			this.sidebar.disableAllSections();
 			// Force open an empty new jani.
@@ -37893,34 +38536,35 @@ JestAppsRegistry.AppJestAnimator =
 		// Setup the animator work station inside the app.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async configure() {
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get the jani editing canvas
-			const gameboard	= this.gameboard;	// get gameboard reference
+			const gameboard	= this.gameboard;   // get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
+			canvas.el.style.imageRendering = 'pixelated'; // pixel art canvas
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			const toolbar	= this.toolbar;
 			// Get the file menu.
-			const filemenu	= this.filemenu;	// get ref
+			const filemenu	= this.filemenu;    // get ref
 
-			// --------------------------------
+			//---------------------------------
 			// Animation Handler [object]
-			// --------------------------------
+			//---------------------------------
 			// Assign the gameboard canvas to the animator for animation rendering
-			const animator	= this.animator;	// access ref
-			animator.canvas	= canvas;			// animator canvas is workspace canvas
+			const animator	= this.animator;    // access ref
+			animator.canvas	= canvas;           // animator canvas is workspace canvas
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Animator UI Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize user interface plugin(s).
 			await JestAnimator.initPlugins( 'ui', this );
 
-			// --------------------------------
+			//---------------------------------
 			// Extend File Menu [object]
-			// --------------------------------
+			//---------------------------------
 			const animatorActions	= [
 				{ name: 'undo',     text: 'Undo' },
 				{ name: 'redo',     text: 'Redo' },
@@ -37953,15 +38597,15 @@ JestAppsRegistry.AppJestAnimator =
 			// Delete tool tip:
 			fmBtns.delete.clicker.addAttribute( 'data-tooltip-keys', 'Delete' );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Animator Tool Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize tools plugins.
 			await JestAnimator.initPlugins( 'tools', this );
 
-			/*// --------------------------------
+			/*//---------------------------------
 			// Load Default Game Image(s)
-			// --------------------------------
+			//---------------------------------
 			const fileBufferLoad	= [];
 			// Load default GIF skins.
 			for ( let i=0; i<=31; i++ )
@@ -37977,9 +38621,9 @@ JestAppsRegistry.AppJestAnimator =
 				]);
 			await this.imager.loadFiles( fileBufferLoad );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Miscellaneous Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Register cabinet file saved event(s).
 			this.register(
 				'file:saved', 'appResponse',
@@ -38142,9 +38786,9 @@ JestAppsRegistry.AppJestAnimator =
 				cabFile.register(
 					'openFile', 'loadObjects',
 					( { jani } ) => {
-						// --------------------------------
+						//---------------------------------
 						// Emit Successful Load Event
-						// --------------------------------
+						//---------------------------------
 						// Emit an app-jani "open jani file" data event.
 						this.emit( 'loadFileData', null, cabFile, { jani } )
 					});
@@ -38200,23 +38844,6 @@ JestAppsRegistry.AppJestAnimator =
 				// Set edit history state (undo/redo) limit.
 				view.governor.init( 'edit', 20 );
 
-				// Add file change event listener.
-				view.governor.register(
-					'changed', 'fileChange',
-					( state, snapshot ) => {
-						// Check if the file has changed.
-						switch ( snapshot.action ) {
-							case "dropRegion":
-							case "fillRegion":
-							case "fillTile":
-							case "sparseRegion":
-								// The file has changed.
-								view.file.jot( "changed", true );
-								break;
-							default: break;
-						}
-					});
-
 				// Listen for undo event.
 				view.register(
 					'undo', 'animatorListen',
@@ -38248,7 +38875,7 @@ JestAppsRegistry.AppJestAnimator =
 					'history:logged', 'labelItem',
 					( item, log ) => {
 						// Broadcast event to custom label history states.
-						this.emit( 'history:logged', null, item, log );
+						this.emit( 'history:logged', null, view, item, log );
 					});
 
 				// Add history panel to the sidebar menu.
@@ -38408,9 +39035,9 @@ JestAppsRegistry.AppJestAnimator =
 				};
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Enable & Disable
-		// --------------------------------
+		//---------------------------------
 		// Enable the animator application.
 		// RETURNS: [void]
 		enable() {
@@ -38519,16 +39146,16 @@ JestAppsRegistry.AppJestAnimator =
 			this.emit( 'postupdate', null, e, state, enabled, mode );	// emit hook
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Rendering Method(s)
-		// --------------------------------
+		//---------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
 		draw( e ) {
-			// --------------------------------
+			//---------------------------------
 			// Check State & Status
-			// --------------------------------
+			//---------------------------------
 			// Get active state info.
 			let state	= this.getState(); // get current program state
 			let snapshot, report, mode, enabled, key;
@@ -38537,9 +39164,9 @@ JestAppsRegistry.AppJestAnimator =
 			mode		= this.skim( 'mode' );
 			if ( !enabled ) return null;
 
-			// --------------------------------
+			//---------------------------------
 			// Check If Canvas Is Available
-			// --------------------------------
+			//---------------------------------
 			// Determine if editor canvas is set.
 			const editor    = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
@@ -38561,15 +39188,15 @@ JestAppsRegistry.AppJestAnimator =
 				e, state, enabled, mode,
 				editorCtx, sketchCtx );
 
-			// --------------------------------
+			//---------------------------------
 			// Draw Depending Upon Mode
-			// --------------------------------
+			//---------------------------------
 			// Handle mode.
 			switch ( mode ) {
 				case 'running':	// application is running
-					// --------------------------------
+					//---------------------------------
 					// Render the Editor Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
 					if ( state.janiView!==null ) {
 						//--------------------------------
@@ -38674,9 +39301,9 @@ JestAppsRegistry.AppJestAnimator =
 				default: break; // no mode to draw
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Render JANI Inside of Animator
-			// --------------------------------
+			//---------------------------------
 			// Draw all relevant animation view(s)
 			let views	= [];
 			const view	= state.jani.animation.getView( 'default' );
@@ -38693,9 +39320,9 @@ JestAppsRegistry.AppJestAnimator =
 			this.animator.render( e, views );	// render views
 			this.animator.draw( views );		// draw views
 
-			// --------------------------------
+			//---------------------------------
 			// Emit Final Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Emit post-draw hooks.
 			this.emit( 'draw', null,
 				e, state, enabled, mode,
@@ -39265,16 +39892,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			const workspace = client.gameboard.display.getCanvas( 'workspace' );
 			// Grab the sketchpad for off-screen drawing & rendering.
 			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
-			// Get the level view & its dimensional information.
-			const state     = client.getState();  // get app state
-			const levelView = state.levelView;    // get open tab level file
-			const bounds    = levelView.anchor.getZoomed(); // get active level rect info
 
 			//-------------------------
 			// Auto-Configure Option(s)
 			//-------------------------
 			// Initiate the tiler as having editor settings.
-			client.settings.tiler.editor = { grid:0, crosshair:false };
+			client.settings.tiler.editor = {
+				crosshair : false,  // crosshair off
+				grid      : 0,      // no grid
+				zoom      : 0       // empty zoom
+				};
 			// Keep the crosshair enabled by default unless the user changed it.
 			client.settings.tiler.editor.crosshair ??= true;
 
@@ -39282,8 +39909,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			// Create Control Panel
 			//-------------------------
 			// Generate a "form" inside the sidebar.
-			const optsPanel = new JestForm( client );      // create DOM Panel element [object].
-			optsPanel.build( 'editor', ['app-editor'] ); // build the form
+			const optsPanel = new JestForm( client );     // create DOM Panel element [object].
+			optsPanel.build( 'editor', ['app-editor'] );  // build the form
 
 			//-------------------------
 			// Crosshair Toggle Button
@@ -39306,48 +39933,79 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 
 			// Track the pointer over the workspace through Jest's element events.
 			const crosshairFollower = new JestMouseFollower( client );
-			crosshairFollower.setWatchElement( workspace, bounds.display.units );
+			crosshairFollower.setWatchElement( workspace, client.config.tileGrid );
 			crosshairFollower.enable();
 
 			//-------------------------
 			// Tab Change Event
 			//-------------------------
-			// Update the crosshair grid when the active tileset tab changes.
+			// Update the crosshair grid when the active file tab changes.
 			/*client.tabbarFile.register(
 				'tabChange', 'editorCrosshairGrid',
 				() => {
-					// Read the newly active tileset view.
-					crosshairFollower.setGridUnits( client.getState()?.levelView.tilePixels );
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( null, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Get the level view & its dimensional information.
+					const bounds = s.levelView.anchor.getZoomed();
+					// Match the marquee grid to the newly active level view.
+					crosshairFollower.setGridUnits( bounds.display.units );
+				});
+
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'crosshairZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( null, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Get the level view & its dimensional information.
+					const bounds = s.levelView.anchor.getZoomed();
+					// Match the crosshair grid to the active level view zoom.
+					crosshairFollower.setGridUnits( bounds.display.units );
 				});*/
 
 			// Draw the row and column highlights after the workspace is rendered.
 			client.register(
 				'draw', 'gridCrosshair',
-				( e, state, enabled, mode, editorCtx ) => {
+				( e, state, enabled, mode, editor ) => {
 					// Draw only while the editor is rendering an open level.
 					if ( mode!=='running'
 						 || !client.settings.tiler.editor.crosshair
-						 || !state.levelView )
-						return; // abort
+						 || !state.levelView ) return; // abort
 
-					// Read the latest pointer tile; null means it left the workspace.
-					const position = crosshairFollower.getWatchPosition();
-					if ( !position ) return;
+					// Get canvas context(s).
+					const editorCtx = editor.el.getContext( '2d' );
 
-					// Convert the hovered tile into workspace pixel coordinates.
-					const levelView = state.levelView; // get open tab level file
-					const bounds    = levelView.anchor.getZoomed(); // get active level rect info
-					const units = bounds.display.units;
-					const x     = position.tileX * units;
-					const y     = position.tileY * units;
+					// Recalculate the local position using the current padding and scroll.
+					const pointer   = crosshairFollower.getWatchPosition();
+					if ( !pointer ) return;
+					const pos       = editor.mousePos( pointer );
+					if ( !editor.containsRinkPoint(pos) ) return;
+
+					// Draw in level-local pixels. The draw hook supplies the translation.
+					const units     = state.levelView.anchor.getUnitsZoomed();
+					const { w, h }  = editor.getRinkBounds();
+					const x         = Math.floor( pos.x/units ) * units;
+					const y         = Math.floor( pos.y/units ) * units;
 
 					// Fill the tile-wide crosshair arms, leaving the hovered tile clear.
 					editorCtx.save();
 					editorCtx.fillStyle   = 'rgba( 255, 0, 0, 0.16 )';
 					editorCtx.fillRect( 0, y, x, units );
-					editorCtx.fillRect( x+units, y, workspace.el.width-x-units, units );
+					editorCtx.fillRect( x+units, y, w-x-units, units );
 					editorCtx.fillRect( x, 0, units, y );
-					editorCtx.fillRect( x, y+units, units, workspace.el.height-y-units );
+					editorCtx.fillRect( x, y+units, units, h-y-units );
 
 					// Draw the dashed boundaries edge-to-edge around both bands.
 					editorCtx.strokeStyle = 'rgba( 255, 0, 0, 0.55 )';
@@ -39355,25 +40013,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 					editorCtx.setLineDash( [4,3] );
 					editorCtx.beginPath();
 					editorCtx.moveTo( 0, y );
-					editorCtx.lineTo( workspace.el.width, y );
+					editorCtx.lineTo( w, y );
 					editorCtx.moveTo( 0, y+units );
-					editorCtx.lineTo( workspace.el.width, y+units );
+					editorCtx.lineTo( w, y+units );
 					editorCtx.moveTo( x, 0 );
-					editorCtx.lineTo( x, workspace.el.height );
+					editorCtx.lineTo( x, h );
 					editorCtx.moveTo( x+units, 0 );
-					editorCtx.lineTo( x+units, workspace.el.height );
+					editorCtx.lineTo( x+units, h );
 					editorCtx.stroke();
 					editorCtx.restore();
 				});
 
 			//-------------------------
-			// Grid Toggle Button
+			// Grid Toggle Slider
 			//-------------------------
-			// Store the grid spacing in tile units; zero means no grid.
-			client.settings.tiler.editor.grid ??= 0;
+			// Store the grid spacing in tile units.
+			client.settings.tiler.editor.grid ??= 1;
 
 			// Create the grid spacing slider.
-			const maxGrid = Math.floor( client.config.levelGrid / 2 );
+			const maxGrid   = Math.floor( client.config.levelGrid/2 );
 			const inputGrid =
 				new JestInputRange(
 					client, 'grid', null,
@@ -39396,21 +40054,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			// Draw the grid over the workspace after it has been rendered.
 			client.register(
 				'draw', 'gridGrid',
-				( e, state, enabled, mode, editorCtx, paletteCtx, sketchCtx ) => {
+				( e, state, enabled, mode, editor, palette, sketch ) => {
 					// Draw only while the editor is rendering an open level.
 					if ( mode!=='running' || !state.levelView ) return;
-					const levelView = state.levelView; // get open tab level file
-					const bounds    = levelView.anchor.getZoomed(); // get active level rect info
+					const levelView  = state.levelView; // get open tab level file
+					const bounds     = levelView.anchor.getZoomed(); // get active level rect info
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
+					const sketchCtx  = sketch.el.getContext( '2d' );
 
 					// Skip zero or invalid spacing values.
-					const grid   = Number( client.settings.tiler.editor.grid );
+					const grid       = Number( client.settings.tiler.editor.grid );
 					if ( !Number.isInteger(grid) || grid<1 ) return;
 
 					// Convert tile spacing and level size into workspace pixels.
-					const units  = bounds.display.units;
-					const limit  = client.config.levelGrid;
-					const width  = workspace.el.width;
-					const height = workspace.el.height;
+					const units      = bounds.display.units;
+					const limit      = client.config.levelGrid;
+					// Limit the grid sketch to the active level's dimensions.
+					const { w: width, h: height } = editor.getRinkBounds();
 
 					// Clear the previous frame's grid.
 					sketchCtx.clearRect( 0, 0, width, height );
@@ -39438,7 +40100,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 				});
 
 			//-------------------------
-			// Editor Options Keyboard Command(s)
+			// Grid Keyboard Command(s)
 			//-------------------------
 			// Register comma and period for grid spacing control.
 			client.io.registerShortcut( ',', 'gridSizeDown' );
@@ -39476,6 +40138,194 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 				});
 
 			//-------------------------
+			// Editor Zoom Slider
+			//-------------------------
+			// Instantiate the settings zoom variable.
+			client.settings.tiler.editor.zoom ??= 0;
+
+			// Create the zoom magnifier slider.
+			const minZoom   = 1,
+				  maxZoom   = 1000;
+			const inputZoom =
+				new JestInputRange(
+					client, 'zoom', null,
+					client.settings.tiler.editor.zoom, 'Zoom'
+					);
+			inputZoom.setMin( minZoom );
+			inputZoom.setMax( maxZoom );
+			inputZoom.setStep( 1 );
+			inputZoom.build( 'input-zoom' );
+			optsPanel.addField( 'zoom', inputZoom );
+			inputZoom.showLabel();
+
+			// Store the selected zoom scale as a number percentage.
+			inputZoom.register(
+				'change', 'adjustZoom',
+				value => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( null, true );
+
+					//---------------------------------
+					// Change Active Tab's Level Zoom
+					//---------------------------------
+					// Convert the value to percent.
+					const zoom = Number(value) / 100;
+					client.settings.tiler.editor.zoom = zoom;
+					s.levelView.anchor.setZoom( zoom );
+
+					//---------------------------------
+					// Resize Editor Workspace Canvas
+					//---------------------------------
+					// Update the workspace geometry before notifying zoom listeners.
+					client.layoutLevelWorkspace( s.levelView, workspace, sketchpad );
+
+					//---------------------------------
+					// Emit Event(s)
+					//---------------------------------
+					// Emit a client-wide event to allow plugins to listen.
+					client.emit( 'levelZoomed', null, zoom );
+				});
+
+			//-------------------------
+			// Zoom File Open Event(s)
+			//-------------------------
+			// Listen for a new file to open, and auto-zoom to 100%.
+			/*client.register(
+				'openedFile', 'applyTilerDefaultZoomSetting',
+				async () => {
+					// Automatically set zoom to 100%.
+					inputZoom.setValue( 100 ); // auto-set
+				});*/
+
+			//-------------------------
+			// Zoom Keyboard Command(s)
+			//-------------------------
+			// Register comma and period for zoom spacing control.
+			client.io.registerShortcut( '-', 'zoomSizeDown' );
+			client.io.registerShortcut( '=', 'zoomSizeUp' );
+
+			// Change the zoom spacing through the editor slider.
+			client.io.register(
+			    'keyboardShortcut', 'zoomResizeCommand',
+			    command => {
+			        // Ignore shortcuts while the user is typing.
+			        if ( client.io.isTypingInInput() ) return; // abort
+
+			        // Ignore commands unrelated to zoom spacing.
+			        if ( !['zoomSizeUp','zoomSizeDown'].includes(command) )
+			            return; // abort
+
+			        // Get the zoom slider from the editor options form.
+			        const form  = client.sidebar.getSection(subtype)?.getContents();
+			        const field = form?.getField( 'zoom' );
+			        if ( !field ) return; // abort
+
+			        // Read the current spacing and slider limits.
+			        const value = Number( field.getValue() ?? minZoom );
+					const min   = Number( field.getMin() ?? minZoom );
+			        const max   = Number( field.getMax() ?? maxZoom );
+
+			        // Increase or decrease by one, allowing zero to turn it off.
+					const increment = 10;
+			        const nextValue =
+			            command==='zoomSizeUp' ?
+			                Math.min( value+increment, max ) :
+			                Math.max( value-increment, min );
+
+			        // Update the slider; its change handler updates zoom setting.
+			        field.setValue( nextValue );
+			    });
+
+			//-------------------------
+			// Tab Change Event
+			//-------------------------
+			// Update the zoom range when the active file tab changes.
+			client.tabbarFile.register(
+				'tabChange', 'editorZoom',
+				() => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s    = client.getFileStatus( null, true );
+					const zoom = s?.levelView?.anchor?.getZoom() ?? 1;
+
+					//---------------------------------
+					// Recalibrate Zoom Controls
+					//---------------------------------
+					// Match the zoom slider to the active level magnification.
+					inputZoom.setValue( zoom * 100 );
+				});
+
+			/*//--------------------------------
+			// Create Neighbor Preview Canvas(es)
+			//--------------------------------
+			// Keep the workspace and its previews in the same scroll container.
+			const board = workspace.el.parentElement;
+			workspace.el.classList.add( 'level-neighbor-workspace' );
+
+			// Create one small canvas for each edge or corner.
+			const previews = directions.map(
+				( [ direction, [x,y] ] ) => {
+					// Place the preview around the center cell, which holds the workspace.
+					const canvas = new ElementCanvas();
+					canvas.el.classList.add( 'level-neighbor-preview' );
+					canvas.el.setAttribute( 'aria-hidden', 'true' );
+					canvas.el.style.gridColumnStart = String( x+2 );
+					canvas.el.style.gridRowStart    = String( y+2 );
+					canvas.el.hidden                = true;
+					client.board.panel.addPanel( `level-neighbor-${direction}`, canvas );
+					// Retain the slot and its grid offsets for drawing.
+					return { direction, x, y, canvas };
+				});*/
+
+			//--------------------------------
+			// Draw Open Level Neighbor(s)
+			//--------------------------------
+			// Crop up to eight tiles from each linked level.
+			/*const edge = Math.min( 8*client.config.tileGrid, client.config.levelSpan );
+
+			client.register(
+				'draw', 'drawLevelNeighbors',
+				( e, state, enabled, mode, editor ) => {
+					// Enable the surrounding grid when the active view has neighbors.
+					const view         = state.levelView;
+					const relationship = view?.relationship;
+					const show         =
+						Boolean(
+							mode==='running' && relationship?.size
+							&& editor.width && editor.height );
+					board.classList.toggle( 'has-level-neighbors', show );
+
+					// Scale the displayed edges with the active tab's zoom.
+					const margin =
+						show
+							? Math.max( 1, Math.round(edge*view.anchor.getZoom()) )
+							: 0;
+					const gutter = `${margin}px`;
+					if ( board.style.getPropertyValue('--level-neighbor-margin')!==gutter )
+						board.style.setProperty( '--level-neighbor-margin', gutter );
+
+					// Refresh only assigned previews and hide empty slots.
+					for ( const { direction, x, y, canvas } of previews ) {
+						const drawn = show && relationship.drawNeighbor( direction, canvas, edge );
+						canvas.el.hidden = !drawn;
+						if ( !drawn ) continue;
+
+						// Match the shared edge to the active canvas, including at fractional zoom.
+						const width  = `${x===0 ? editor.width : margin}px`;
+						const height = `${y===0 ? editor.height : margin}px`;
+						if ( canvas.el.style.width!==width )
+							canvas.el.style.width  = width;
+						if ( canvas.el.style.height!==height )
+							canvas.el.style.height = height;
+					}
+				});*/
+
+			//-------------------------
 			// Add to Sidebar
 			//-------------------------
 			// Add the curator panel to the sidebar.
@@ -39496,6 +40346,1180 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 	if ( window.JestTiler && typeof window.JestTiler.use==='function' )
 		window.JestTiler.use( type, plugin );
 	else console.error( 'editor.plugin.js load error: JestTiler.use() not found' );
+})( window );
+
+/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/tiler/overworld.tool.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/overworld/overworld.tool.js loaded' );
+
+//-------------------------
+// JestToolOverworld Class
+//-------------------------
+// Edit neighboring level links through an overview and an open-tab picker.
+// Changes remain in a draft until the user applies the complete assignment.
+class JestToolOverworld extends JestTool {
+	// Direction labels use the same compass keys as the relationship class.
+	static labels = {
+		northwest : 'NW',
+		north     : 'N',
+		northeast : 'NE',
+		west      : 'W',
+		east      : 'E',
+		southwest : 'SW',
+		south     : 'S',
+		southeast : 'SE'
+		};
+
+	// UI handling properties
+	launcher       = null;      // [JestButton] Open the neighbor overview.
+	modal          = null;      // [JestModal] Neighbor overview and apply controls.
+	picker         = null;      // [JestModal] Open-level candidate picker.
+	overview       = null;      // [Panel] Main modal content owned by the modal box.
+	pickerContent  = null;      // [Panel] Picker content owned by the picker box.
+	grid           = null;      // [Panel] Proportional compass layout.
+	center         = null;      // [Panel] Current level preview.
+	hint           = null;      // [Panel] Padding and assignment explanation.
+	error          = null;      // [Panel] Assignment validation message.
+	reel           = null;      // [Panel] Candidate card and navigation arrows.
+	card           = null;      // [Panel] Candidate preview and filename.
+	count          = null;      // [Panel] Candidate position and tab number.
+	slots          = new Map();	// [Map<string,JestButton>] Compass controls.
+	previousButton = null;      // [JestButton] Browse to the preceding level.
+	nextButton     = null;      // [JestButton] Browse to the following level.
+
+	// Relationship editing properties
+	owner          = null;      // [JestFileViewEditorPainterLevel|null] Source level.
+	draft          = new Map();	// [Map<string,JestFileView|null>] Staged neighbor links.
+	padding        = 0;         // [number] Preview depth in unzoomed tiles.
+	direction      = null;      // [string|null] Compass slot currently being chosen.
+
+	// Candidate navigation properties
+	candidates      = [];       // [array] Other live level views, in tab order.
+	index           = 0;        // [int] Current candidate within that array.
+	wheelAmount     = 0;        // [number] Accumulated wheel movement in pixels.
+	wheelTime       = 0;        // [number] Time of the previous wheel step.
+	returnFocus     = null;     // [HTMLElement|null] Focus to restore after closing.
+
+	//---------------------------------
+	// Constructor
+	//---------------------------------
+	// Construct the tool; build() creates its panels and dialogs separately.
+	// * client	- [JestTiler] Application containing the open level tabs.
+	// * name	- [string] Toolbox registration name.
+	constructor( client, name='overworld' ) {
+		super( client, name ); // call parent constructor
+	}
+
+	//-------------------------
+	// Initialization
+	//-------------------------
+	// Build the launcher, dialogs, and their internal event handlers once.
+	// * name		- [string] Unique component name.
+	// * classes	- [array|null] Additional panel classes.
+	build( name='tool-overworld', classes=[] ) {
+		// Match the panel construction used by the other JestTool subclasses.
+		if ( this.panel ) return; // already built
+		if ( classes===null ) classes = [];
+		const defaultClasses = [ 'tool-overworld' ];
+		super.build( name, defaultClasses.mergeUnique(classes) );
+
+		// Build each part independently so layout and input setup stay readable.
+		this.buildLauncher();
+		this.buildDialogs();
+		this.buildOverview();
+		this.buildPicker();
+		this.registerDialogEvents();
+
+		// Keep both registered dialogs hidden until explicitly opened.
+		this.modal.hide();  // auto-hide the modal
+		this.picker.hide(); // auto-hide the level picker
+	}
+
+	//--------------------------------
+	// Build Sidebar Launcher
+	//--------------------------------
+	// Add the overview button to the tool's own sidebar panel.
+	buildLauncher() {
+		// Use the existing JestButton click handling and native focus behavior.
+		this.launcher =
+			this.makeButton(
+				this.panel, 'open', 'Graph',
+				()=>this.open(), ['ow-launcher','toolbar']
+				);
+	}
+
+	//--------------------------------
+	// Build Registered Dialogs
+	//--------------------------------
+	// Create both popups through the application's existing modal factory.
+	buildDialogs() {
+		// Main overview: cancel discards the draft, apply commits all slots.
+		this.client.addModal( 'overworldNeighbors', {
+			title   : 'Overworld neighbors',
+			text    : 'Choose an edge or corner.',
+			buttons : {
+				cancel : {
+					label   : 'Cancel',
+					onClick :
+						() => {
+							// Close the dialog & play closed "cancel" SFX.
+							this.close();
+							this.client.soundboard.playSound( 'jest_close0', 'mp3', 1.1 );
+						}
+					},
+				set : {
+					label   : 'Update',
+					onClick :
+						() => {
+							// Apply the changes and play the "success" SFX if successful.
+							if ( this.apply()===true )
+								this.client.soundboard.playSound( 'jest_success', 'mp3', 1.1 );
+							else this.client.soundboard.playSound( 'jest_deflect', 'mp3', 1.1 );
+						}
+					}
+				}
+			});
+
+		// Candidate picker: clear is an explicit choice, separate from Back.
+		this.client.addModal( 'overworldNeighborPicker', {
+			title   : 'Choose level',
+			text    : 'Browse the other open level tabs.',
+			buttons : {
+				cancel : {
+					label   : 'Back', // cancel set level
+					onClick : () => this.picker.close()
+					},
+				clear  : {
+					label   : 'Clear Slot', // clear level slot
+					onClick :
+						() => {
+							// Apply the changes and play the "none" SFX if successful.
+							const success = this.choose( null );
+							if ( success===true )
+								this.client.soundboard.playSound( 'jest_none', 'mp3', 1.1 );
+							else this.client.soundboard.playSound( 'jest_deflect', 'mp3', 1.1 );
+						}
+					},
+				select : {
+					label   : 'Select Level', // set level
+					onClick :
+						() => {
+							// Apply the changes and play the "select" SFX if successful.
+							const success = this.choose( this.candidates[this.index] );
+							if ( success===true )
+								this.client.soundboard.playSound( 'jest_select0', 'mp3', 1.1 );
+							else this.client.soundboard.playSound( 'jest_deflect', 'mp3', 1.1 );
+						}
+					}
+				}
+			});
+
+		// Retain the registered modal objects and scope their appearance.
+		this.modal	= this.client.modals.overworldNeighbors;
+		this.picker	= this.client.modals.overworldNeighborPicker;
+		this.modal.panel.addClass( 'jest-overworld-modal' );
+		this.picker.panel.addClass( 'jest-overworld-picker' );
+	}
+
+	//--------------------------------
+	// Build Neighbor Overview
+	//--------------------------------
+	// Arrange one center preview and eight adjoining direction controls.
+	buildOverview() {
+		// Give the modal one owned content branch between its text and input area.
+		this.overview = new Panel({
+			name    : 'overworld-content',
+			tag     : 'div',
+			classes : [ 'ow-overview' ]
+			});
+		this.modal.box.addPanel( 'overworldContent', this.overview, 2 );
+
+		// Build the proportional compass grid as a named child panel.
+		this.grid = this.overview.createPanel({
+			name    : 'grid',
+			tag     : 'div',
+			classes : [ 'ow-grid' ]
+			});
+
+		// Center preview is informational; direction controls remain clickable.
+		this.center = this.grid.createPanel({
+			name    : 'center',
+			tag     : 'div',
+			classes : [ 'ow-center' ]
+			});
+
+		// Resolve coordinates from the same table used to draw linked levels.
+		for ( const [direction,[x,y]] of this.getDirections() ) {
+			const button =
+				this.makeButton(
+					this.grid, direction, JestToolOverworld.labels[direction],
+					() => this.openPicker( direction ), 'ow-slot'
+					);
+			button.panel.el.style.gridArea = `${y+2} / ${x+2}`;
+			this.slots.set( direction, button );
+		}
+
+		// Keep explanatory text and validation messages outside the grid.
+		this.hint  = this.makeText( this.overview, 'hint', 'ow-hint' ).hide();
+		this.error = this.makeText( this.overview, 'error', 'ow-error' ).hide();
+		this.error.addAttribute( 'role', 'status' );
+		// Hide the default notice field (packaged inside the modal).
+		this.modal.panel.refs.box.refs.notice.hide();
+	}
+
+	//--------------------------------
+	// Build Candidate Picker
+	//--------------------------------
+	// Create the rolodex card, navigation buttons, and position indicator.
+	buildPicker() {
+		// Give the picker its own content branch inside the existing modal box.
+		this.pickerContent = new Panel({
+			name    : 'overworld-picker-content',
+			tag     : 'div',
+			classes : [ 'ow-picker-content' ]
+			});
+		this.picker.box.addPanel( 'overworldPickerContent', this.pickerContent, 2 );
+
+		// Only the card and arrows belong to the horizontal navigation row.
+		this.reel = this.pickerContent.createPanel({
+			name    : 'reel',
+			tag     : 'div',
+			classes : [ 'ow-reel' ]
+			});
+		this.previousButton =
+			this.makeButton(
+				this.reel, 'previous', '‹',
+				() => this.step(-1), 'ow-arrow'
+				);
+		this.previousButton.clicker.addAttribute( 'aria-label', 'Previous Level' );
+
+		// The selected candidate gets a full preview rather than an edge crop.
+		this.card = this.reel.createPanel({
+			name    : 'card',
+			tag     : 'div',
+			classes : [ 'ow-card' ]
+			});
+		this.nextButton =
+			this.makeButton(
+				this.reel, 'next', '›',
+				() => this.step(1), 'ow-arrow'
+				);
+		this.nextButton.clicker.addAttribute( 'aria-label', 'Next level' );
+
+		// Announce browsing changes without moving focus from the controls.
+		this.count = this.makeText( this.pickerContent, 'count', 'ow-count' );
+		this.count.addAttribute( 'aria-live', 'polite' );
+		this.reel.register(
+			'wheel', 'overworldPicker', event=>this.onPickerWheel(event),
+			'dom', null, { passive:false }
+			);
+	}
+
+	//--------------------------------
+	// Register Dialog Events
+	//--------------------------------
+	// Route modal dismissal through the same cleanup used by tool methods.
+	registerDialogEvents() {
+		// Overlay clicks and Escape emit the same close event as Cancel.
+		this.modal.register(
+			'close', 'overworldCleanup', ()=>this.reset()
+			);
+		this.picker.register(
+			'close', 'overworldPickerCleanup', ()=>this.resetPicker()
+			);
+
+		// Keep editor shortcuts outside the dialog's local keyboard handling.
+		this.configureKeyboard( this.modal );
+		this.configureKeyboard( this.picker );
+	}
+
+	//--------------------------------
+	// Create Jest Button
+	//--------------------------------
+	// RETURNS: [JestButton] Engine button owned by the supplied parent panel.
+	// * parent    - [Panel] Destination panel.
+	// * name      - [string] Unique button name within this tool.
+	// * label     - [string] Visible button text.
+	// * callback  - [function] Action called by the button's click event.
+	//   classes   - [array] of classes to add to panel element.
+	makeButton( parent, name, label, callback, classes=[] ) {
+		// JestButton owns its clicker and title; the parent owns its outer panel.
+		const button = new JestButton( this.client, `overworld-${name}` );
+		button.build( `overworld-${name}`, ['overworld-btn'].mergeUnique(classes), label );
+		button.register( 'click', 'overworld', callback );
+		button.clicker.addAttributes({
+			type         : 'button',
+			'aria-label' : label
+			});
+		parent.addPanel( name, button.panel );
+		return button; // button reference
+	}
+
+	//--------------------------------
+	// Create Text Panel
+	//--------------------------------
+	// Create a named paragraph through the existing Panel ownership system.
+	// RETURNS: [Panel] Paragraph panel appended to the supplied parent.
+	// * parent    - [Panel] Destination panel.
+	// * name      - [string] Unique child reference name.
+	// * className - [string] Appearance class for the new paragraph.
+	// * text      - [string] Initial plain-text content.
+	makeText( parent, name, className, text='' ) {
+		// Panel creates, appends, and retains the OSElement reference in one step.
+		const panel = parent.createPanel({
+			name    : name,
+			tag     : 'p',
+			classes : [ className ]
+			});
+		// Use OSElement.setText() so caller content is never parsed as markup.
+		panel.setText( text );
+		return panel; // text panel
+	}
+
+	//--------------------------------
+	// Configure Modal Keyboard
+	//--------------------------------
+	// Install dialog semantics, local keyboard handling, and input isolation.
+	// * modal - [JestModal] Dialog to configure.
+	configureKeyboard( modal ) {
+		// Focus the box when opening, even before a candidate is available.
+		modal.box.addAttributes({
+			tabindex     : -1,
+			role         : 'dialog',
+			'aria-modal' : 'true',
+			'aria-label' : modal.titleText
+			});
+		modal.panel.register(
+			'keydown', 'overworldKeyboard',
+			event=>this.onModalKeyDown(modal,event), 'dom'
+			);
+
+		// Prevent modal pointer and key events from reaching editor listeners.
+		const events = [ 'keyup', 'keypress', 'pointerdown', 'mousedown', 'mouseup', 'click' ];
+		for ( const name of events )
+			modal.panel.register(
+				name, 'overworldIsolation', event=>event.stopPropagation(), 'dom'
+				);
+	}
+
+	//--------------------------------
+	// Handle Dialog Keyboard
+	//--------------------------------
+	// Close, browse, or contain focus within the active dialog.
+	// * modal - [JestModal] Dialog that received the event.
+	// * event - [KeyboardEvent] Native keyboard event.
+	onModalKeyDown( modal, event ) {
+		// Keep ordinary text and navigation keys away from editor shortcuts.
+		event.stopPropagation();
+
+		// Escape follows the modal's normal close event and cleanup path.
+		if ( event.key==='Escape' ) {
+			event.preventDefault();
+			modal.close();
+			return; // handled
+		}
+
+		// Arrow keys browse only while the candidate picker is active.
+		if ( modal===this.picker && ['ArrowLeft','ArrowRight'].includes(event.key) ) {
+			event.preventDefault();
+			this.step( event.key==='ArrowLeft' ? -1 : 1 );
+			return; // handled
+		}
+
+		// Other keys retain their native button behavior.
+		if ( event.key==='Tab' )
+			this.containFocus( modal, event );
+	}
+
+	//--------------------------------
+	// Contain Dialog Focus
+	//--------------------------------
+	// Wrap Tab and Shift+Tab between the dialog's available controls.
+	// * modal - [JestModal] Current dialog.
+	// * event - [KeyboardEvent] Tab key event.
+	containFocus( modal, event ) {
+		// Exclude disabled and hidden controls from the focus sequence.
+		const box      = modal.box.el;
+		const selector = 'button,input,select,textarea,a[href],[tabindex]';
+		const nodes    = [...box.querySelectorAll(selector)].filter(
+			element => element.tabIndex>=0 && !element.disabled && element.getClientRects().length
+			);
+		const first    = nodes[0];
+		const last     = nodes[nodes.length-1];
+		const active   = document.activeElement;
+
+		// An empty dialog keeps focus on its own box.
+		if ( !first ) {
+			event.preventDefault();
+			box.focus();
+			return; // handled
+		}
+
+		// Focus begins on the dialog box, then wraps at either end.
+		if ( event.shiftKey && [first,box].includes(active) ) {
+			event.preventDefault();
+			last.focus();
+		}
+		else if ( !event.shiftKey && [last,box].includes(active) ) {
+			event.preventDefault();
+			first.focus();
+		}
+	}
+
+	//--------------------------------
+	// Handle Picker Wheel
+	//--------------------------------
+	// Accumulate trackpad movement and limit how quickly candidates advance.
+	// * event - [WheelEvent] Native scroll event from the rolodex.
+	onPickerWheel( event ) {
+		// Normalize line and page scrolling to approximately pixel units.
+		event.preventDefault();
+		const now   = performance.now();
+		const delta = Math.abs(event.deltaX)>Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+		const scale = event.deltaMode===1 ? 16 : event.deltaMode===2 ? 300 : 1;
+		this.wheelAmount += delta * scale;
+
+		// Require both a useful scroll distance and a pause between steps.
+		if ( Math.abs(this.wheelAmount)<60 || now-this.wheelTime<180 )
+			return; // wait for more movement
+
+		this.step( Math.sign(this.wheelAmount) );
+		this.wheelAmount = 0;
+		this.wheelTime   = now;
+	}
+
+	//--------------------------------
+	// Resolve Compass Directions
+	//--------------------------------
+	// RETURNS: [array] Direction names and their relative grid offsets.
+	getDirections() {
+		// Share the relationship class's direction table rather than copying it.
+		return Object.entries( JestFileRelationshipLevel.directions );
+	}
+
+	//--------------------------------
+	// Resolve Open Level Views
+	//--------------------------------
+	// RETURNS: [array] Live level views in their current tab order.
+	getViews() {
+		// Exclude unloaded files and tabs belonging to other editor types.
+		return this.client.tabbarFile.views.filter(
+			view => view instanceof JestFileViewEditorPainterLevel && view.file );
+	}
+
+	//--------------------------------
+	// Resolve Display Filename
+	//--------------------------------
+	// RETURNS: [string] Filename including the extension when available.
+	// * view - [JestFileViewEditorPainterLevel|null] View being labeled.
+	filename( view ) {
+		// Empty previews still receive a useful accessible label.
+		const file = view?.file;
+		if ( !file ) return 'Untitled level';
+
+		// Avoid adding the extension twice when the stem already includes it.
+		const stem = String( file.stem ?? 'Untitled' );
+		const ext  = String( file.extension ?? '' ).replace( /^\./, '' );
+		return ext && !stem.endsWith(`.${ext}`) ? `${stem}.${ext}` : stem;
+	}
+
+	//--------------------------------
+	// Resolve Padding in Tiles
+	//--------------------------------
+	// RETURNS: [number] Unzoomed neighbor depth, measured in tiles.
+	getPadding() {
+		// Prefer the same adapter used by an application's padding slider.
+		const value      = this.client.getOverworldPadding?.( this.owner );
+		const configured = value===undefined || value===null ? NaN : Number(value);
+		if ( Number.isFinite(configured) && configured>=0 )
+			return configured; // configured tile depth
+
+		// The workspace origin is meaningful only for the active source view.
+		const workspace  = this.client.gameboard.display.getCanvas( 'workspace' );
+		const units      = this.owner.anchor.getZoomed().display.units;
+		const bounds     = workspace.getEditBounds?.() ?? workspace.editBounds;
+		const active     = this.client.tabbarFile.activeView===this.owner;
+		if ( active && bounds && units>0 && (bounds.x>0 || this.owner.relationship.size>0) )
+			return bounds.x / units; // zoomed pixels to unzoomed tiles
+
+		// Preserve the older editor's eight-tile preview default.
+		return 8;
+	}
+
+	//--------------------------------
+	// Open Neighbor Overview
+	//--------------------------------
+	// RETURNS: [boolean] Whether a live source level was available.
+	open() {
+		// Reopening an existing draft must not replace its source or choices.
+		if ( this.owner ) {
+			const dialog = this.direction===null ? this.modal : this.picker;
+			dialog.box.el.focus();
+			return true; // already open
+		}
+
+		// Match the application's normal busy gate before starting an action.
+		if ( this.client.busy() ) return false; // app busy
+		const owner = this.client.tabbarFile.activeView;
+		if ( !this.getViews().includes(owner) || !owner.relationship )
+			return false; // no editable source
+
+		// Capture the source once; changing tabs cannot redirect this draft.
+		this.returnFocus = document.activeElement;
+		this.owner   = owner;
+		this.draft   =
+			new Map(
+				this.getDirections().map(
+					([direction]) => [ direction, owner.relationship.getView(direction) ]
+					)
+				);
+		this.padding = Math.min( this.client.config.levelGrid, Math.max(0,this.getPadding()) );
+		this.error.setText( '' ).hide();
+
+		// Track the popup interaction through the existing JestTool state API.
+		this.enable();
+		this.jot( 'mode', 'overview' );
+		this.renderOverview();
+		this.modal.open( owner );
+		this.modal.box.el.focus();
+		return true; // opened
+	}
+
+	//--------------------------------
+	// Close Neighbor Overview
+	//--------------------------------
+	// RETURNS: [boolean] Whether an open draft was dismissed.
+	close() {
+		// Modal.close() emits the event that resets all popup state.
+		if ( !this.owner ) return false; // already closed
+		this.modal.close(); // close the dialog
+		return true; // closed
+	}
+
+	//--------------------------------
+	// Disable Tool
+	//--------------------------------
+	// Dismiss an active popup when the toolbox disables this tool.
+	// RETURNS: [boolean] Whether the tool was enabled before this call.
+	disable() {
+		// Let JestTool validate the enabled state before clearing this tool.
+		if ( !super.disable() ) return false; // already disabled
+		if ( this.owner ) this.close();
+		else this.reset();
+		return true; // disabled
+	}
+
+	//--------------------------------
+	// Reset Popup State
+	//--------------------------------
+	// Discard the draft and restore focus after every overview dismissal.
+	reset() {
+		// Close the nested dialog first so its inert state is always released.
+		if ( this.direction!==null ) this.picker.close();
+		this.modal.box.el.inert = false;
+
+		// Release file references before another level can open the tool.
+		this.owner       = null;
+		this.draft.clear();
+		this.candidates  = [];
+		this.index       = 0;
+		this.direction   = null;
+		this.wheelAmount = 0;
+		this.wheelTime   = 0;
+		this.jot( 'mode', 'idle' );
+		this.jot( 'enabled', false );
+
+		// Return focus only when the original element is still in the page.
+		const focus      = this.returnFocus;
+		this.returnFocus = null;
+		if ( focus?.isConnected ) focus.focus();
+	}
+
+	//--------------------------------
+	// Reset Candidate Picker
+	//--------------------------------
+	// Return from the picker to its original direction in the overview.
+	resetPicker() {
+		// Capture the direction before releasing the temporary browsing state.
+		const direction  = this.direction;
+		this.direction   = null;
+		this.candidates  = [];
+		this.index       = 0;
+		this.wheelAmount = 0;
+		this.wheelTime   = 0;
+		this.modal.box.el.inert = false;
+
+		// The overview retains its draft when the user presses Back.
+		if ( this.owner ) {
+			this.jot( 'mode', 'overview' );
+			this.slots.get( direction )?.clicker.el.focus();
+		}
+	}
+
+	//--------------------------------
+	// Refresh Open Tab Choices
+	//--------------------------------
+	// Refresh labels and candidates after tabs change, close, or rename.
+	refresh() {
+		// No draft exists while the dialog is closed.
+		if ( !this.owner ) return;
+		this.renderOverview();
+		if ( this.direction!==null ) this.step( 0 );
+	}
+
+	//--------------------------------
+	// Draw Preview Snapshot
+	//--------------------------------
+	// Reuse the level view's renderer without changing its zoom or anchor.
+	// * parent     - [Panel] Container receiving the preview canvas.
+	// * view       - [JestFileViewEditorPainterLevel|null] Level to render.
+	// * direction  - [string|null] Adjoining edge or corner to crop.
+	preview( parent, view, direction=null ) {
+		// Closed views must not leave an old preview in a direction control.
+		if ( parent.refs?.preview )
+			parent.removePanel( 'preview' ); // remove tracked snapshot
+
+		// Check that view is active.
+		if ( !view || !this.getViews().includes(view) ) return;
+		view.refreshCanvas(); // refresh rendering
+		// Get canvas [object] DOM element & verify it has dimension.
+		const source  = view.getViewRender()?.el;
+		if ( !source?.width || !source?.height ) return;
+
+		// Create an independent preview with a 256×256 pixel bitmap.
+		const canvas = new ElementCanvas();
+		canvas.resize( 256, 256 );
+
+		// Remove the fixed inline display dimensions added by resize().
+		// The existing CSS can then stretch the preview to fill its container.
+		canvas.el.style.removeProperty( 'width' );
+		canvas.el.style.removeProperty( 'height' );
+
+		// Access the JEST canvas object's actual DOM element canvas node.
+		const context = canvas.el.getContext( '2d' );
+		context.imageSmoothingEnabled = false; // pixelate it
+		// Set source clip to (0,0) @ 100% x 100%.
+		let sx = 0,
+			sy = 0;
+		let sw = source.width,
+			sh = source.height;
+
+		// North shows the neighbor's bottom edge; west shows its right edge.
+		if ( direction ) {
+			// Obtain the coordinates based upon the stored file relationship.
+			const [x,y]	= JestFileRelationshipLevel.directions[direction];
+			// Measure the neighbor crop as a fraction of the configured level grid.
+			const ratio	= this.padding / this.client.config.levelGrid;
+			sw = x===0 ? source.width  : Math.max( 1, source.width*ratio );
+			sh = y===0 ? source.height : Math.max( 1, source.height*ratio );
+			sx = x<0 ? source.width-sw  : 0;
+			sy = y<0 ? source.height-sh : 0;
+		}
+
+		// CSS fits the snapshot to its overview slot or candidate card.
+		context.drawImage( source, sx, sy, sw, sh, 0, 0, 256, 256 );
+		parent.addPanel( 'preview', canvas, 0 );
+	}
+
+	//--------------------------------
+	// Render Neighbor Overview
+	//--------------------------------
+	// Update proportional geometry, assigned states, and filename tooltips.
+	renderOverview() {
+		// The layout represents one full level plus two padding strips.
+		this.grid.el.style.setProperty( '--ow-edge', `${this.padding}fr` );
+		this.grid.el.style.setProperty( '--ow-main', `${this.client.config.levelGrid}fr` );
+		this.grid.toggleClass( 'is-zero', this.padding===0 );
+
+		// Zero padding still leaves usable direction handles in the popup.
+		const depth = this.padding.toFixed(1).replace( /\.0$/, '' );
+		/*this.hint.setText(
+			this.padding===0
+				? 'Padding is hidden. Direction handles remain available for assigning levels.'
+				: `${depth} tiles of padding · Blue: empty · Yellow: assigned`
+				).show();*/
+
+		// Render the source level independently from its neighbor controls.
+		this.preview( this.center, this.owner );
+		this.appendFilename( this.center, this.filename(this.owner) );
+
+		// Each slot retains its JestButton title so labels cannot accumulate.
+		for ( const [direction,button] of this.slots ) {
+			const view     = this.draft.get( direction );
+			const filename = view ? this.filename(view) : 'Choose Level';
+			const title    = `${direction}: ${filename}`;
+			button.panel.toggleClass( 'is-linked', Boolean(view) );
+			button.panel.addAttribute( 'title', title );
+			button.clicker.addAttribute( 'aria-label', title );
+			this.preview( button.clicker, view, direction );
+			button.title.setText(
+				JestToolOverworld.labels[direction] + (view ? ` · ${filename}` : '')
+				);
+		}
+	}
+
+	//--------------------------------
+	// Append Preview Filename
+	//--------------------------------
+	// Add or update a plain-text filename with a full-name tooltip.
+	// RETURNS: [Panel] Tracked filename label panel.
+	// * parent - [Panel] Preview container receiving the label.
+	// * text   - [string] Filename or empty-state explanation.
+	appendFilename( parent, text ) {
+		// Reuse one named Panel so previews never accumulate duplicate labels.
+		const label = parent.refs?.label ?? parent.createPanel({
+			name    : 'label',
+			tag     : 'span',
+			classes : [ 'ow-preview-label' ]
+			});
+		const changed = label.el.textContent!==text;
+		label.setText( text );
+		label.addAttribute( 'title', text );
+
+		// Fade the new filename in so browsing feels continuous.
+		if ( changed && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches )
+			label.el.animate?.(
+				[ { opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'none' } ],
+				{ duration:380, easing:'cubic-bezier(0.22,1,0.36,1)' }
+				);
+		return label; // label panel
+	}
+
+	//--------------------------------
+	// Open Candidate Rolodex
+	//--------------------------------
+	// Browse other level tabs without changing the active editor tab.
+	// RETURNS: [boolean] Whether a valid direction was opened.
+	// * direction - [string] Compass slot to edit.
+	openPicker( direction ) {
+		// The picker needs a draft and one of the relationship's known slots.
+		if ( !this.owner || !Object.hasOwn(JestFileRelationshipLevel.directions,direction) )
+			return false; // unavailable slot
+
+		// Begin on the slot's assigned level when that tab remains open.
+		this.direction   = direction;
+		this.candidates  = this.getViews().filter( view => view!==this.owner );
+		this.index       = Math.max( 0, this.candidates.indexOf(this.draft.get(direction)) );
+		this.wheelAmount = 0;
+		this.wheelTime   = 0;
+
+		// Keep assistive labels synchronized with the current compass direction.
+		const title = `Choose ${direction} level`;
+		this.card.el.dataset.dir = 'none';
+		this.picker.setTitle( title );
+		this.picker.box.addAttribute( 'aria-label', title );
+		this.renderCandidate();
+		this.modal.box.el.inert = true;
+		this.jot( 'mode', 'picking' );
+		this.picker.open();
+		this.picker.box.el.focus();
+		return true; // opened
+	}
+
+	//--------------------------------
+	// Advance Candidate
+	//--------------------------------
+	// Wrap the rolodex and preserve candidate identity when tabs reorder.
+	// * offset - [int] Relative step; zero refreshes the current candidate.
+	step( offset ) {
+		// Refresh the live list while retaining the current view object.
+		const current   = this.candidates[this.index];
+		this.candidates = this.getViews().filter( view => view!==this.owner );
+		const count     = this.candidates.length;
+		const index     = Math.max( 0, this.candidates.indexOf(current) );
+		this.index      = count ? ((index+offset)%count+count)%count : 0;
+
+		// Tell the stylesheet which way the card should slide in from.
+		this.card.el.dataset.dir = offset<0 ? 'prev' : offset>0 ? 'next' : 'none';
+		this.renderCandidate();
+	}
+
+	//--------------------------------
+	// Render Candidate Card
+	//--------------------------------
+	// Display the selected level, its filename, and its current tab position.
+	renderCandidate() {
+		// Replace both the old snapshot and its filename on every browse step.
+		const view = this.candidates[this.index];
+		this.preview( this.card, view );
+		this.appendFilename(
+			this.card, view ? this.filename(view) : 'No other level tabs are open'
+			);
+
+		// Disable actions that require a candidate when the list is empty.
+		this.picker.buttons.select.toggle( 'enable', Boolean(view) );
+		this.previousButton.toggle( 'enable', this.candidates.length>=2 );
+		this.nextButton.toggle( 'enable', this.candidates.length>=2 );
+		this.count.setText( view
+			? `${this.index+1} / ${this.candidates.length} · Tab ${this.client.tabbarFile.views.indexOf(view)+1}`
+			: 'Open another level to assign it'
+			);
+	}
+
+	//--------------------------------
+	// Stage Candidate Assignment
+	//--------------------------------
+	// Store one choice in the draft without changing the live relationship.
+	// RETURNS: [boolean] Whether the candidate was accepted.
+	// * view - [JestFileViewEditorPainterLevel|null] Candidate or cleared slot.
+	choose( view ) {
+		// An empty picker is distinct from explicitly clearing a slot.
+		if ( !this.owner || !this.direction || view===undefined )
+			return false; // no selection
+
+		// Reject closed candidates and self-links before staging the change.
+		if ( view!==null && (view===this.owner || !this.getViews().includes(view)) ) {
+			this.step( 0 );
+			return false; // stale or invalid candidate
+		}
+
+		// The main dialog remains responsible for committing this draft.
+		this.draft.set( this.direction, view );
+		this.error.setText( '' ).hide();
+		this.renderOverview();
+		this.picker.close();
+		return true; // staged
+	}
+
+	//--------------------------------
+	// Validate Staged Neighbors
+	//--------------------------------
+	// RETURNS: [boolean] Whether every referenced level is still available.
+	validateDraft() {
+		// Validate the source before accessing its relationship object.
+		const live = this.getViews();
+		if ( !live.includes(this.owner) || !this.owner.relationship ) {
+			this.error.setText( 'The source level was closed. Reopen this dialog from a level tab.' ).show();
+			return false; // unavailable source
+		}
+
+		// Validate all targets before any live relationship is changed.
+		for ( const [direction,view] of this.draft ) {
+			if ( view!==null && (!live.includes(view) || view===this.owner) ) {
+				this.error.setText( `The ${direction} level was closed. Choose another level or clear that slot.` ).show();
+				return false; // unavailable target
+			}
+		}
+		return true; // complete draft is available
+	}
+
+	//--------------------------------
+	// Apply All Staged Neighbors
+	//--------------------------------
+	// Commit all slots together, restoring previous links if an API rejects one.
+	// RETURNS: [boolean] Whether the complete draft was accepted.
+	apply() {
+		// Reject a stale source or target before touching the live links.
+		if ( !this.validateDraft() ) return false; // invalid draft
+		const owner  = this.owner;
+		const links  = owner.relationship;
+		const before =
+			new Map(
+				this.getDirections().map( ([key]) => [key,links.getView(key)] )
+				);
+
+		// The relationship API performs final direction and view validation.
+		for ( const [direction,view] of this.draft ) {
+			if ( links.setView(direction,view) ) continue; // accepted
+			// Restore the original assignment if any slot is rejected.
+			for ( const [key,target] of before )
+				links.setView( key, target );
+			this.error.setText( 'The neighbor assignment was rejected.' ).show();
+			return false; // rolled back
+		}
+
+		// The regular draw loop renders the committed relationship changes.
+		this.client.emit( 'levelNeighborsChanged', null, owner, new Map(this.draft) );
+		// Close the dialog & play closed "cancel" SFX.
+		this.close(); // close the dialog
+		return true;  // committed
+	}
+}
+
+/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/tiler/overworld.plugin.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/overworld/overworld.plugin.js loaded' );
+
+//-------------------------
+// Overworld Plugin
+//-------------------------
+// Register the neighbor tool and connect its panel to the editor sidebar.
+// Load overworld.css and overworld.tool.js before this plugin initializes.
+(function( window ) {
+	//--------------------------------
+	// Plugin Metadata
+	//--------------------------------
+	const type    = 'tools';
+	const subtype = 'overworld';
+
+	//--------------------------------
+	// Plugin Definition
+	//--------------------------------
+	const plugin  = {
+		//--------------------------------
+		// Initialize Plugin
+		//--------------------------------
+		// Create one tool per client and register application-level events.
+		// * client - [JestTiler] Application containing the open level tabs.
+		init: function( client ) {
+			// Avoid duplicate panels and modal registrations for the same client.
+			if ( client.toolbox.tools[subtype] ) return; // already installed
+
+			//-------------------------
+			// Access Necessary Surface(s)
+			//-------------------------
+			// Grab the workspace for drawing on the editing area.
+			const workspace = client.gameboard.display.getCanvas( 'workspace' );
+			// Grab the sketchpad for off-screen drawing & rendering.
+			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
+
+			//-------------------------
+			// Create Overworld Tool
+			//-------------------------
+			// Follow the same construct, register, and build order as other tools.
+			const tool = new JestToolOverworld( client, subtype );
+			client.toolbox.registerTool( subtype, tool );
+			tool.build(); // initialize launcher and registered dialogs
+
+			// Preserve access used by the previous standalone popup controller.
+			client.overworldNeighbors = tool;
+
+			//-------------------------
+			// Create Control Panel
+			//-------------------------
+			// Generate a "form" inside the sidebar.
+			const optsPanel = new JestForm( client ); // create DOM Panel element [object].
+			optsPanel.build( 'overworld', ['app-overworld'] ); // build the form
+
+			//-------------------------
+			// Add Level-Picker to Sidebar
+			//-------------------------
+			// Add level-picker launcher to the sidebar form.
+			optsPanel.panel.addPanel( 'picker', tool.panel );
+
+			//--------------------------------
+			// Overworld Preview Padding
+			//--------------------------------
+			// Instantiate the settings overworld padding preview variable.
+			client.settings.tiler.editor.padding ??= 8;
+
+			// Create the zoom magnifier slider.
+			const minPad = 0,
+				  maxPad = client.config.levelGrid;
+			const inputPadding =
+				new JestInputRange(
+					client, 'Padding', null,
+					client.settings.tiler.editor.padding, 'Padding'
+					);
+			inputPadding.setMin( minPad );
+			inputPadding.setMax( maxPad );
+			inputPadding.setStep( 1 );
+			inputPadding.build( 'input-padding' );
+			optsPanel.addField( 'padding', inputPadding );
+			inputPadding.showLabel();
+
+			// Store the selected padding.
+			inputPadding.register(
+				'change', 'adjustPadding',
+				value => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( null, true );
+
+					//---------------------------------
+					// Change Overworld Padding Preview
+					//---------------------------------
+					// Apply the new padding before any tool reads the workspace bounds.
+					client.settings.tiler.editor.padding = Number( value );
+
+					// Automatically update the preview.
+					const view = client.tabbarFile.activeView;
+					if ( !view ) return; // abort
+					client.layoutLevelWorkspace( view, workspace, sketchpad );
+
+					// Resnap a tile that is already being carried.
+					client.toolbox.getTool('tiledrop')?.crate?.refreshPosition();
+				});
+
+			// Return the same tile value used by the existing padding slider.
+			client.getOverworldPadding = ( activeView ) => {
+				// Keep this measurement independent of the level's zoom.
+				return client.settings.tiler.editor?.padding;
+				//return Number( inputPadding.getValue() );
+			};
+
+			//--------------------------------
+			// Overworld Preview Padding Alpha
+			//--------------------------------
+			// Instantiate the settings overworld padding preview alpha variable.
+			client.settings.tiler.editor.paddingAlpha ??= 1;
+
+			// Create the zoom magnifier slider.
+			const minPadAlpha = 0,
+				  maxPadAlpha = 1;
+			const inputPaddingAlpha =
+				new JestInputRange(
+					client, 'Transparency', 1,
+					client.settings.tiler.editor.paddingAlpha, 'Transparency'
+					);
+			inputPaddingAlpha.setMin( minPadAlpha );
+			inputPaddingAlpha.setMax( maxPadAlpha );
+			inputPaddingAlpha.setStep( 0.1 );
+			inputPaddingAlpha.build( 'input-padding-alpha' );
+			optsPanel.addField( 'paddingAlpha', inputPaddingAlpha );
+			inputPaddingAlpha.showLabel();
+
+			// Store the selected padding alpha.
+			inputPaddingAlpha.register(
+				'change', 'adjustPaddingAlpha',
+				value => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( null, true );
+
+					//---------------------------------
+					// Change Overworld Preview Alpha
+					//---------------------------------
+					// Apply the new padding alpha.
+					client.settings.tiler.editor.paddingAlpha = Number( value );
+				});
+
+			//--------------------------------
+			// Quick Overworld Neighbor Controls
+			//--------------------------------
+			// Use the same direction table for the dropdown and preview positions.
+			const tabbar     = client.tabbarFile;
+			const directions = Object.entries( JestFileRelationshipLevel.directions );
+
+			// Choose which compass slot to edit.
+			const directionInput = new JestInputSelect( client, 'neighborDirection' );
+			directionInput.build( 'neighbor-direction' );
+			directionInput.addOptions(
+				directions.map(
+					( [direction] ) => ({
+						value : direction,
+						label : direction[0].toUpperCase() + direction.slice(1)
+					})
+				));
+			directionInput.selectOption( 'north' );
+			optsPanel.addField( 'neighborDirection', directionInput );
+			directionInput.showLabel(); // reveal label
+			// Add a hover-over tooltip.
+			directionInput.panel.addAttribute( 'data-tooltip', 'Neighbor Direction' );
+
+			// Choose the open level assigned to that slot.
+			const targetInput = new JestInputSelect( client, 'neighborLevel' );
+			targetInput.build( 'neighbor-level' ); // build it
+			optsPanel.addField( 'neighborLevel', targetInput );
+			targetInput.showLabel();
+			// Add a hover-over tooltip.
+			targetInput.panel.addAttribute( 'data-tooltip', 'Neighbor Level' );
+
+			//--------------------------------
+			// Refresh Neighbor Choices
+			//--------------------------------
+			// Show the other open level tabs and the active slot's current target.
+			const refreshNeighborTargets = () => {
+				// Resolve the current view and selected direction.
+				const view      = tabbar.activeView;
+				const direction = directionInput.getValue();
+				const linked    = view?.relationship?.getView( direction );
+				const options   = [ { value: '', label: 'None' } ];
+
+				// List candidates in tab order. The number distinguishes duplicate names.
+				tabbar.views.forEach(
+					( candidate, index ) => {
+						if ( candidate===view || !(candidate instanceof JestFileViewEditorPainterLevel) )
+							return; // skip
+
+						options.push({
+							value : candidate.skey,
+							label : `${index+1}. ${candidate.file.stem}`
+							});
+					});
+
+				// Restore the active slot's selection after rebuilding the options.
+				targetInput.setOptions( options );
+				targetInput.selectOption( linked?.skey ?? '' );
+				targetInput.field.el.disabled = !view || options.length===1;
+			};
+
+			// Refresh when the selected direction or the set of open tabs changes.
+			directionInput.register(
+				'user:change', 'levelNeighbors',
+				()=>refreshNeighborTargets() );
+
+			// Detect when the active tab or view changes.
+			tabbar.register(
+				['tabChange','viewRemoved','viewRenamed'],
+				'refreshNeighborsDropdownLists',
+				()=>refreshNeighborTargets() );
+
+			// Apply only user changes. setOptions() can emit a regular change event.
+			targetInput.register(
+				'user:change', 'setLevelNeighbor',
+				skey => {
+					// Resolve the chosen tab from the current open views.
+					const view      = tabbar.activeView;
+					const direction = directionInput.getValue();
+					const target    = tabbar.views.find( candidate => candidate.skey===skey ) ?? null;
+
+					// Ignore a selection if its target closed before it was applied.
+					if ( !view || (skey && !target) ) return;
+					view.relationship.setView( direction, target );
+				});
+
+			// Automatically refresh the neighboring targets.
+			refreshNeighborTargets();
+
+			//-------------------------
+			// Add to Sidebar
+			//-------------------------
+			// Add the curator panel to the sidebar.
+			client.sidebar.addDisableExclusion( subtype ); // prevent forced collapse
+			client.sidebar.addSection( subtype, 'Overworld', optsPanel.panel, {}, optsPanel );
+			client.sidebar.refit( subtype ); // resize to fit contents
+
+			//--------------------------------
+			// Refresh Open File Choices
+			//--------------------------------
+			// Keep the source fixed while updating filenames and live candidates.
+			client.tabbarFile.register(
+				['tabChange','viewRemoved','viewRenamed'], 'overworldPopup',
+				() => tool.refresh()
+				);
+		},
+
+		//--------------------------------
+		// Extend Application
+		//--------------------------------
+		// Tool methods remain on JestToolOverworld; no client overrides needed.
+		// * Klass	- [class] Application constructor supplied by plugin setup.
+		// * proto	- [object] Application prototype supplied by plugin setup.
+		extend: function( Klass, proto ) {
+			// No additional application methods are required.
+		}
+	};
+
+	//--------------------------------
+	// Register Plugin
+	//--------------------------------
+	// Use the same guarded registration as the other creator tool plugins.
+	if ( window.JestTiler && typeof window.JestTiler.use==='function' )
+		window.JestTiler.use( type, plugin );
+	else console.error( 'overworld.plugin.js load error: JestTiler.use() not found' );
 })( window );
 
 /* --- BEGIN js/apps/jest/clients/plugins/creator/methods/painter.plugin.js --- */
@@ -39537,15 +41561,27 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 			proto.drawCompositeRect = function(
 				ctx, bounds, cx, cy, mask,
 				fill=null, stroke=null, shadow=null, contents=null ) {
+				//--------------------------------
+				// Validate Drawing Mask
+				//--------------------------------
+				// An empty mask contains no drawable cells. This can legitimately occur
+				// while a selection is being cleared, rebuilt, or reduced to zero cells.
+				if ( !mask?.length || !mask[0]?.length )
+					return false; // nothing to draw
+
+				//--------------------------------
+				// Resolve Composite Dimension(s)
+				//--------------------------------
 				// Get grid units of board.
 				const { units } = bounds;
-				// Get columns & rows span of mask.
-				const cols = mask[0].length,
-					  rows = mask.length;
 
-				// -------------------------
+				// Get the column and row span of the validated mask.
+				const rows = mask.length;
+				const cols = mask[0].length;
+
+				//--------------------------
 				// Compute Composite Mask
-				// -------------------------
+				//--------------------------
 				// Build boolean tile grid
 				/*const mask	=
 					Array.from(
@@ -39570,9 +41606,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					}
 				}*/
 
-				// -------------------------
+				//--------------------------
 				// Fill Background Shadow
-				// -------------------------
+				//--------------------------
 				// Check if shadow supplied.
 				if ( shadow ) {
 					// Save context state & render stroke.
@@ -39591,9 +41627,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					ctx.restore(); // restore state
 				}
 
-				// -------------------------
+				//--------------------------
 				// Fill Active Selection Area
-				// -------------------------
+				//--------------------------
 				// Check if fill value supplied.
 				if ( fill ) {
 					// Save context state & render stroke.
@@ -39609,9 +41645,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					ctx.restore(); // restore state
 				}
 
-				// -------------------------
+				//--------------------------
 				// Draw Contents (Image)
-				// -------------------------
+				//--------------------------
 				// Check for contents to draw.
 				if ( contents && contents.img ) {
 					// Draw image onto canvas.
@@ -39622,9 +41658,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 						);
 				}
 
-				// -------------------------
+				//--------------------------
 				// Stroke Masked Perimeter
-				// -------------------------
+				//--------------------------
 				// Use Path2D to draw an irregular rectangle region.
 				const path = new Path2D();
 				for ( let my=0; my<rows; my++ ) {
@@ -39657,9 +41693,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 						}
 					}
 				}
-				// -------------------------
+				//--------------------------
 				// Render Stroke(s)
-				// -------------------------
+				//--------------------------
 				// Check for stroke to draw.
 				if ( stroke ) {
 					const strokes = Array.isArray(stroke) ? stroke : [stroke];
@@ -39713,26 +41749,38 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			// Appropriately label each history item.
 			client.register(
 				'history:logged', 'labelItem',
-				( item, log ) => {
+				( view, item, log ) => {
+					//--------------------------------
+					// Set History Item Log Title
+					//--------------------------------
 					// Check for history label.
 					if ( log.history )
-						return item.setLabel( log.history );
-					// Switch log action & determine label.
-					switch ( log.action ) {
-						case 'fillTile': // use a fill tile
-							item.setLabel( 'Tiles changed.' );
-							break;
-						case 'sparseRegion': // draw a series of tile(s)
-							item.setLabel( 'Sparse region laid.' );
-							break;
-						case 'fillRegion': // drop a clone of the region
-							item.setLabel( 'Region filled.' );
-							break;
-						case 'dropRegion': // drop a clone of the region
-							item.setLabel( 'Region placed.' );
-							break;
-						//default: console.warn( `Revert Action Unknown: ` );
+						item.setLabel( log.history );
+					else {
+						// Switch log action & determine label.
+						switch ( log.action ) {
+							case 'fillTile': // use a fill tile
+								item.setLabel( 'Tiles changed.' );
+								break;
+							case 'sparseRegion': // draw a series of tile(s)
+								item.setLabel( 'Sparse region laid.' );
+								break;
+							case 'fillRegion': // drop a clone of the region
+								item.setLabel( 'Region filled.' );
+								break;
+							case 'dropRegion': // drop a clone of the region
+								item.setLabel( 'Region placed.' );
+								break;
+							// Unknown action.
+							default: return; //console.warn( `Revert Action Unknown: ` );
+						}
 					}
+
+					//--------------------------------
+					// Known Action Marks File Changed (Saveable)
+					//--------------------------------
+					// The file has changed & can now be saved again.
+					view.file.jot( "changed", true );
 				});
 		},
 
@@ -40066,64 +42114,38 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			}
 
 			//--------------------------------
-			// Utility: center of visible gameboard
+			// Get Visible Level Center
 			//--------------------------------
-			// RETURNS: { x, y } in *pixel* coordinates local to the canvas
-			// * units	- [int] set grid dimension units
+			// RETURNS: [object] Center of the visible active level as { x, y }.
+			// * units - [number] Canvas pixels per returned unit.
 			proto.getVisibleLevelCenter = function( units=1 ) {
-				//--------------------------------
-				// Access Drawing Workspace Area
-				//--------------------------------
-				// Get level canvas.
-				const canvas	= this.gameboard.display.getCanvas('workspace').el;
+				// Resolve the editable rectangle and the board that scrolls it.
+				const canvas   = this.gameboard.display.getCanvas( 'workspace' );
+				const board    = canvas.el.parentElement;
+				const level    = canvas.getRinkClientBounds();
+				if ( !board || !level ) return { x: 0, y: 0 };
 
-				//--------------------------------
-				// Calculate Position & Dimensions
-				//--------------------------------
-				// NOTE: If your canvas is inside a scrollable DIV, use that instead:
-				const container	= canvas.parentElement;		// access canvas parent
-				const visibleW	= container.clientWidth;
-				const visibleH	= container.clientHeight;
-				const scrollX	= container.scrollLeft;
-				const scrollY	= container.scrollTop;
-				const canvasW	= canvas.width;				// canvas width (in pixels)
-				const canvasH	= canvas.height;			// canvas height (in pixels)
+				// Measure the board's visible area inside its borders and scrollbars.
+				const rect     = board.getBoundingClientRect();
+				const left     = rect.left + board.clientLeft;
+				const top      = rect.top + board.clientTop;
+				const right    = left + board.clientWidth;
+				const bottom   = top + board.clientHeight;
 
-				//--------------------------------
-				// Calculate Center
-				//--------------------------------
-				// Begin center calculation(s).
-				let centerX, centerY;
+				// Find the midpoint of the visible portion of the active level.
+				const midX     = (Math.max(left,level.left) + Math.min(right,level.right)) / 2;
+				const midY     = (Math.max(top,level.top) + Math.min(bottom,level.bottom)) / 2;
 
-				// Horizontal center
-				// container wider than canvas → full canvas visible
-				if ( visibleW>=canvasW ) centerX = canvasW / 2;
-				else {
-					const halfVW	= visibleW / 2;
-					const minMidX	= halfVW;
-					const maxMidX	= canvasW - halfVW;
-					const rawMidX	= scrollX + halfVW;
-					centerX			= Math.min( Math.max(rawMidX,minMidX), maxMidX );
-				}
+				// Convert to level-local pixels. If the level is fully offscreen,
+				// use its nearest edge on the axis where there is no overlap.
+				const { w, h } = canvas.getRinkBounds();
+				const x        = (midX-level.left) / level.scaleX;
+				const y        = (midY-level.top) / level.scaleY;
+				const localX   = Math.max( 0, Math.min(x,w-1) );
+				const localY   = Math.max( 0, Math.min(y,h-1) );
 
-				// Vertical center
-				if ( visibleH>=canvasH ) centerY = canvasH / 2;
-				else {
-					const halfVH	= visibleH / 2;
-					const minMidY	= halfVH;
-					const maxMidY	= canvasH - halfVH;
-					const rawMidY	= scrollY + halfVH;
-					centerY			= Math.min( Math.max(rawMidY,minMidY), maxMidY );
-				}
-
-				//--------------------------------
-				// Return Center in Units (e.g. Tiles)
-				//--------------------------------
-				// Confine centerX and centerY to units.
-				centerX	= Math.floor( centerX / units );
-				centerY	= Math.floor( centerY / units );
-				return { x: centerX, y: centerY }; // return coordinates
-			}
+				return { x: Math.floor(localX/units), y: Math.floor(localY/units) };
+			};
 
 			// Fill a region in the level matrix with a tile.
 			// RETURNS: [boolean] `true` on success else `false` on fail.
@@ -40468,9 +42490,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/sidebar.plugin.
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create sidebar board [object]
-			// --------------------------------
+			//---------------------------------
 			// Create possible modes.
 			//const modes	= [ 'draw', 'fill', 'erase', 'select' ];
 			client.sidebar	= new JestCollapsibleMenu( client );
@@ -40504,9 +42526,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/tabbarFile.plug
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create File Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the tabbar.
 			const tabbarFile	= new JestTabbar( client );
 			client.tabbarFile	= tabbarFile; // set tabbar
@@ -40576,9 +42598,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Status Bar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the statusbar.
 			const statusbar		= new JestStatusbar( client );
 			client.statusbar	= statusbar; // set toolbar
@@ -40596,7 +42618,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				() => {
 					let message = 'Welcome to <b>Tileshop</b>';
 					message += ' by <strong>JEST®</strong>';
-					message += ' • Copyright© 2025';
+					message += ' • Copyright© 2026';
 					message += ' • All Rights Reserved.';
 					statusbar.cite( message );
 				});
@@ -40609,21 +42631,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				name       : 'copyright',
 				tag        : 'div',
 				classes    : [ 'jest-copyright' ],
-				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.4</strong>. All rights reserved.'
+				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.43</strong>. All rights reserved.'
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create Loading Bar [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a loading bar to the status bar.
 			const loadbar		= new JestLoadbar( client );
 			client.loadbar		= loadbar; // keep ref
 			loadbar.build( 'jest-loadbar', ['jest-ani-stripes'] ); // build loadbar
 			statusbar.panel.addPanel( 'loadbar', loadbar.panel ); // add to statusbar DOM
 
-			// --------------------------------
+			//---------------------------------
 			// Create Level "mousemove" Info Tracking
-			// --------------------------------
+			//---------------------------------
 			// Get level editor canvas.
 			const canvas = this.gameboard.display.getCanvas( 'workspace' );
 			// Register mouse location event(s).
@@ -40638,34 +42660,39 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 					// Early out if statusbar is missing
 					if ( !statusbar || !statusbar.cite ) return;
 					// Check for open view & tool.
-					const state		= this.getState(); // get program state
+					const state = this.getState(); // get program state
 					if ( !state?.levelView ) return;
 					// Require level view & level [object].
-					const view		= state.levelView;
+					const view  = state.levelView;
 
 					//--------------------------------
 					// Resolve Target Level Layer
 					//--------------------------------
 					// Acesss active tab level.
-					const level     = view.file.context;
-					const layer     = level.getActiveLayer(); // get layer
+					const level = view.file.context;
+					const layer = level.getActiveLayer(); // get layer
 					if ( !layer ) return false;               // can't find layer
 
 					//--------------------------------
 					// Access Tile Data @ Coordinate
 					//--------------------------------
-					// Obtain the mouse level position.
-					const pos		= canvas.mousePos( e );
-					const units		= this.config.tileGrid ?? 16;
-					const x			= Math.floor( pos.x / units );
-					const y			= Math.floor( pos.y / units );
+					// Report active-level coordinates only while over the editable area.
+					const pos   = canvas.mousePos( e );
+					if ( !canvas.containsRinkPoint(pos) ) {
+						this.statusbar.cite( '' );
+						return; // abort
+					}
+					// Read tile spacing at the active tab's zoom.
+					const units = view.anchor.getUnitsZoomed();
+					const x     = Math.floor( pos.x / units );
+					const y     = Math.floor( pos.y / units );
 					// Get tile (if any) from level
-					const tile		= layer.getTile( x, y );
+					const tile  = layer.getTile( x, y );
 					//--------------------------------
 					// Generate Status Display Text
 					//--------------------------------
 					// Generate status bar text to be displayed.
-					let msg = `<strong>level</strong> (${x},${y})`;
+					let msg     = `<strong>level</strong> (${x},${y})`;
 					if ( tile && tile.ts!==undefined )
 						msg += `  →  <strong>tile</strong> (${tile.tx},${tile.ty})`;
 					// Display position/tile info in status bar.
@@ -40708,9 +42735,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/editor.plugin.j
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Editor Panel [object]
-			// --------------------------------
+			//---------------------------------
 			// Create editor panel to store the editing/playing area.
 			client.editor	=
 				client.panel.refs.interface.refs.center.createPanel({
@@ -40720,9 +42747,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/editor.plugin.j
 					});
 			//client.editor.resize( null, 100px );
 
-			// --------------------------------
+			//---------------------------------
 			// Add Gameboard Canvas [object]
-			// --------------------------------
+			//---------------------------------
 			// Create possible modes.
 			//const modes			= [ 'draw', 'fill', 'erase', 'select' ];
 			// Add canvas to editor.
@@ -40762,9 +42789,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/actionbar.plugi
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Actionbar Toolbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the actionbar toolbar.
 			const actionbar  = new JestToolbar( client );
 			client.actionbar = actionbar; // set actionbar
@@ -40804,9 +42831,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Get File Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Get the tabbar.
 			const tabbarFile	= client.tabbarFile; // get tabbar
 			const button		= client.tabbarFile.buttons.new; // new file (+) button
@@ -40895,9 +42922,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 			// * prevView	- [object] JestFileView to deactivate from editing.
 			//   action	- [string] Type of action taking place: 'open', 'switch', 'close', etc.
 			proto.tabbarFileChange = async function( nextView, prevView=null, action=null ) {
-				// --------------------------------
+				//---------------------------------
 				// Teardown Previous View (if supplied)
-				// --------------------------------
+				//---------------------------------
 				// Check if a previous view is hiding.
 				if ( prevView!==null ) {
 					//--------------------------------
@@ -40908,9 +42935,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					this.sidebar.refit( 'history' ); // refit history
 				}
 
-				// --------------------------------
+				//---------------------------------
 				// Resize Gameboard Canvas to Match File Dimensions
-				// --------------------------------
+				//---------------------------------
 				// Attempt to get the canvas.
 				const workspace	= this.gameboard.display.getCanvas( 'workspace' );
 				const sketchpad	= this.gameboard.display.getCanvas( 'sketchpad' );
@@ -40926,10 +42953,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					//--------------------------------
 					// Resize Canvases
 					//--------------------------------
-					// Resize canvases to match new active target's viewport.
-					const bounds = nextView.anchor.getZoomed();
-					workspace.resize( bounds.display.w, bounds.display.h );
-					sketchpad.resize( bounds.display.w, bounds.display.h );
+					// Resize canvases to match active tab's level viewport.
+					this.layoutLevelWorkspace( nextView, workspace, sketchpad );
 
 					//--------------------------------
 					// Switch Active File In Cabinet
@@ -40951,11 +42976,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					nextView.history.show();         // show history
 					this.sidebar.refit( 'history' ); // refit history
 				}
+				// No view found.
 				else {
-					// --------------------------------
+					//---------------------------------
 					// Check If Canvas Is Available
-					// --------------------------------
+					//---------------------------------
 					// Shrink gameboard to invisible.
+					workspace.rink = null;
 					workspace.resize( 0, 0 );
 					// Clear the canvas contents.
 					workspace.clear();
@@ -40988,9 +43015,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Sidebar Tileset Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the tileset tabbar.
 			const tabbarTileset  = new JestTabbar( client );
 			client.tabbarTileset = tabbarTileset; // set tabbar
@@ -41039,9 +43066,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 			// * view	- [object] JestFileView to activate as tileset selector.
 			proto.tabbarTilesetChange = function( view ) {
 				console.log( 'Tileset tab change.' );
-				// --------------------------------
+				//---------------------------------
 				// Resize Gameboard Canvas to Match Level Dimensions
-				// --------------------------------
+				//---------------------------------
 				// Attempt to get the canvas.
 				const canvas = this.gameboard.display.getCanvas( 'palette' );
 				// Check for an active view.
@@ -41079,9 +43106,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// User Login/Sign-up Authentication
-			// --------------------------------
+			//---------------------------------
 			// Build the GUI.
 			client.login.build(); // setup login/logout badge
 			// Add a login panel to the top right of the app interface.
@@ -41095,16 +43122,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 						topright.addPanel( 'login', client.login.badge );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Login Notification Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Wire global failed account signup event.
 			client.login.register(
 				'signupFail', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Failed to create account! ${message}`,
@@ -41125,9 +43152,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loginFail', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Failed to log in! ${message}`,
@@ -41148,9 +43175,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loginRequired', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Login required to perform action: ${message}`,
@@ -41171,9 +43198,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loggedIn', 'accountActionLoggedIn',
 				username => {
-					// --------------------------------
+					//---------------------------------
 					// Send User "Logged In" Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Successfully logged in as ${username}!`,
@@ -41191,9 +43218,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 				});
 			//this.login.register( 'logout', 'tiler', () => this.clearUserUI() );
 
-			// --------------------------------
+			//---------------------------------
 			// Autocheck Login Session
-			// --------------------------------
+			//---------------------------------
 			// Check if user is logged in.
 			await client.login.checkLoginSession(); // try to checkin
 			// Prompt user with a login screen if no session is active.
@@ -41230,9 +43257,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud/cloud
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Cloud Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Register "synchronize" save event (with notification).
 			client.cloud.register(
 				'save', 'systemNotice',
@@ -41318,9 +43345,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud/cloud
 			// Set the default sort type of the cloud file list.
 			client.cloud.fileViewer.listView.sortByColumn( 'level_name' ); // sort by filename
 
-			// --------------------------------
+			//---------------------------------
 			// Load Cloud List After Login
-			// --------------------------------
+			//---------------------------------
 			// Fetch the list whenever login succeeds after startup.
 			client.login.register(
 				'loggedIn', 'loadList',
@@ -41684,9 +43711,9 @@ class JestToolLayers extends JestTool {
 	// Canvas target
 	target      = null;         // [ElementCanvas] workspace canvas
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -41717,9 +43744,9 @@ class JestToolLayers extends JestTool {
 		// Tool is empty by default.
 		this.jot( 'mode', 'empty' );	// tool is idle to start
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const filetypes    = this.client.imager.filetypes.join( ', .' );
 
@@ -41763,9 +43790,9 @@ class JestToolLayers extends JestTool {
 		this.panel.refs.buttons.addPanel( 'toolbar', this.toolbar.panel );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the layers tool.
 	// RETURNS: [boolean].
 	enable() {
@@ -42565,9 +44592,9 @@ class JestToolHand extends JestTool {
 	scrollY    = 0;       // [number] Scroll-top position when the drag began.
 	dragging   = false;   // [boolean] Whether a pan is active.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client - [object] Application client that this piece belongs to.
@@ -42576,9 +44603,9 @@ class JestToolHand extends JestTool {
 		super( client, name ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the hand tool and listen for a pan start.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -42592,9 +44619,9 @@ class JestToolHand extends JestTool {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Reset the tool to be used.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	reset() {
@@ -42618,7 +44645,7 @@ class JestToolHand extends JestTool {
 		this.target.register( 'mousedown', 'handStart', e=>this.start(e), 'dom' );
 		return true; // success
 	}
-	
+
 	//--------------------------------
 	// Disable Hand Tool
 	//--------------------------------
@@ -42647,9 +44674,9 @@ class JestToolHand extends JestTool {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Hand Drawing Target
-	// --------------------------------
+	//---------------------------------
 	// Set the workspace canvas and its scroll container.
 	// RETURNS: [boolean] success.
 	// * target - [ElementCanvas] Canvas to pan.
@@ -42881,9 +44908,9 @@ class JestSwatches extends JestTool {
 	swatchId		= 0;				// [int] unique ID incrementor
 	container		= null;				// [HTMLElement] DOM container holding swatches
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -42891,9 +44918,9 @@ class JestSwatches extends JestTool {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -42913,9 +44940,9 @@ class JestSwatches extends JestTool {
 			]); // add to form
 		this.container	= this.panel.refs.listWrap; // keep ref
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar
@@ -43315,9 +45342,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/swatches/swa
 		// Called once when plugin is registered.
 		// * client - [object] reference to JestTiler
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Swatch Panel
-			// --------------------------------
+			//---------------------------------
 			// Create swatch panel [object].
 			const tool	= new JestSwatches( this );
 			client.swatchPanel	= tool;
@@ -43450,9 +45477,9 @@ class JestToolEyedropper extends JestTool {
 	follower    = null;     // [JestMouseFollower] Positions the tile preview.
 	preview     = null;     // [HTMLCanvasElement|null] Floating tile preview.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -43503,9 +45530,9 @@ class JestToolEyedropper extends JestTool {
 		this.preview  = preview;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target Canvas
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to enable eyedropper for.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -43594,9 +45621,9 @@ class JestToolEyedropper extends JestTool {
 		return null;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the eyedropper tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -43637,6 +45664,9 @@ class JestToolEyedropper extends JestTool {
 		const enabled  = this.skim( 'enabled' );
 		const mode     = this.skim( 'mode' );
 		if ( !enabled || mode!=='idle' ) return;
+		// Sample only from the active level.
+		if ( !this.target.containsRinkPoint(this.target.mousePos(e)) )
+			return; // not inside applicable area
 		// Switch eyedropper mode to live sampling a tile.
 		this.jot( 'mode', 'sampling' );	// change mode
 		// Emit start event.
@@ -43819,6 +45849,11 @@ class JestToolEyedropper extends JestTool {
 		const client   = this.client;
 		const state    = this.client.getState();
 		const pos      = this.target.mousePos( e );
+		// Clear the sample when crossing from the level into its padding.
+		if ( !this.target.containsRinkPoint(pos) ) {
+			if ( this.hovering ) this.exitTarget();
+			return false; // abort
+		}
 		const units    = this.anchor.units;
 		const x        = Math.floor( pos.x / units );
 		const y        = Math.floor( pos.y / units );
@@ -43976,8 +46011,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 			// existing active-layer-only sampling behavior.
 			const inputComposite =
 				new JestInputCheckbox(
-					client, 'composite', null,
-					tool.composite, 'Composite' );
+					client, 'composite', null, tool.composite, 'Composite'
+					);
 			inputComposite.build( 'input-composite' );
 			inputComposite.showLabel();
 			// Explain the sampling mode without crowding the panel.
@@ -44253,8 +46288,26 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/eyedropper/e
 					const key   = !e.shiftKey ? 'foreground' : 'background';
 					client.toolEyedropLevelTile( x, y, key );
 				});
-		},
 
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'eyedropperZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
+		},
 
 		//--------------------------------
 		// New Method(s) In Tiler Application
@@ -44379,9 +46432,9 @@ class JestToolMarquee extends JestTool {
 	transform     = null;       // Immutable source kept until the floating selection is dropped.
 	transformDrag = null;       // Current handle drag and its starting bounds.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -44413,9 +46466,9 @@ class JestToolMarquee extends JestTool {
 		this.tracer.graticulate( this.anchor.units ); // match
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Marquee Drawing Target
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -44435,9 +46488,9 @@ class JestToolMarquee extends JestTool {
 		this.target	= target;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the marquee tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -44484,9 +46537,9 @@ class JestToolMarquee extends JestTool {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Option(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the multiselectability of the marquee.
 	// RETURNS: [void]
 	// * enable	- [bool] Whether to allow multiselectability (true) or not (false).
@@ -44536,12 +46589,10 @@ class JestToolMarquee extends JestTool {
 		//-------------------------
 		// Create the mouse click event for selection start.
 		this.target.register(
-			'mousedown', 'selectStart',
-			e=>this.checkClick(e), 'dom' );
+			'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
 		// Update the cursor when the pointer moves over the canvas.
 		this.target.register(
-			'mousemove', 'transformCursor',
-			e=>this.updateTransformCursor(e), 'dom' );
+			'mousemove', 'transformCursor', e=>this.updateTransformCursor(e), 'dom' );
 		//-------------------------
 		// Emit Reset Event
 		//-------------------------
@@ -44558,8 +46609,8 @@ class JestToolMarquee extends JestTool {
 	// RETURNS: [object] { x, y, w, h } in pixel units or [null] for deselect.
 	getBounds() {
 		// If no selection is made, return null.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode==='empty' ) return null;
 		// Get anchor's logical (grid) values
 		const x	= this.anchor.x * this.anchor.units;
@@ -44586,27 +46637,31 @@ class JestToolMarquee extends JestTool {
 		// Calibrate Mode
 		//-------------------------
 		// Mode / enableability requirement
-		const enabled  = this.skim( 'enabled' );
-		let mode       = this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		let mode      = this.skim( 'mode' );
 		if ( !enabled ) return;
+
+		// Require a click inside the defined rink before changing the selection.
+		const mouse   = this.target.mousePos( e );
+		if ( !this.target.containsRinkPoint(mouse) ) return;
 
 		//-------------------------
 		// Check Keyboard Action
 		//-------------------------
 		// Get keyboard modifiers.
-		const mod      = this.getModifiers( e );
+		const mod     = this.getModifiers( e );
 		// Determine if shift key is pressed.
-		const add      = mod.shift;
+		const add     = mod.shift;
 		// Check for alt/option key.
-		const sub      = mod.alt;
+		const sub     = mod.alt;
 
 		//-------------------------
 		// Check Click Context
 		//-------------------------
 		// Determine if adding or subtracting.
-		const restart  = !( add || sub );
+		const restart = !( add || sub );
 		// Check if click is inside an active selection.
-		let inside     = this.isClickInsideSelection( e );
+		let inside    = this.isClickInsideSelection( e );
 
 		//-------------------------
 		// Capture Existing State
@@ -44654,8 +46709,8 @@ class JestToolMarquee extends JestTool {
 					if ( inside ) { // clicked existing marque
 						// Check if selection has been floated yet (clicked / dragged).
 						if ( mode==='selected' ) { // check if lifting embedded
-							this.jot( 'mode', 'floating' );		// marquee is floating
-							this.emit( 'floated', null, this );	// embedded selection lifted
+							this.jot( 'mode', 'floating' );     // marquee is floating
+							this.emit( 'floated', null, this ); // embedded selection lifted
 						}
 					}
 					// Outside selection, restart a new selection
@@ -44675,16 +46730,15 @@ class JestToolMarquee extends JestTool {
 		}
 
 		// Return helper data.
-		mode		= this.skim( 'mode' ); // update mode
-		const info	= { enabled, mode, add, sub, restart, inside }; // return info
+		mode        = this.skim( 'mode' ); // update mode
+		const info  = { enabled, mode, add, sub, restart, inside }; // return info
 
 		//-------------------------
 		// Calculate Coordinates
 		//-------------------------
 		// Convert mouse event to tile‐coordinates
-		const mouse	= this.target.mousePos( e );
-		const tileX	= Math.floor( mouse.x/this.anchor.units );
-		const tileY	= Math.floor( mouse.y/this.anchor.units );
+		const tileX = Math.floor( mouse.x/this.anchor.units );
+		const tileY = Math.floor( mouse.y/this.anchor.units );
 
 		//-------------------------
 		// Delegate to Task
@@ -44712,16 +46766,16 @@ class JestToolMarquee extends JestTool {
 		const click = this.target.mousePos( e );
 
 		// Convert pixel to grid coordinate
-		const gx = Math.floor( click.x / this.anchor.units );
-		const gy = Math.floor( click.y / this.anchor.units );
+		const gx    = Math.floor( click.x / this.anchor.units );
+		const gy    = Math.floor( click.y / this.anchor.units );
 
 		// Check if inside bounding box
 		if ( !this.client.grapher.isPointInBounds(gx,gy,this.bounds) )
 			return false; // not inside selection
 
 		// Convert to mask-local space
-		const mx = gx - this.bounds.x;
-		const my = gy - this.bounds.y;
+		const mx    = gx - this.bounds.x;
+		const my    = gy - this.bounds.y;
 
 		// Verify that the mask contains the cell and is active
 		return !!( this.mask[my] && this.mask[my][mx] );
@@ -44731,14 +46785,14 @@ class JestToolMarquee extends JestTool {
 	// Marquee Rect Handling Method(s)
 	//-----------------------------
 	// Create a select rect.
-	// * x,y	- [int] Coordinates (in tile units) of rect top-left location.
-	// * w,h	- [int] Dimensions (in tile units) of rect width x height.
-	// action	- [string] Value of action name: 'add', 'sub', 'replace'
+	// * x,y   - [int] Coordinates (in tile units) of rect top-left location.
+	// * w,h   - [int] Dimensions (in tile units) of rect width x height.
+	// action  - [string] Value of action name: 'add', 'sub', 'replace'
 	createRect( x, y, w, h, type='add' ) {
 		// Validate argument(S).
 		if ( !['add','sub','replace'].includes(type) ) {
 			console.warn( `Unknown argument for marquee rect type ${type}` );
-			return false;
+			return false; // abort
 		}
 		// Compute rectangle
 		const rect = { x, y, w, h, type };
@@ -44780,14 +46834,10 @@ class JestToolMarquee extends JestTool {
 		// Clamp Boundaries
 		//-------------------------
 		// Don't go below 0
-		tx	= Math.max( 0, tx );
-		ty	= Math.max( 0, ty );
-		// Get target width/height (in tile units)
-		const tw	= this.target.width  / this.anchor.units;
-		const th	= this.target.height / this.anchor.units;
+		const { cols: tw, rows: th } = this.getTargetGridSize();
 		// Don't go beyond the matrix
-		this.clickX	= Math.min( tx, tw ),
-		this.clickY	= Math.min( ty, th );
+		this.clickX = Math.min( tx, tw ),
+		this.clickY = Math.min( ty, th );
 		// Begin tracing the new selection.
 		this.tracer.move( this.clickX, this.clickY ); // move anchor to new location
 		this.tracer.resize( 0, 0 ); // resize the anchor
@@ -44822,26 +46872,25 @@ class JestToolMarquee extends JestTool {
 		// Require the tool to be available.
 		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='selecting' ) return;
 
 		//-------------------------
 		// Calculate Size & Location
 		//-------------------------
 		// Use helper method to calculate.
-		const mod		= this.getModifiers( e );
-		const click		= this.target.mousePos( e );
-		const tw		= this.target.width  / this.anchor.units;
-		const th		= this.target.height / this.anchor.units;
-		const tileX		= Math.floor( click.x / this.anchor.units );
-		const tileY		= Math.floor( click.y / this.anchor.units );
+		const mod     = this.getModifiers( e );
+		const click   = this.target.mousePos( e );
+		const { cols: tw, rows: th } = this.getTargetGridSize();
+		const tileX   = Math.floor( click.x / this.anchor.units );
+		const tileY   = Math.floor( click.y / this.anchor.units );
 		const { startX, startY, width, height } =
 			this.applyModifiersToRect( mod, this.clickX, this.clickY, tileX, tileY, tw, th );
 
-		// -----------------------------
+		//------------------------------
 		// Update & Emit Event(s)
-		// -----------------------------
+		//------------------------------
 		// Move and resize the anchor
 		this.tracer.move( startX, startY );
 		this.tracer.resize( width, height );
@@ -44862,9 +46911,9 @@ class JestToolMarquee extends JestTool {
 		const { x, y, w, h } = this.tracer.getBounds();
 		const units  = this.anchor.units;
 
-		// ------------------------------
+		//-------------------------------
 		// Compute rect & preserve action
-		// ------------------------------
+		//-------------------------------
 		// Get keyboard modifiers.
 		const mod    = this.getModifiers( e );
 		// Reset the marquee tool for new selection.
@@ -45052,9 +47101,9 @@ class JestToolMarquee extends JestTool {
 		this.emit( 'selected', null, this );
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Cancel a Selection
-	// -------------------------------
+	//--------------------------------
 	// Cancel a selection.
 	// RETURNS: [void].
 	cancel() {
@@ -45071,21 +47120,13 @@ class JestToolMarquee extends JestTool {
 		this.reset(); // reset the marquee
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Compute Selection Mask
-	// -------------------------------
+	//--------------------------------
 	// Merges all rects (add/sub/replace) into a boolean mask
 	// and asks the canvas to redraw the overlay.
 	// RETURNS: [void].
 	_computemask() {
-		//-------------------------
-		// Setup Computation Vars
-		//-------------------------
-		// Setup grid dimensions in tiles.
-		const units = this.anchor.units;
-		const cols  = this.target.width  / units;
-		const rows  = this.target.height / units;
-
 		//-------------------------
 		// Find total bounding box
 		//-------------------------
@@ -45267,9 +47308,9 @@ class JestToolMarquee extends JestTool {
 		this.target.register( 'mousemove', 'dragging', e=>this.dragSelection(e), 'window' );
 		this.target.register( jsos.mouseUps, 'dragged', e=>this.endDragSelection(e), 'window' );
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Duplicate Selection
-		// -----------------------------
+		//------------------------------
 		// Get key modifiers.
 		const mod = this.getModifiers( e );
 		// If user holds Alt/Option while dragging, emit 'duplicate'.
@@ -45387,9 +47428,9 @@ class JestToolMarquee extends JestTool {
 		this.emit( 'deselected', null, this );
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Get Modifiers
-	// -----------------------------
+	//------------------------------
 	// Returns modifier flags based on current mouse event.
 	getModifiers( e ) {
 		return {
@@ -45401,9 +47442,9 @@ class JestToolMarquee extends JestTool {
 			};
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Apply Square or Axis Lock
-	// -----------------------------
+	//------------------------------
 	// Adjusts width, height, startX/startY based on modifier flags.
 	applyModifiersToRect( mod, clickX, clickY, tileX, tileY, tw, th ) {
 		// Calculate bounds before moving anchor
@@ -45430,9 +47471,9 @@ class JestToolMarquee extends JestTool {
 		width      = endX - startX;
 		height     = endY - startY;
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Force Square Mode
-		// -----------------------------
+		//------------------------------
 		// If both Shift+Alt/Option are held, force square selection box.
 		// Square modifier
 		/*if ( mod.square ) {
@@ -45448,9 +47489,9 @@ class JestToolMarquee extends JestTool {
 			height	= Math.min( size, th-startY );
 		}
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Lock Axis (Shift)
-		// -----------------------------
+		//------------------------------
 		// If only Shift is held (without Alt), lock to dominant axis.
 		// NOTE: This is the axis-lock modifier plug.
 		else if ( mod.axisLock ) {
@@ -45462,9 +47503,9 @@ class JestToolMarquee extends JestTool {
 		return { startX, startY, width, height };
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Selection State
-	// --------------------------------
+	//---------------------------------
 	// Capture the current marquee without modifying it.
 	// RETURNS: [void].
 	getSelectionState() {
@@ -45545,9 +47586,9 @@ class JestToolMarquee extends JestTool {
 		return true;
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Transform Method(s)
-	// -----------------------------
+	//------------------------------
 	// Find which resize handle, if any, was clicked.
 	// RETURNS: [string|null] Handle name: nw, n, ne, e, se, s, sw or w.
 	// * e - Mouse event in workspace coordinates.
@@ -45566,6 +47607,8 @@ class JestToolMarquee extends JestTool {
 
 		// Get the mouse position in the same canvas coordinate space.
 		const mouse   = this.target.mousePos( e );
+		// Limit handle hit-testing to the permittable rink area.
+		if ( !this.target.containsRinkPoint(mouse) ) return null;
 
 		// Keep handles in a consistent clickable size in canvas pixels.
 		const hitSize = 9;
@@ -45688,8 +47731,7 @@ class JestToolMarquee extends JestTool {
 		const units  = this.anchor.units;
 		const tileX  = Math.round( mouse.x/units );
 		const tileY  = Math.round( mouse.y/units );
-		const cols   = this.target.width / units;
-		const rows   = this.target.height / units;
+		const { cols, rows } = this.getTargetGridSize();
 
 		// Start with the bounds that were visible when this drag began.
 		const start  = this.transformDrag.bounds;
@@ -45805,6 +47847,17 @@ class JestToolMarquee extends JestTool {
 		canvas.style.cursor = cursors[handle] ?? '';
 	}
 
+	//--------------------------------
+	// Get Target Grid Size
+	//--------------------------------
+	// RETURNS: [object] Editable tile counts as { cols, rows }.
+	getTargetGridSize() {
+		// Use the level's exact tile counts when the workspace supplies them.
+		const units	= this.anchor.units;
+		const { w, h, cols=w/units, rows=h/units } = this.target.getRinkBounds();
+		return { cols, rows };
+	}
+
 	//-------------------------
 	// Remove Listeners
 	//-------------------------
@@ -45856,9 +47909,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 			// Get the tileset view & its dimensional information.
 			const tilesetView = client.getState().tilesetView;
 
-			// --------------------------------
+			//---------------------------------
 			// Create Marquee Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Instantiate marquee tool
 			const tool   = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -46009,15 +48062,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 			// Tab Change Event
 			//-------------------------
 			// Update the marquee grid when the active tileset tab changes.
-			/*client.tabbarFile.register(
+			client.tabbarTileset.register(
 				'tabChange', 'tilesetMarqueeGrid',
 				() => {
-					// Read the newly active tileset view.
-					const tilesetView = client.getState().tilesetView;
-					// Keep the anchor in native tile pixels.
-					if ( tilesetView?.tilePixels )
-						tool.anchor.graticulate( tilesetView.tilePixels );
-				});*/
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Get the tileset view & its dimensional information.
+					const bounds = s.tilesetView.anchor.getZoomed();
+					// Match the marquee grid to the newly active tileset view.
+					tool.anchor.graticulate( bounds.display.units );
+				});
 
 			//-------------------------
 			// Marquee Visual Rendering
@@ -46025,24 +48086,27 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 			// Register marquee drawing visual.
 			client.register(
 				'draw', subtype,
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
-					// --------------------------------
+					//---------------------------------
 					// Draw Tool Visual(s)
-					// --------------------------------
+					//---------------------------------
 					// Get level marquee tool mode.
-					const toolMode = tool.skim( 'mode' );
+					const toolMode   = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
 					if ( toolMode!=='selecting' && toolMode!=='selected'
 						 && toolMode!=='floating' && toolMode!=='dragging' ) return;
 
-					// -----------------------------
+					//------------------------------
 					// Validate Marquee Mask/Trace
-					// -----------------------------
+					//------------------------------
 					// Get tile measurements.
 					const units  = tool.anchor.units;
 					// Check if current marquee has either valid mask or traced rectangle.
@@ -46066,9 +48130,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 					// Exit if nothing to process
 					if ( !masked && !traced ) return;
 
-					// -------------------------------
+					//--------------------------------
 					// Mode: selected / selecting
-					// -------------------------------
+					//--------------------------------
 					// Visually show marquee semi-transparent rect.
 					switch ( toolMode ) {
 						case "selected":
@@ -46219,21 +48283,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			const workspace = client.gameboard.display.getCanvas( 'workspace' );
 			// Grab the sketchpad for off-screen drawing & rendering.
 			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
-			// Get the level view & its dimensional information.
-			const state     = client.getState();  // get app state
-			const levelView = state.levelView;    // get open tab level file
-			const bounds    = levelView.anchor.getZoomed(); // get active level rect info
 
-			// --------------------------------
+			//---------------------------------
 			// Create Marquee Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a marquee tool to the level canvas board.
 			const tool      = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
 			tool.build(); // build the tool
 
 			// Match the marquee anchor to native level tile pixels.
-			tool.anchor.graticulate( bounds.display.units );
 			const canvas    = client.gameboard.display.getCanvas( 'workspace' );
 			tool.setTarget( canvas ); // set target
 
@@ -46307,11 +48366,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			//--------------------------------
 			// Create tool curator.
 			tool.addCurator( 'primary' );
-			const curator		= tool.curators.primary; // shorthand
+			const curator = tool.curators.primary; // shorthand
 
 			// Register a marquee history handler for complex
 			// marquee state & manipulation undo/redo logging.
-			const marqueeMemory	= new Map();
+			const marqueeMemory = new Map();
 
 			// Add curator item type(s).
 			curator.registerType( 'mosaic' );
@@ -46324,9 +48383,28 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Add the curator panel to the sidebar.
 			client.sidebar.addSection( 'marquee', 'Marquee', curator );
 
-			// --------------------------------
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'levelMarqueeZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
+
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'levelMarqueeRemember',
 				() => {
@@ -46343,33 +48421,27 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			client.tabbarFile.register(
 				'tabChange', 'levelMarqueeRefresh',
 				view => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
 
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					curator.flushVisibleCache();   // flush cache
 					curator.refreshOptions();      // refresh list
 
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					// Remember curator dropdown.
 					if ( !s ) return tool.restoreSelectionState();
 
-					// --------------------------------
-					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
-					// Match the marquee grid to the newly active level view.
-					//tool.anchor.graticulate( s.levelView.tilePixels );
-
-					// --------------------------------
+					//---------------------------------
 					// Restore Marquee Selection
-					// --------------------------------
+					//---------------------------------
 					// Restore curator dropdown.
 					curator.restoreSelection( s.fileKey );
 					// Restore the tab's contextual marquee state.
@@ -46498,9 +48570,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create Modal(s)
-			// --------------------------------
+			//---------------------------------
 			// Generate the "sign" region modal.
 			client.addModal(
 				'newSign',
@@ -47555,15 +49627,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Register marquee drawing visual.
 			client.register(
 				'draw', subtype,
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
-					// --------------------------------
+					//---------------------------------
 					// Draw Tool Visual(s)
-					// --------------------------------
+					//---------------------------------
 					// Get level marquee tool mode.
 					const toolMode = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
@@ -47571,9 +49646,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						 && toolMode!=='floating' && toolMode!=='dragging'
 						 && toolMode!=='transforming' ) return;
 
-					 // -----------------------------
+					 //------------------------------
 					 // Validate Marquee Mask/Trace
-					 // -----------------------------
+					 //------------------------------
 					 // Get tile measurements.
 					 const units  = tool.anchor.units;
 					 // Check if current marquee has either valid mask or traced rectangle.
@@ -47597,10 +49672,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					 // Exit if nothing to process
 					 if ( !masked && !traced ) return;
 
-					// -------------------------------
+					//--------------------------------
 					// Mode: selected / selecting
 					// Draw irregular marquee outline
-					// -------------------------------
+					//--------------------------------
 					if ( toolMode==='selected' || toolMode==='selecting' ) {
 						// Determine dashed outline.
 						const dashSpeed  = 0.5;
@@ -47609,11 +49684,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						// Check if a composite selection exists.
 						if ( masked ) {
 							// Calculate dimensions.
-							const cols   = tool.target.width  / units;
-							const rows   = tool.target.height / units;
-
-							// Composite stroke style(s).
+							const { cols, rows } = tool.getTargetGridSize();
+							// Preserve the current canvas rendering state.
 							editorCtx.save();
+							// Composite stroke style(s).
+							//editorCtx.globalCompositeOperation = 'source-over';
 							editorCtx.globalCompositeOperation = 'difference';
 							const stroke =
 								[{
@@ -47627,8 +49702,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							client.drawCompositeRect(
 								editorCtx, {units,cols,rows},
 								bounds.x, bounds.y, mask,
-								null, //"rgba( 50, 0, 0, 0.2 )",	// fill
-								stroke, null, null			// stroke
+								null, //"rgba( 50, 0, 0, 0.2 )", // fill
+								stroke, null, null // stroke
 								);
 							// Unset the "difference" marquee color mode.
 							editorCtx.restore(); // restore drawing mode
@@ -47641,6 +49716,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							const rows = trace.h;  // trace region height
 							// Composite stroke style(s).
 							editorCtx.save();
+							// Determine blend-mode for marquee dancing-ants outline.
+							//editorCtx.globalCompositeOperation = 'source-over';
 							editorCtx.globalCompositeOperation = 'difference';
 							const stroke =
 								[{
@@ -47745,8 +49822,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							editorCtx,
 							{
 								units : units,
-								cols  : tool.target.width / units,
-								rows  : tool.target.height / units
+								...tool.getTargetGridSize()
 							},
 							bounds.x, bounds.y, mask,
 							null,               // no background fill
@@ -47807,12 +49883,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Register marquee drawing visual.
 			client.register(
 				'draw', 'levelMarqueeCuratorRegions',
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					// Only if client is running.
 					if ( mode!=='running' ) return;
-					const type	= curator.typeSelected;
+					const type	     = curator.typeSelected;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 					// Tool must be selected.
 					if ( !tool.skim('enabled') ) return;
 					// Require curator seleted type to be 'warp'.
@@ -47991,16 +50070,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						curator.addObject(
 							'warp',
 							{
-							action  : 'levelMarquee',	// Action type
-							file	: file.skey,		// Use file's skey
-							name	: name,				// Name with index
-							level   : name,				// Target level
-							w	   : item.w ?? 4,		// Width (default 4)
-							h	   : item.h ?? 4,		// Height (default 4)
-							x	   : item.x ?? 0,		// X coordinate
-							y	   : item.y ?? 0,		// Y coordinate
-							dx	  : item.dx ?? 0,		// Delta X (default 0)
-							dy	  : item.dy ?? 0		// Delta Y (default 0)
+							action : 'levelMarquee',    // Action type
+							file   : file.skey,         // Use file's skey
+							name   : name,              // Name with index
+							level  : name,              // Target level
+							w	   : item.w ?? 4,       // Width (default 4)
+							h	   : item.h ?? 4,       // Height (default 4)
+							x	   : item.x ?? 0,       // X coordinate
+							y	   : item.y ?? 0,       // Y coordinate
+							dx	   : item.dx ?? 0,      // Delta X (default 0)
+							dy	   : item.dy ?? 0       // Delta Y (default 0)
 							});
 						});
 					//-----------------------------
@@ -48012,14 +50091,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						curator.addObject(
 							'sign',
 							{
-							action  : 'levelMarquee',	// Action type
-							file	: file.skey,		// Use file's skey
-							name	: item.name,		// Name the sign
-							dialog  : item.dialog,		// Sign message
-							w	   : item.w ?? 4,		// Width (default 4)
-							h	   : item.h ?? 4,		// Height (default 4)
-							x	   : item.x ?? 0,		// X coordinate
-							y	   : item.y ?? 0,		// Y coordinate
+							action : 'levelMarquee',    // Action type
+							file   : file.skey,         // Use file's skey
+							name   : item.name,         // Name the sign
+							dialog : item.dialog,       // Sign message
+							w	   : item.w ?? 4,       // Width (default 4)
+							h	   : item.h ?? 4,       // Height (default 4)
+							x	   : item.x ?? 0,       // X coordinate
+							y	   : item.y ?? 0,       // Y coordinate
 							});
 						});
 				});
@@ -48043,9 +50122,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 		// New Method(s) In Tiler Application
 		//--------------------------------
 		extend: function( Klass, proto ) {
-			// -----------------------------
+			//------------------------------
 			// Get Composite Marquee Region
-			// -----------------------------
+			//------------------------------
 			// Copy a composite masked region (not just rectangular).
 			// RETURNS: [object|null] contents data, or null if invalid.]
 			// * x,y		- [int] Values of mask top-left x,y coordinates on canvas.
@@ -48093,7 +50172,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Generate Stamp Using Matrix
 				//--------------------------------
 				// Build stamp canvas.
-				const stamp		= tileset.createStamp( matrix );
+				const stamp = tileset.createStamp( matrix );
 
 				//--------------------------------
 				// Return Data
@@ -48167,32 +50246,32 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Access the Active Level
 				//--------------------------------
 				// Validate an active view is open.
-				const state		= this.getState();			// get current program state
+				const state  = this.getState();     // get current program state
 				// Convert the region to a stamp.
-				const view		= state.levelView;
-				if ( !view ) return false;					// no active level view
-				const level		= view.file.context;		// access current level
+				const view   = state.levelView;
+				if ( !view ) return false;          // no active level view
+				const level  = view.file.context;   // access current level
 
 				//--------------------------------
 				// Get Mask Level-Region Inside Tool Contents
 				//--------------------------------
 				// Validate marquee tool and activeView.
-				const region	= tool.contents;
+				const region = tool.contents;
 				if ( !region ) return false;
 
 				//--------------------------------
 				// Get Region Localized Data
 				//--------------------------------
 				// Resolve level layer.
-				const layer		= level.getLayer( region.layerId );
+				const layer  = level.getLayer( region.layerId );
 				if ( !layer || layer.locked ) return false;	// can't find / edit layer
-				const { x, y }	= tool.bounds; // extract coordinates
+				const { x, y } = tool.bounds; // extract coordinates
 
 				//--------------------------------
 				// Replace Level Region With Mask Level-Region
 				//--------------------------------
 				// Replace the tiles in the region.
-				const tiles		=
+				const tiles  =
 					this.toolLevelReplaceRegion(
 						x, y, region.matrix, region.stamp, false, layer.id );
 				if ( !tiles ) return false;
@@ -48595,9 +50674,9 @@ class JestToolPencil extends JestTool {
 	_motionsTracked   = 0;                 // [int] total how many motions tracked (during draw).
 	_motionTrackLapse = null;              // [ms] last motion track update (external update).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client  - [object] Application client that this piece belongs to.
@@ -48620,9 +50699,9 @@ class JestToolPencil extends JestTool {
 		super.build( name, defaultClasses.mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -48637,9 +50716,9 @@ class JestToolPencil extends JestTool {
 		this.jot( 'mode', 'idle' ); // tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Threshold(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the timeout threshold between draws before sending idle events.
 	// RETURNS: [void]
 	// * val	- [ms] Int value of time to wait before setting draw as idle.
@@ -48655,9 +50734,9 @@ class JestToolPencil extends JestTool {
 		this._swishThreshold	= val;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -48836,6 +50915,8 @@ class JestToolPencil extends JestTool {
 		this._mouseButton  = e.button;
 		// Calculate click position in tile units
 		const click = this.target.mousePos( e );
+		// Begin a stroke only inside the editable level.
+		if ( !this.target.containsRinkPoint(click) ) return;
 		const units = this.anchor.units;
 		const x     = Math.floor( click.x / units );
 		const y     = Math.floor( click.y / units );
@@ -49031,9 +51112,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Pencil Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a pencil tool to the level canvas board.
 			const tool		= new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -49352,6 +51433,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/penci
 			//-------------------------
 			// Log the entire line of tile(s) drawn as one undo/redo action.
 			tool.register( 'stop', 'logPencil', ()=>client.toolLogPencil() );
+
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'pencilZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------
@@ -49629,9 +51729,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Eraser Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Reuse pencil input tracking, but provide eraser drawing behavior.
 			const tool		= new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -49934,6 +52034,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 			//-------------------------
 			// Log the entire line of tile(s) drawn as one undo/redo action.
 			tool.register( 'stop', 'logEraser', ()=>client.toolLogEraser() );
+
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'eraserZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------
@@ -50188,9 +52307,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Pencil Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a pencil tool to the level canvas board.
 			const tool    = new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -50653,8 +52772,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 					// Check If File Open
 					//--------------------------------
 					// Check for open view & tool.
-					const view		= state.levelView;
-					const key		= state.levelViewKey;
+					const view   = state.levelView;
+					const key    = state.levelViewKey;
 					//--------------------------------
 					// Check If Update Possible
 					//--------------------------------
@@ -50918,6 +53037,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			console.log( matrix3 );
 			const matrix4 = client.grapher.fillMatrixPerimeter( matrix3, ['a','b'], 0 );
 			console.log( matrix4 );*/
+
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'paintbrushZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------
@@ -51244,19 +53382,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/dra
 // This tool enables grabbing objects from to drop inside container(s).
 class JestToolDragdrop extends JestTool {
 	// Object propert(ies)
-	target		= null;			// [ElementCanvas] Target canvas element to draw on.
-	contents	= null;			// [...] queue content(s) for dragdrop.
-	crate		= null;			// [JestToolCrate] for carrying [object].
-	startTimer	= null;			// Timeout for double-click handling.
-	clickToDrag	= true;			// [bool] Whether click-to-drag (true) or hold-to-drag (false).
+	target      = null;         // [ElementCanvas] Target canvas element to draw on.
+	contents    = null;         // [...] queue content(s) for dragdrop.
+	crate       = null;         // [JestToolCrate] for carrying [object].
+	startTimer  = null;         // Timeout for double-click handling.
+	clickToDrag = true;         // [bool] Whether click-to-drag (true) or hold-to-drag (false).
+	// Suppression state
+	suppressed  = false;        // [bool] Whether this drag owns external suppression.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
-	// * name		- [string] Value of tool name.
+	// * client  - [object] Application client that this piece belongs to.
+	// * name    - [string] Value of tool name.
 	constructor( client, name ) {
 		super( client, name ); // call parent constructor
 	}
@@ -51266,54 +53406,57 @@ class JestToolDragdrop extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='tool-dragdrop', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-dragdrop' ];
+		const defaultClasses = [ 'tool-dragdrop' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Crate Tool [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a crate tool to the editor.
-		const crate		= new JestToolCrate( this.client );
+		const crate  = new JestToolCrate( this.client );
 		crate.build(); // generate crate
-		this.crate		= crate;
+		this.crate   = crate;
 		this.client.panel.addPanel( 'crate', crate.panel );
+
 		// React to drop event.
 		crate.register(
 			'dropped', 'dragdrop',
 			( garage, localPos ) => {
 				if ( garage ) {
 					//console.log( `Crate dropped into "${ droppedGarage.name }". Local coords:`, localPos );
-					// Call the drag drop draw method.
-					this.drop( garage, localPos.x, localPos.y ); // attempt to draw/place.
+					// Commit the same tile coordinates shown by the crate.
+					this.drop( garage, localPos.x, localPos.y, localPos );
 				}
 				else {
 					//console.log( 'Crate dropped outside any garage.' );
 					this.stop( null, false ); // stop & reset (no need to re-drop)
 				}
 				// Disable the crate & hide it.
-				this.crate.disable();	// disable if ensabled
-				this.crate.clear();		// erase crate contents & hide
+				this.crate.disable();  // disable if ensabled
+				this.crate.clear();    // erase crate contents & hide
 			});
+
 		// Set graticulate listener to update crate.
 		this.anchor.register( 'graticulate', 'crateUpdate',
 			( units ) => {
 				// Update the crate units.
 				this.crate.anchor.graticulate( units );
 			});
-		// --------------------------------
+
+		//---------------------------------
 		// Create Canvas In Crate [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a canvas to the crate for drag display.
 		crate.display.addCanvas( 'dragdrop' );
 		// Disable the crate & hide it.
-		this.crate.disable();	// disable if ensabled
-		this.crate.clear();		// erase crate contents & hide
+		this.crate.disable();  // disable if ensabled
+		this.crate.clear();    // erase crate contents & hide
 		// Disable this to start.
-		this.disable();			// disabled
+		this.disable();        // disabled
 		// Change crate styling when entering/leaving
 		/*crate.register(
 			'garagEenter', 'highlightGarage',
@@ -51327,12 +53470,12 @@ class JestToolDragdrop extends JestTool {
 			});*/
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
-	// * target		- [ElementCanvas] The target to allow selectability on.
+	// * target  - [ElementCanvas] The target to allow selectability on.
 	setTarget( target ) {
 		// Validate argument(s)
 		if ( !(target instanceof ElementCanvas) ) {
@@ -51345,9 +53488,9 @@ class JestToolDragdrop extends JestTool {
 		this.jot( 'mode', 'idle' ); // tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -51355,19 +53498,29 @@ class JestToolDragdrop extends JestTool {
 		if ( !super.enable() ) return false;
 		// Add event listener(s)
 		this.jot( 'enabled', true );
-		this.reset();			// reset drag drop
-		this.crate.enable();	// enable the crate
+		this.reset();         // reset drag drop
+		this.crate.enable();  // enable the crate
 	}
 	// Disable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	disable() {
+		//--------------------------------
+		// Release Active Drag Resources
+		//--------------------------------
+		// Force-release external clamp(s).
+		this.release(); // release suppression
+
 		// Check parent constructor.
 		if ( !super.disable() ) return false;
+
+		//--------------------------------
+		// Disable Tool
+		//--------------------------------
 		// Remove event listener(s)
 		this.jot( 'enabled', false );
-		this.removeTargetListeners();	// remove target event(s)
-		this.removeGlobalListeners();	// remove global event(s)
-		this.crate.disable();	// disable the crate
+		this.removeTargetListeners();  // remove target event(s)
+		this.removeGlobalListeners();  // remove global event(s)
+		this.crate.disable();          // disable the crate
 	}
 
 	//--------------------------------
@@ -51588,21 +53741,21 @@ class JestToolDragdrop extends JestTool {
 		// Get Click Location
 		//-------------------------
 		// Find the x & y of the mouse click
-		let click	= this.target.mousePos( e );
+		let click = this.target.mousePos( e );
 		// Convert to grid units.
-		let x		= Math.floor( click.x / this.anchor.units );
-		let y		= Math.floor( click.y / this.anchor.units );
+		let x     = Math.floor( click.x / this.anchor.units );
+		let y     = Math.floor( click.y / this.anchor.units );
 		//-------------------------
 		// Get Screen Location (for crate)
 		//-------------------------
 		// Compute where the cursor is:
-		const screenX		= e.clientX,
-		      screenY		= e.clientY;
+		const screenX     = e.clientX,
+		      screenY     = e.clientY;
 		// “Grab” the crate from its center.
-		const crateWidth	= this.anchor.units;
-		const crateHeight	= this.anchor.units;
-		const grabOffsetX	= Math.floor( crateWidth/2 );
-		const grabOffsetY	= Math.floor( crateHeight/2 );
+		const crateWidth  = this.anchor.units;
+		const crateHeight = this.anchor.units;
+		const grabOffsetX = Math.floor( crateWidth/2 );
+		const grabOffsetY = Math.floor( crateHeight/2 );
 		// Return screen click data.
 		return {
 			tx: x, ty: y, crateWidth, crateHeight,
@@ -51615,31 +53768,38 @@ class JestToolDragdrop extends JestTool {
 	// * garage		- [object] of garage being dropped in.
 	// * localX		- [number] Value of relative x location in the garage.
 	// * localY		- [number] Value of relative y location in the garage.
-	drop( garage, localX, localY ) {
+	//   snapped    - [object] Local position information.
+	drop( garage, localX, localY, snapped=null ) {
 		//console.log( 'dropping dragdrop' );
 		// Mode gate keep.
-		const enabled	= this.skim( 'enabled' );
+		const enabled = this.skim( 'enabled' );
 		//const mode	= this.skim( 'mode' );
 		if ( !enabled ) return;
+
 		//-------------------------
 		// Get Data for Event
 		//-------------------------
 		// Get data from crate contents.
-		const contents	= this.crate.display.getContents();
-		// Track mouse and drag coordinates.
-		const units		= this.anchor.units; // tile units
-		const levelX	= Math.round( localX / units );
-		const levelY	= Math.round( localY / units );
+		const contents = this.crate.display.getContents();
+		// Use the crate's current destination-space units. These may differ from
+		// the source tool units when dropping onto a zoomed surface, for example.
+		const units    = this.crate.anchor.getUnitsZoomed(); // tile units
+		// Use the crate's snapped coordinates, with rounding for direct callers.
+		const levelX   = snapped?.lx ?? Math.round( localX/units );
+		const levelY   = snapped?.ly ?? Math.round( localY/units );
+
 		//-------------------------
 		// Handle Crate
 		//-------------------------
-		this.crate.hide();		// hide the crate
-		this.crate.disable();	// disable if enabled
+		this.crate.hide();     // hide the crate
+		this.crate.disable();  // disable if enabled
+
 		//-------------------------
 		// Reset Tool Mode
 		//-------------------------
 		// Reset the tool.
 		this.reset(); // reset tool
+
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------
@@ -51672,10 +53832,10 @@ class JestToolDragdrop extends JestTool {
 		//-------------------------
 		// Trigger the crate drop event if possible.
 		if ( e && drop )
-			this.crate.drop( e );	// drop the crate
-		this.crate.reset();			// reset the crate
-		this.crate.hide();			// hide the crate
-		this.crate.disable();		// disable if enabled
+			this.crate.drop( e );   // drop the crate
+		this.crate.reset();         // reset the crate
+		this.crate.hide();          // hide the crate
+		this.crate.disable();       // disable if enabled
 		//-------------------------
 		// Reset Tool Mode
 		//-------------------------
@@ -51686,6 +53846,66 @@ class JestToolDragdrop extends JestTool {
 		//-------------------------
 		// Emit drop( event.
 		this.emit( 'dragdropStopped', null, this );
+	}
+
+	//--------------------------------
+	// Release External Suppression
+	//--------------------------------
+	// Release third-party interaction clamps and discard the carried snapshot.
+	// Emits "released" so plugins can remove whatever restrictions they own.
+	// RETURNS: [boolean] `true` when released else `false`.
+	release() {
+		//--------------------------------
+		// Prevent Duplicate Release
+		//--------------------------------
+		// Multiple terminal drag events may occur during the same operation.
+		if ( !this.suppressed )
+			return false; // already released
+
+		// Change the state before emitting so callbacks cannot recursively
+		// release the same drag operation.
+		this.suppressed = false;
+
+		//--------------------------------
+		// Discard Carried Tile Data
+		//--------------------------------
+		// Crate.clear() resets only its visual panel. Explicitly remove the
+		// stored snapshot to avoid reviving stale contents.
+		this.crate.display.setContents( null );
+
+		//--------------------------------
+		// Notify External Consumers
+		//--------------------------------
+		// Plugins decide which delegator restrictions or other clamps to remove.
+		this.emit( 'released', null, this );
+
+		return true; // released
+	}
+
+	//--------------------------------
+	// Request External Suppression
+	//--------------------------------
+	// Request third-party interaction clamps for the active drag operation.
+	// Emits "suppressed" so plugins can install their own restrictions.
+	// RETURNS: [boolean] `true` when activated else `false`.
+	suppress() {
+		//--------------------------------
+		// Prevent Duplicate Suppression
+		//--------------------------------
+		// A drag operation should own only one suppression lifecycle.
+		if ( this.suppressed )
+			return false; // already suppressed
+
+		// Change the state before emitting so callbacks see the correct status.
+		this.suppressed = true;
+
+		//--------------------------------
+		// Notify External Consumers
+		//--------------------------------
+		// Plugins decide which mouse actions or other resources to suppress.
+		this.emit( 'suppressed', null, this );
+
+		return true; // suppression activated
 	}
 
 	//-------------------------
@@ -51726,47 +53946,178 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Dragdrop Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a dragdrop tool to the tileset canvas board.
-			const tool		= new JestToolDragdrop( this, subtype );
+			const tool = new JestToolDragdrop( this, subtype );
 			client.toolbox.registerTool( subtype, tool );
-			tool.build();			// build tool
-			tool.setClickToDrag();	// click-to-drag (not hold-to-drag)
+			tool.build(); // build tool
+			tool.setClickToDrag(); // click-to-drag (not hold-to-drag)
 			// Set tool grid size.
 			tool.anchor.graticulate( client.config.tileGrid );
 
 			// Simultaneous tools allowed:
 			tool.coopt( 'tilesetMarquee' );
 
-			// --------------------------------
+			//---------------------------------
 			// Set Tiledrop Drag & Drop Source + Destination
-			// --------------------------------
+			//---------------------------------
 			// Set the "tileset" canvas as the crate source lift region for dragdrop.
-			const paletteCanvas	= client.gameboard.display.getCanvas( 'palette' );
-			tool.setTarget( paletteCanvas );		// set tile-click source
+			const paletteCanvas = client.gameboard.display.getCanvas( 'palette' );
+			tool.setTarget( paletteCanvas ); // set tile-click source
 			// Set the "level" canvas as the crate drop destination for dragdrop.
-			const levelCanvas	= client.gameboard.display.getCanvas( 'workspace' );
-			const levelCanvasEl	= levelCanvas.el;
-			tool.crate.addGarage( levelCanvasEl );
+			const levelCanvas   = client.gameboard.display.getCanvas( 'workspace' );
+			const levelCanvasEl = levelCanvas.el;
+			// Limit level drops to the workspace's editable rectangle.
+			tool.crate.addGarage( levelCanvasEl, levelCanvas );
 			// Set swatch panel as a garage.
-			const swatchPanelEl	= client.swatchPanel.panel.el;
+			const swatchPanelEl = client.swatchPanel.panel.el;
 			tool.crate.addGarage( swatchPanelEl );
 
-			// --------------------------------
+			//--------------------------------
+			// Synchronize Tiledrop Level Zoom
+			//--------------------------------
+			// Rescales the carried tile preview and updates its destination snapping.
+			// The snapshot matrix and original stamp remain logically unscaled.
+			// RETURNS: [boolean] `true` on success else `false`.
+			const syncTileDropZoom = () => {
+				//--------------------------------
+				// Validate Carried Tile Data
+				//--------------------------------
+				// Get the original unscaled snapshot carried by the crate.
+				const snapshot = tool.crate.display.getContents();
+				const stamp    = snapshot?.stamp;
+				const matrix   = snapshot?.matrix;
+
+				// Require a valid tile matrix and its original stamp canvas.
+				if ( !stamp?.el || !matrix?.length || !matrix[0]?.length )
+					return false; // nothing is currently being carried
+
+				//--------------------------------
+				// Resolve Active Level Zoom
+				//--------------------------------
+				// Get the active level view. Fall back to normal scale when no level
+				// is open so the crate never retains a previous level's magnification.
+				const state = this.getState();
+				const view  = state?.levelView;
+				const zoom  = view?.anchor.getZoom() ?? 1;
+
+				// Get the display-space size of one level tile.
+				const units = view?.anchor.getUnitsZoomed() ?? client.config.tileGrid;
+
+				//--------------------------------
+				// Configure Crate Coordinate Space
+				//--------------------------------
+				// Keep the crate's logical units equal to the normal tile size.
+				tool.crate.anchor.graticulate( client.config.tileGrid );
+				// Apply level magnification through the crate anchor.
+				tool.crate.anchor.setZoom( zoom );
+
+				// Keep the mouse centered within the first carried tile while freely
+				// following the pointer outside a garage.
+				tool.crate.offsetX = units / 2;
+				tool.crate.offsetY = units / 2;
+
+				//--------------------------------
+				// Calculate Zoomed Preview Size
+				//--------------------------------
+				// Determine the logical tile dimensions of the carried matrix.
+				const columns = matrix[0].length;
+				const rows    = matrix.length;
+
+				// Convert the logical matrix dimensions into display-space pixels.
+				const width  = Math.max( 1, Math.round(columns * units) );
+				const height = Math.max( 1, Math.round(rows    * units) );
+
+				//--------------------------------
+				// Render Zoomed Crate Preview
+				//--------------------------------
+				// Get the crate's preview canvas.
+				const preview = tool.crate.display.getCanvas( 'dragdrop' );
+				if ( !preview ) return false; // abort
+
+				// Scale the original stamp into the crate using nearest-neighbor
+				// rendering supplied by ElementCanvas.draw().
+				preview.draw(
+					stamp, true, true,
+					0, 0, 0, 0,
+					stamp.width, stamp.height, width, height
+					);
+
+				// Match the outer crate panel to the scaled preview dimensions.
+				tool.crate.panel.resize( width, height );
+
+				//--------------------------------
+				// Refresh Current Drag Position
+				//--------------------------------
+				// Immediately resnap the crate after a real-time zoom change.
+				tool.crate.refreshPosition();
+				return true; // success
+			};
+
+			//---------------------------------
 			// Add Event Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Event listener when "item picked up".
 			tool.register(
 				'dragdropPickup', 'liftTile',
 				( e, pos, tool ) => {
-					//console.log('tiledrop: dragdrop pickup');
-					// Draw the tile inside the crate.
-					//console.log( e, pos, tool );
-					if ( client.toolTilesetTileLift(tool,pos.tx,pos.ty) )
-						// Set a short mouse-click timeout suppression.
-						client.delegator.permaSuppress( 'tiledrop', ['click','mouseup','mousedown'] );
+					//--------------------------------
+					// Create Carried Tile Snapshot
+					//--------------------------------
+					// Copy the selected tileset region into the drag-drop crate.
+					if ( !client.toolTilesetTileLift(tool,pos.tx,pos.ty) )
+						return false; // pickup failed
+
+					//--------------------------------
+					// Match Active Level Zoom
+					//--------------------------------
+					// Immediately display and snap the crate at the active level scale.
+					syncTileDropZoom();
+
+					//--------------------------------
+					// Shield Event Overlap(s)
+					//--------------------------------
+					// Request to suppress necessary action(s).
+					tool.suppress(); // suppress event(s)
+				});
+
+			// Event listener when carrying to suppress external mouse-interactions.
+			tool.register(
+				'suppressed', 'suppressMouseActions',
+				dragdrop => {
+					// Prevent editor tools beneath the carried crate from
+					// receiving the same mouse interaction.
+					client.delegator.permaSuppress(
+						dragdrop.name,
+						['click','mouseup','mousedown']
+						);
+				});
+
+			// Event listener when carrying to release external mouse-interactions.
+			tool.register(
+				'released', 'releaseMouseActions',
+				dragdrop => {
+					// Release permanent ownership while retaining a short
+					// cooldown for the terminating mouse interaction.
+					client.delegator.clearPerma(
+						dragdrop.name,
+						['click','mouseup','mousedown'],
+						300
+						);
+				});
+
+			// A drop outside every garage emits "dragdropStopped" without
+			// emitting "dragdropDropped", so it requires its own cleanup path.
+			tool.register(
+				'dragdropStopped', 'releaseTileDrop',
+				() => {
+					//--------------------------------
+					// Release Event Overlap Shield
+					//--------------------------------
+					// Request to release necessary suppression.
+					tool.release(); // release suppression
 				});
 
 			// Event listener when "item dropped".
@@ -51774,18 +54125,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				'dragdropDropped', 'layTile',
 				( garage, e, tool, region ) => {
 					//--------------------------------
+					// Finalize Successful Drop
+					//--------------------------------
+					// Release suppression before validating.
+					// This guarantees cleanup.
+					tool.release(); // release suppression
+
+					//--------------------------------
 					// Validate State & Get Editor [objects]
 					//--------------------------------
 					// Check for open view & tool.
-					const state		= this.getState(); // get program state
+					const state = this.getState(); // get program state
 					if ( !state?.levelView ) return;
 					// Require level view & level [object].
-					const view		= state.levelView;
+					const view  = state.levelView;
+
 					//--------------------------------
 					// Commit Tile Drop Movement
 					//--------------------------------
-					// Set a short mouse-click timeout suppression.
-					client.delegator.clearPerma( 'tiledrop', ['click','mouseup','mousedown'], 300 );
 					// Replace a tile on the level.
 					//console.log( e, tile );
 					//client.toolLevelDraw( tile, e.lx, e.ly );
@@ -51815,14 +54172,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 						// Only trigger if matrix is 1x1.
 						if ( w===1 && h===1 ) {
 							// Get tile from matrix.
-							const tile	= region.matrix[0][0];
+							const tile = region.matrix[0][0];
 							// Prompt user to add tile to swatch panel.
 							client.modals.newSwatch.inputs.title.setValue( '' );
 							client.modals.newSwatch.open( tile );
 						}
 					}
-					// Empty the crate display contents.
-					tool.crate.display.setContents( null );
 				});
 
 			// Event listener when target "double clicked".
@@ -51849,6 +54204,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					}
 				});
 
+			//--------------------------------
+			// Live Level Zoom Listener
+			//--------------------------------
+			// Update an actively carried tiledrop whenever the level zoom changes.
+			client.register(
+				'levelZoomed', 'tiledropCrateZoom',
+				() => {
+					// Ignore zoom changes when no tile snapshot is being carried.
+					if ( !tool.crate.display.getContents() )
+						return; // nothing to update
+					// Resize, resnap, and reposition the crate immediately.
+					syncTileDropZoom();
+				});
+
 			//-------------------------
 			// Tileset Selection Hook(s)
 			//-------------------------
@@ -51858,7 +54227,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				( tool ) => {
 					//console.log('lifted');
 					// Get marquee anchor bounds.
-					const bounds	= tool.anchor.getBounds(); // bounding box info
+					const bounds = tool.anchor.getBounds(); // bounding box info
 					// Store the marquee bounds info inside tiledrop contents.
 					client.toolbox.tools.tiledrop.setContents( bounds );
 					// Clear the selection.
@@ -51871,7 +54240,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				( e ) => {
 					// Get tileset marquee anchor bounds.
 					const tilesetMarquee = client.toolbox.tools.tilesetMarquee;
-					const bounds	= tilesetMarquee.tracer.getBounds(); // bounding box info
+					const bounds = tilesetMarquee.tracer.getBounds(); // bounding box info
 					// Permit the drag-drop if a selection is made.
 					if ( bounds.w>0 && bounds.h>0 )
 						tool.jot( 'canceling', false );
@@ -51884,21 +54253,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 		extend: function( Klass, proto ) {
 			// Display a tile inside the drag & drop crate.
 			// RETURNS: [boolean] `true` on success else `false` on fail.
-			// * tool	- [object] JestToolToldrop emitting the event.
-			// * x,y	- [number] Coordinates of tile x,y on tileset.
+			// * tool  - [object] JestToolToldrop emitting the event.
+			// * x,y   - [number] Coordinates of tile x,y on tileset.
 			proto.toolTilesetTileLift = function( tool, x, y ) {
 				//console.log( 'lifting tileset tile(s)' );
 				// Get active state info.
-				const state		= this.getState();	// get current program state
+				const state    = this.getState(); // get current program state
 				// Validate an active view is open.
-				if ( !state.tileset ) return false;	// no active tileset
-				const tileset	= state.tileset;	// get tileset ref
-				// --------------------------------
+				if ( !state.tileset ) return false; // no active tileset
+				const tileset  = state.tileset; // get tileset ref
+				//---------------------------------
 				// Draw Tile in Crate
-				// --------------------------------
+				//---------------------------------
 				// Check for an active marquee selection.
 				let w = 1, h = 1; // width & height
-				const contents	= tool.getContents();
+				const contents = tool.getContents();
 				if ( contents ) {
 					// Get bounds from tiledrop contents (stored via marquee).
 					( { x, y, w, h } = contents );
@@ -51906,16 +54275,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 					tool.setContents( null );
 				}
 				// Clamp width & height
-				w	= Math.max( 1, w ); // no smaller than a single tile
-				h	= Math.max( 1, h ); // no smaller than a single tile
+				w = Math.max( 1, w ); // no smaller than a single tile
+				h = Math.max( 1, h ); // no smaller than a single tile
 				// Get region matrix & stamp.
-				const snapshot	= tileset.snapshotRegion( x, y, w, h );
+				const snapshot = tileset.snapshotRegion( x, y, w, h );
 				const { matrix, stamp } = snapshot;
 				// Set the crate contents to carry designated tile data.
 				//tool.crate.display.setContents( tileset.getTileData(tx,ty) );
 				tool.crate.display.setContents( snapshot );
 				// Get tile snapshot canvas & stamp onto crate display.
-				//const stamp		= tileset.getTileStamp( tx, ty );
+				//const stamp = tileset.getTileStamp( tx, ty );
 				tool.crate.display.render( 'dragdrop', stamp );
 				// Resize crate to show contents.
 				tool.crate.panel.resize( stamp.width, stamp.height );
@@ -51960,9 +54329,9 @@ class JestToolFloodfill extends JestTool {
 	//_offsetX, _offsetY, _spacingX, _spacingY, _floodOriginX,
 	//_floodOriginY, _useSwatch, _pCols, _pRows
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -51988,9 +54357,9 @@ class JestToolFloodfill extends JestTool {
 		this.jot( 'mode', 'idle' );	// tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target Canvas
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to enable floodfill for.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -52010,9 +54379,9 @@ class JestToolFloodfill extends JestTool {
 		this.target	= target; // set clickable canvas
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the floodfill tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -52167,8 +54536,8 @@ class JestToolFloodfill extends JestTool {
 		let count = 0;
 		while ( queue.length>0 ) {
 			// Pop next tile from queue
-			const [ cx, cy ]	= queue.shift();
-			const id			= `${cx},${cy}`;
+			const [ cx, cy ] = queue.shift();
+			const id         = `${cx},${cy}`;
 
 			// Skip if already visited
 			if ( visited.has(id) ) continue;
@@ -52199,6 +54568,8 @@ class JestToolFloodfill extends JestTool {
 			}
 		}
 
+		// If count > 0, emit filled event.
+		if ( count>0 ) this.emit( 'floodFilled', null, count );
 		// Return Total Changed
 		return count; // total count of tile(s) changed
 	}
@@ -52840,7 +55211,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 			// Replace tile hook, within floodfill tool.
 			tool.register(
 				'applyReplace', 'replaceTile',
-				( tile ) => {
+				tile => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					//--------------------------------
@@ -52965,6 +55336,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 
 					//console.log( 'applyReplace9' );
 					layer.fillRegion( x, y, 1, 1, newTile );
+				});
+
+			// Register event when floodfill has finished.
+			tool.register(
+				'floodFilled', 'endOperation',
+				count => {
+					// Play sound indicating a fill took place.
 					client.soundboard.playSound( 'jest_pour', 'mp3', 1.05 );
 				});
 
@@ -52980,6 +55358,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 					});
 			const record	= client.secretary.getRecord( 'json/patterns.json' );
 			tool.curators.primary.importObjects( record ); // import json [objects]
+
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'floodfillZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
+				});
 		},
 
 		//--------------------------------
@@ -53017,6 +55414,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				// Get the click position on the level.
 				const canvas	= this.gameboard.display.getCanvas( 'workspace' ); // get rendering canvas
 				const pos		= canvas.mousePos( e );
+				// Require a starting tile on the active level.
+				if ( !canvas.containsRinkPoint(pos) ) return false;
 				const units		= tool.anchor.units; // tile units
 				const x			= Math.floor( pos.x / units );
 				const y			= Math.floor( pos.y / units );
@@ -53144,9 +55543,9 @@ class JestToolEntities extends JestTool {
 	// Dragging state
 	moved       = false;        // [bool] whether entity has moved
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -53165,27 +55564,27 @@ class JestToolEntities extends JestTool {
 	build( name='tool-entities', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
-		const defaultClasses	= [ 'tool-entities' ];
+		const defaultClasses = [ 'tool-entities' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
 
 		// Tool is empty by default.
-		this.jot( 'mode', 'empty' );	// tool is idle to start
+		this.jot( 'mode', 'empty' ); // tool is idle to start
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
-		const filetypes		= this.client.imager.filetypes.join( ', .' );
-		const imageSelect	= new JestInputFileSelect( this.client, `.${filetypes}` );
-		this.imageSelect	= imageSelect;
+		const filetypes   = this.client.imager.filetypes.join( ', .' );
+		const imageSelect = new JestInputFileSelect( this.client, `.${filetypes}` );
+		this.imageSelect  = imageSelect;
 		imageSelect.build( 'imageSelect', ['open-image-select'] );
 		// Add image file-select input field to buttons toolbar.
 		//this.panel.refs.buttons.addPanel( 'imageSelect', imageSelect.panel );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target
-	// --------------------------------
+	//---------------------------------
 	// Assign the workspace canvas.
 	// RETURNS: [boolean].
 	// * target - [ElementCanvas] canvas to interact with
@@ -53209,9 +55608,9 @@ class JestToolEntities extends JestTool {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the entities tool.
 	// RETURNS: [boolean].
 	enable() {
@@ -53302,17 +55701,19 @@ class JestToolEntities extends JestTool {
 		// Check Keyboard Modifiers
 		//--------------------------------
 		// Determine if shift key is pressed.
-		const add		= e.shiftKey;
+		const add    = e.shiftKey;
 		// Check for alt/option key.
-		const sub		= e.altKey;
+		const sub    = e.altKey;
 		//--------------------------------
 		// Calculate Mouse Position
 		//--------------------------------
-		const mouse		= this.target.mousePos( e );
+		const mouse  = this.target.mousePos( e );
+		// Ignore preview clicks before selecting or deselecting a Hook.
+		if ( !this.target.containsRinkPoint(mouse) ) return;
 		//--------------------------------
 		// Find Clicked Entity
 		//--------------------------------
-		const object	= this.getEntityAt( mouse.x, mouse.y );
+		const object = this.getEntityAt( mouse.x, mouse.y );
 		// Clicking empty space deselects.
 		if ( !object ) {
 			this.deselect();
@@ -53367,7 +55768,9 @@ class JestToolEntities extends JestTool {
 	    if ( e ) {
 			// Check if mouse is hovering, grabbing, etc.
 		    const mouse  = this.target.mousePos( e );
-		    object = this.getEntityAt( mouse.x, mouse.y );
+			// Hit-test Hooks only within the permittable rink.
+			if ( this.target.containsRinkPoint(mouse) )
+				object   = this.getEntityAt( mouse.x, mouse.y );
 	    }
 
 		//--------------------------------
@@ -53400,32 +55803,32 @@ class JestToolEntities extends JestTool {
 		// Reverse order prioritizes the topmost drawn entity.
 		for ( let i=items.length-1; i>=0; i-- ) {
 			// Access curator item returned from getEntities() hook.
-			const object	= items[i];
-			const data		= object?.data;
+			const object = items[i];
+			const data   = object?.data;
 
 			//--------------------------------
 			// Resolve Entity Dimensions
 			//--------------------------------
-			const image	= data?.image;
+			const image = data?.image;
 
 			// Check whether the entity image is ready.
-			const valid	= Boolean( image?.canvas && image.skim('image')==='drawn' );
+			const valid = Boolean( image?.canvas && image.skim('image')==='drawn' );
 
 			// Skip hidden objects.
 			if ( object.skim('visible')===false ) continue;
 
 			// Convert entity coordinates into pixels.
-			const units	= this.client.config.tileGrid;
-			const bx	= Number(data.x) * units;
-			const by	= Number(data.y) * units;
+			const units = this.anchor.units;
+			const bx    = Number(data.x) * units;
+			const by    = Number(data.y) * units;
 
 			// Use actual dimensions or default NPC dimensions.
-			const bw	= valid ? image.canvas.width  : 45;
-			const bh	= valid ? image.canvas.height : 48;
+			const bw    = valid ? image.canvas.width  : 45;
+			const bh    = valid ? image.canvas.height : 48;
 
 			// Require valid bounds.
 			if ( ![bx,by,bw,bh].every(Number.isFinite) )
-				continue;
+				continue; // skip
 
 			//--------------------------------
 			// Check Point Intersection
@@ -53508,18 +55911,18 @@ class JestToolEntities extends JestTool {
 		//--------------------------------
 		// Calculate Measurements
 		//--------------------------------
-		const mouse	= this.target.mousePos( e );
-		const units	= this.client.config.tileGrid;
+		const mouse = this.target.mousePos( e );
+		const units = this.anchor.units;
 		// Store original coordinates.
-		this.dragStartX		= Number( object.data.x );
-		this.dragStartY		= Number( object.data.y );
+		this.dragStartX  = Number( object.data.x );
+		this.dragStartY  = Number( object.data.y );
 		// Calculate entity's pixel position.
-		const x		= this.dragStartX * units;
-		const y		= this.dragStartY * units;
+		const x     = this.dragStartX * units;
+		const y     = this.dragStartY * units;
 		// Preserve where the cursor grabbed the image.
-		this.grabOffsetX	= mouse.x - x;
-		this.grabOffsetY	= mouse.y - y;
-		this.moved	= false;
+		this.grabOffsetX = mouse.x - x;
+		this.grabOffsetY = mouse.y - y;
+		this.moved  = false;
 
 		//--------------------------------
 		// Change Mode
@@ -53564,7 +55967,7 @@ class JestToolEntities extends JestTool {
 		// Calculate New Coordinates
 		//--------------------------------
 		const mouse	= this.target.mousePos( e );
-		const units	= this.client.config.tileGrid;
+		const units	= this.anchor.units;
 		// Convert pixel position to level coordinates.
 		let x	= (mouse.x-this.grabOffsetX) / units;
 		let y	= (mouse.y-this.grabOffsetY) / units;
@@ -53645,9 +56048,9 @@ class JestToolEntities extends JestTool {
 		this.updateCursor( e ); // update cursor
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Get Modifiers
-	// -----------------------------
+	//------------------------------
 	// Returns modifier flags based on current mouse event.
 	getModifiers( e ) {
 		return {
@@ -53699,15 +56102,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		// Create Data Form (to edit entity hook)
 		//--------------------------------
 		// Create DOM Panel element [object].
-		const form		= new JestForm( client );
+		const form   = new JestForm( client );
 		form.build(); // build the form
 
 		//--------------------------------
 		// Create String Input Fields
 		//--------------------------------
 		// Create fields.
-		const fields	= {
-			path	: 'Path',
+		const fields = {
+			path : 'Path',
 			};
 		for ( const key in fields ) { // iterate & create
 			// Create input [object]
@@ -53725,8 +56128,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		//--------------------------------
 		// Create coordinate fields for positioning hooks.
 		const numFields	= {
-			x	: 'X Position',
-			y	: 'Y Position'
+			x : 'X Position',
+			y : 'Y Position'
 			};
 		for ( const key in numFields ) {
 			// Create numeric input.
@@ -53755,10 +56158,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		// Manually Create a Textarea
 		//--------------------------------
 		// Create script text-area input [object]
-		const input2	= new JestInputTextarea( client, 'script', null, null, 'script', 3 );
-		input2.build( `input-script` );		// build field
+		const input2 = new JestInputTextarea( client, 'script', null, null, 'script', 3 );
+		input2.build( `input-script` );    // build field
 		input2.panel.addAttribute( 'data-tooltip', 'Hook Script' );
-		form.addField( 'script', input2 );	// add field to form
+		form.addField( 'script', input2 ); // add field to form
 
 		//--------------------------------
 		// Manually Modify Some Field(s)
@@ -53770,13 +56173,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 	//--------------------------------
 	// Plugin Metadata
 	//--------------------------------
-	const type		= 'tools';
-	const subtype	= 'entities';
+	const type    = 'tools';
+	const subtype = 'entities';
 
 	//--------------------------------
 	// Plugin Definition
 	//--------------------------------
-	const plugin = {
+	const plugin  = {
 		//--------------------------------
 		// Initialize Plugin
 		//--------------------------------
@@ -54331,9 +56734,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Hook Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the hook modal.
 			client.addModal(
 				'newHook',
@@ -54466,22 +56869,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					data.script		= script;	// capture hook script
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Create Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new hook.
 					const object	= client.addHook( tool, data );
 					if ( !object ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Create Custom Dropdown Label
-					// --------------------------------
+					//---------------------------------
 					// Item label should match the image path.
 					curator.updateOptionLabel( object.data.id, path );
 
-					// --------------------------------
+					//---------------------------------
 					// Preload Image Into Hook
-					// --------------------------------
+					//---------------------------------
 					// If an image was set & exists, load its preview.
 					if ( image ) {
 						// addHook initializes image to null; attach the resolved image.
@@ -54492,9 +56895,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						client.reloadHooks( tool );
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `hookAdd`,
@@ -54521,9 +56924,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					modal.close();
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'entitiesRemember',
 				() => {
@@ -54535,20 +56938,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			client.tabbarFile.register(
 				'tabChange', 'entitiesRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.reloadHooks( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Image File Select [object] Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Add hidden image file select input to curator toolbar.
 			curator.toolbar.panel.addPanel( 'imagine', tool.panel );
 			// Add image button to curator.
@@ -54867,7 +57270,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			// Register entity hook drawing on the level editor.
 			client.register(
 				'draw', 'levelEntitiesCuratorHooks',
-				( e, state, enabled, mode, editorCtx, paletteCtx ) => {
+				( e, state, enabled, mode, editor, palette ) => {
 					//--------------------------------
 					// Validate Editor State
 					//--------------------------------
@@ -54877,14 +57280,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					if ( mode!=='running' ) return;
 					// Require Entities curator.
 					if ( curator.typeSelected!=='hook' ) return;
+					// Get canvas context(s).
+					const editorCtx  = editor.el.getContext( '2d' );
+					const paletteCtx = palette.el.getContext( '2d' );
 
 					//--------------------------------
 					// Access Entity Hooks
 					//--------------------------------
 					// Get all visible entity hook objects.
-					const items		= curator.getVisibleObjects( 'hook' );
-					const selected	= curator.getSelectedObject();
-					const units		= client.config.tileGrid;
+					const items      = curator.getVisibleObjects( 'hook' );
+					const selected   = curator.getSelectedObject();
+					const units      = tool.anchor.units;
+					const zoom       = state.levelView.anchor.getZoom();
 
 					//--------------------------------
 					// Resolve Default NPC Placeholder
@@ -54900,11 +57307,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						//--------------------------------
 						// Resolve Entity Image
 						//--------------------------------
-						const data		= item.data;
-						const image		= data.image;
+						const data   = item.data;
+						const image  = data.image;
 
 						// Determine whether the hook image is ready.
-						const valid		= Boolean( image?.canvas && image.skim('image')==='drawn' );
+						const valid  = Boolean( image?.canvas && image.skim('image')==='drawn' );
 
 					    // Skip if neither image is available.
 					    if ( !valid && !fallbackReady ) continue;
@@ -54924,29 +57331,37 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						// Draw Entity Image
 						//--------------------------------
 						editorCtx.save();
-						editorCtx.globalAlpha	= 1;
+						editorCtx.globalAlpha = 1;
 						editorCtx.globalCompositeOperation = 'source-over';
 						// Draw the actual hook image.
 						if ( valid )
-						    editorCtx.drawImage( image.canvas.el, x, y, w, h );
+						    editor.draw(
+								image.canvas,
+								false, // do not clear
+								false, // do not resize
+								x, y, 0, 0,
+								w, h, w*zoom, h*zoom
+								);
 						// Draw the default NPC sprite from ui/opps.gif.
-						else editorCtx.drawImage(
-					        fallback.canvas.el,
-					        npcPlaceholder.x, npcPlaceholder.y,
-					        npcPlaceholder.w, npcPlaceholder.h,
-					        x, y, w, h );
+						else editor.draw(
+					        fallback.canvas,
+							false, // do not clear
+							false, // do not resize
+							x, y, npcPlaceholder.x, npcPlaceholder.y,
+							npcPlaceholder.w, npcPlaceholder.h, w*zoom, h*zoom
+							);
 
 						//--------------------------------
 						// Highlight Selected Entity
 						//--------------------------------
 						if ( tool.skim('enabled') && item===selected ) {
-							const dashSpeed	= 0.5;
-							const offset	= (e.tickCount * dashSpeed) % 10;
-							editorCtx.lineWidth		= 2;
-							editorCtx.strokeStyle	= 'rgba(0,255,255,0.9)';
+							const dashSpeed = 0.5;
+							const offset    = (e.tickCount * dashSpeed) % 10;
+							editorCtx.lineWidth      = 2;
+							editorCtx.strokeStyle    = 'rgba(255,0,0,0.9)';
 							editorCtx.setLineDash( [6,4] );
 							editorCtx.lineDashOffset = offset;
-							editorCtx.strokeRect( x-2, y-2, w+4, h+4 );
+							editorCtx.strokeRect( x-2, y-2, w*zoom+4, h*zoom+4 );
 						}
 
 						//--------------------------------
@@ -54955,16 +57370,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						// Draw marching ants around the NPC beneath the mouse.
 						if ( tool.skim('enabled') && item===tool.hovered ) {
 							const offset = (e.tickCount * 0.5) % 8;
-							editorCtx.lineWidth		= 1;
+							editorCtx.lineWidth      = 1;
 							editorCtx.setLineDash( [4,4] );
 							// Black dashes.
-							editorCtx.strokeStyle	= '#000';
+							editorCtx.strokeStyle    = '#000';
 							editorCtx.lineDashOffset = -offset;
-							editorCtx.strokeRect( x-3, y-3, w+6, h+6 );
+							editorCtx.strokeRect( x-3, y-3, w*zoom+6, h*zoom+6 );
 							// White dashes.
-							editorCtx.strokeStyle	= '#fff';
+							editorCtx.strokeStyle    = '#fff';
 							editorCtx.lineDashOffset = -(offset+4);
-							editorCtx.strokeRect( x-3, y-3, w+6, h+6 );
+							editorCtx.strokeRect( x-3, y-3, w*zoom+6, h*zoom+6 );
 						}
 
 						// Restore the canvas editor.
@@ -54985,16 +57400,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				async ( file, { npc=[] } ) => {
 					for ( const item of npc ) {
 						// Add NPC to curator.
-						const object	=
+						const object =
 							curator.addObject(
 								'hook',
 								{
-								file		: file.skey,
-								path		: item.path ?? '',
-								script		: item.script ?? '',
-								x			: item.x ?? 0,
-								y			: item.y ?? 0,
-								readonly	: false
+								file     : file.skey,
+								path     : item.path ?? '',
+								script   : item.script ?? '',
+								x        : item.x ?? 0,
+								y        : item.y ?? 0,
+								readonly : false
 								});
 
 						// Update the dropdown item label.
@@ -55004,6 +57419,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						if ( item.path && object )
 							await client.setHookImage( tool, object, item.path );
 					}
+				});
+
+			//---------------------------------
+			// Settings Change Listener(s)
+			//---------------------------------
+			// Create event for when the magnification zoom value changes.
+			client.register(
+				'levelZoomed', 'entitiesZoom',
+				zoom => {
+					//---------------------------------
+					// Get Current File State
+					//---------------------------------
+					// Get current file status.
+					const s = client.getFileStatus( tool, true );
+					//---------------------------------
+					// Recalibrate to Zoomed Grid-Size
+					//---------------------------------
+					// Match the tool grid to the active level view zoom.
+					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});
 		},
 
@@ -55063,9 +57497,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				data.x		= Number( data.x ?? 0 );
 				data.y		= Number( data.y ?? 0 );
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the hook to the curator.
 				//if ( true ) {
 					// Add the hook to the curator.
@@ -55566,15 +58000,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				//--------------------------------
 				// Retrieve the center of the currently visible
 				// level viewport in logical tile coordinates.
-				const units		= this.config.tileGrid;
-				const center	= this.getVisibleLevelCenter( units );
+				const units  = tool.anchor.units;
+				const center = this.getVisibleLevelCenter( units );
 
 				//--------------------------------
 				// Prepare Pasted Entity
 				//--------------------------------
 				// Position the new entity at the visible center.
 				// Preserve its copied script and image path.
-				const data	= {
+				const data   = {
 					path	: snapshot.path ?? '',
 					script	: snapshot.script ?? '',
 					x		: Math.round( center.x*4 ) / 4,
@@ -55813,16 +58247,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/animation/an
 			let toggle		= false; // sounds off by default
 			inputLoop.setChecked( toggle );
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh Animation Options on Tab Change
-			// --------------------------------
+			//---------------------------------
 			// Create event for when tab is changed, to switch file.
 			client.tabbarFile.register(
 				'tabChange', 'animationRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Refresh Animation Setting(s) Form
-					// --------------------------------
+					//---------------------------------
 					// Reload options form to reflect animation setting(s).
 					client.refreshAnimationControls();
 				});
@@ -55901,9 +58335,9 @@ class JestToolScrapbook extends JestTool {
 	frameRange		= null;				// JestInputRange [object] for navigating frame(s).
 	layerRange		= null;				// JestInputRange [object] for navigating layer(s).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -55936,9 +58370,9 @@ class JestToolScrapbook extends JestTool {
 			{ name: 'buttons',  tag: 'div', classes: [ 'selector-buttons' ] }
 			]); // add to form*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Button Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar
@@ -55946,9 +58380,9 @@ class JestToolScrapbook extends JestTool {
 		// Add toolbar to client interface.
 		this.panel.refs.buttons.addPanel( 'toolbar', toolbar.panel );*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const filetypes		= this.client.imager.filetypes.join( ', .' );
 		const imageSelect	= new JestInputFileSelect( this.client, `.${filetypes}` );
@@ -55989,9 +58423,9 @@ class JestToolScrapbook extends JestTool {
 		this.layerRange	= layerRange; // store ref
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -56011,9 +58445,9 @@ class JestToolScrapbook extends JestTool {
 		this.target	= target;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the scrapbook tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -56347,9 +58781,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					client.sidebar.refit( 'scrapbook' );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Group Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sprite group modal.
 			client.addModal(
 				'newGroup',
@@ -56400,9 +58834,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.modals.newGroup.register(
 				'preopen', 'reset', e=>client.modals.newGroup.resetInputs() );
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Sprite Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sprite modal.
 			client.addModal(
 				'newSprite',
@@ -56454,9 +58888,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.modals.newSprite.register(
 				'preopen', 'reset', e=>client.modals.newSprite.resetInputs() );
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'scrapbookRemember',
 				() => {
@@ -56468,23 +58902,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.tabbarFile.register(
 				'tabChange', 'scrapbookRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
-					// --------------------------------
+					//---------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.reloadGroups( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Image File Select [object] Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Add hidden image file select input to curator toolbar.
 			curator.toolbar.panel.addPanel( 'flipbooker', tool.panel );
 			// Add image button to curator.
@@ -56549,9 +58983,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					client.soundboard.playSound( 'jest_success', 'mp3', 1.1 );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Edit/Undo Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Handle edit / undo event(s).
 			client.register(
 				'revert', 'scrapbookTool',
@@ -56779,9 +59213,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Apply Changes to Field(s) Button
-			// --------------------------------
+			//---------------------------------
 			// Add apply button to curator.
 			curator.toolbar.createButton( { name: 'apply', text: 'Apply' } );
 			curator.toolbar.buttons.apply.register(
@@ -57046,9 +59480,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Other Action Button(s)
-			// --------------------------------
+			//---------------------------------
 			// Add create button to curator.
 			curator.toolbar.createButton( { name: 'create', text: 'Create' } );
 			curator.toolbar.buttons.create.register(
@@ -57130,16 +59564,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					data.path		= path;		// capture path
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Begin Data For New Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new sprite group.
 					const object	= await client.addGroup( tool, data );
 					if ( object===null ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `groupAdd`,
@@ -57202,16 +59636,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					data.name		= name;		// capture sprite name
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Create Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new sprite.
 					const object	= client.addSprite( tool, data );
 					if ( object===null ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `spriteAdd`,
@@ -57340,9 +59774,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					if ( !confirm(`Are you sure you want to remove ${type} "${data.name}"?`) )
 						return; // user aborted
 
-					// --------------------------------
+					//---------------------------------
 					// Emit Item Pre-Remove Event
-					// --------------------------------
+					//---------------------------------
 					// Emit event signaling item was manually removed by user.
 					//s.curator.emit( `manual:${type}:pre:remove`, null, snapshot, object );
 
@@ -57361,9 +59795,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 						default: break;
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `${type}Remove`,
@@ -57381,9 +59815,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					const snapshot	= s.janiView.governor.log( 'edit', log );
 					s.file.jot( 'changed', true );
 
-					// --------------------------------
+					//---------------------------------
 					// Emit Item Removed Event
-					// --------------------------------
+					//---------------------------------
 					// Emit event signaling item was manually removed by user.
 					s.curator.emit( `manual:${type}:removed`, null, snapshot, object );
 				});
@@ -57605,9 +60039,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool,true)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Create Blank Group
-					// --------------------------------
+					//---------------------------------
 					// Create [JestCuratorObject] instance.
 					const data		=
 						{
@@ -57620,9 +60054,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 						};
 					const object	= curator.addObject( 'group', data, false );
 
-					// --------------------------------
+					//---------------------------------
 					// Load Sprite Group(s)
-					// --------------------------------
+					//---------------------------------
 					// Iterate all animation groups.
 					const groups	= s.ani.groups;
 					for ( const [group,filename] of Object.entries(groups) ) {
@@ -57730,9 +60164,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				data.path	= data?.path ? data.path : '';
 				data.image	= null; // by default image is null
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Check if group already exists.
 				if ( !s.ani.hasGroup(data.name) ) {
 					//--------------------------------
@@ -58355,9 +60789,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				data.sw		= data.sw ?? 0;	// source width
 				data.sh		= data.sh ?? 0;	// source height
 
-				// --------------------------------
+				//---------------------------------
 				// Create New [AnimationSprite]
-				// --------------------------------
+				//---------------------------------
 				// Create [AnimationSprite] instance.
 				if ( !data?.sprite || !(data.sprite instanceof AnimationSprite) ) {
 					// Add next sprite id to curator sprite data.
@@ -58383,9 +60817,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				// Ensure sprite is in the animation.
 				s.ani.addSprite( data.sprite );
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the sprite to the curator.
 				if ( true ) {
 					// Add the sprite to the curator.
@@ -58790,9 +61224,9 @@ class JestToolFlipbook extends JestTool {
 	layerToolbar	= null;		// Navigator [JestToolbar] for layer buttons
 	layerForm		= null;		// [JestForm] for navigating layer(s).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -58824,9 +61258,9 @@ class JestToolFlipbook extends JestTool {
 		const config	= this.client.config;
 		const halfJFS	= config.janiFullSpan / 2;
 
-		// --------------------------------
+		//---------------------------------
 		// Sticker Control(s) Form
-		// --------------------------------
+		//---------------------------------
 		// Create DOM Panel element [object].
 		const stickerForm	= new JestForm( this.client );
 		this.stickerForm	= stickerForm; // store form
@@ -58940,9 +61374,9 @@ class JestToolFlipbook extends JestTool {
 		layerRange.showLabel();		// show the label
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -58962,9 +61396,9 @@ class JestToolFlipbook extends JestTool {
 		this.target	= target;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the flipbook tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -59160,9 +61594,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			curator.toolbar.buttons.create.register(
 				'click', 'create-object', () => curator.emit('btnCreate') );
 
-			// --------------------------------
+			//---------------------------------
 			// Edit/Undo Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Handle edit / undo event(s).
 			client.register(
 				'revert', 'flipbookTool',
@@ -59328,9 +61762,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 						default: break;
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Sidebar
-					// --------------------------------
+					//---------------------------------
 					// Hard refresh the flipbook sidebar panel.
 					client.flipbookHardRefresh( tool );
 				});
@@ -59358,9 +61792,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( dir===1 ) findex ++;
 					const frame	= client.addFrame( tool, findex );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'frameAdd',
@@ -59407,9 +61841,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					const frame		= s.ani.getFrameAt( findex );
 					const data		= client.removeFrame( tool, frame );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'frameRemove',
@@ -59452,9 +61886,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( dir===1 ) lindex ++;
 					const layer		= client.addLayer( tool, s.frame, lindex );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'layerAdd',
@@ -59506,9 +61940,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Call removeLayer method in client.
 					const data		= client.removeLayer( tool, layer );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'layerRemove',
@@ -59543,16 +61977,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				],
 				'flipbookPlugin',
 				() => {
-					// --------------------------------
+					//---------------------------------
 					// Hard Refresh Curator Display(s)
-					// --------------------------------
+					//---------------------------------
 					// Recalculate control(s) in the curator.
 					client.flipbookHardRefresh( tool );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Apply Changes to Field(s) Button
-			// --------------------------------
+			//---------------------------------
 			/*// Add apply button to curator.
 			curator.toolbar.createButton( { name: 'apply', text: 'Apply' } );
 			curator.toolbar.buttons.apply.register(
@@ -59704,9 +62138,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool,true)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Curator Object List(s)
-					// --------------------------------
+					//---------------------------------
 					// Change the active frame being viewed.
 					s.aniView.setFrameIndex( value );
 					// Recalculate layer(s) within frame.
@@ -59723,17 +62157,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Curator Object List(s)
-					// --------------------------------
+					//---------------------------------
 					// Change the active layer being viewed.
 					s.aniView.setLayerIndex( value );
 					this.refreshCurator( tool ); // refresh curator
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Sticker Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sticker modal.
 			client.addModal(
 				'newSticker',
@@ -59816,17 +62250,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Create a New Sticker
-					// --------------------------------
+					//---------------------------------
 					// Render data to pass to deinition method.
 					const data		= {}; // generic [object]
 					// Attempt to define a sticker.
 					const object	= client.defineFlipbookSticker( tool, data );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'stickerAdd',
@@ -59884,15 +62318,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( !confirm(`Are you sure you want to remove ${type} "${name}"?`) )
 						return; // user aborted
 
-					// --------------------------------
+					//---------------------------------
 					// Create a New Sticker
-					// --------------------------------
+					//---------------------------------
 					// Remove a sticker from the layer.
 					s.layer.removeSticker( data.sticker.z );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'stickerRemove',
@@ -60202,9 +62636,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			curator.register(
 				'display', subtype,
 				( object ) => { // * object - [JestCuratorObject]
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate Control(s)
-					// --------------------------------
+					//---------------------------------
 					// Update the flipbook controls.
 					client.updateFlipbookControls( tool );
 
@@ -60291,9 +62725,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'flipbookRemember',
 				() => {
@@ -60305,13 +62739,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			client.tabbarFile.register(
 				'tabChange', 'flipbookRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.flipbookHardRefresh( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
@@ -60369,9 +62803,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					curator.emit( 'auto:load', null, 'sticker' );
 					curator.selectTopObject(); // autoselect first sticker
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Sidebar
-					// --------------------------------
+					//---------------------------------
 					// Hard refresh the flipbook sidebar panel.
 					client.flipbookHardRefresh( tool );
 					// Recalculate layer(s) within frame.
@@ -60407,9 +62841,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				}
 				const sprite	= s.ani.getSpriteByID( sid );
 
-				// --------------------------------
+				//---------------------------------
 				// Setup Curator [object] Data
-				// --------------------------------
+				//---------------------------------
 				// Store data for curator sprite object.
 				data.file		= s.fileKey;
 				// Add next sprite id to curator sprite data.
@@ -60418,18 +62852,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				data.frame		= s.frame;		// frame index
 				data.layer		= s.layer;		// layer index
 
-				// --------------------------------
+				//---------------------------------
 				// Create New Sticker
-				// --------------------------------
+				//---------------------------------
 				// Default coordinates.
 				const { x, y }	= 0;
 				// Create a sticker of the sprite & add to layer.
 				const sticker	= s.layer.createSticker( data.sid, x, y );
 				data.sticker	= sticker;		// store ref in data
 
-				// --------------------------------
+				//---------------------------------
 				// Create Sticker's Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the sticker to the curator.
 				const object	= s.curator.addObject( 'sticker', data );
 				// Update sprite select on each sticker & in modal.
@@ -60448,15 +62882,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
 
-				// --------------------------------
+				//---------------------------------
 				// Clamp Layer Selection(s) (safety fallback)
-				// --------------------------------
+				//---------------------------------
 				// Clamp all views' selected layer index.
 				s.ani._clampAllViews();
 
-				// --------------------------------
+				//---------------------------------
 				// Reset JANI Layer Slider
-				// --------------------------------
+				//---------------------------------
 				// Rescale the layer selector to match layer count.
 				const layerRange	= tool.layerForm.fields.layerRange;
 				const layersCount	= s.frame.getLayerCount();
@@ -60485,15 +62919,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Refresh the curator dropdown(s).
 				this.refreshCurator( tool ); // refresh curator
 
-				// --------------------------------
+				//---------------------------------
 				// Recalibrate Control(s)
-				// --------------------------------
+				//---------------------------------
 				// Hard-refresh update flipbook controls.
 				this.updateFlipbookControls( tool );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Curator Display(s)
-				// --------------------------------
+				//---------------------------------
 				// Recalculate layer(s) within frame.
 				this.recalculateLayers( tool );
 			}
@@ -60508,9 +62942,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
 
-				// --------------------------------
+				//---------------------------------
 				// Reset JANI Frame Slider
-				// --------------------------------
+				//---------------------------------
 				// Rescale the frame selector to match frame count.
 				const frameRange	= tool.frameForm.fields.frameRange;
 				const framesCount	= s.jani.animation.frames.length;
@@ -60727,9 +63161,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				if ( type!=='sticker' ) return;
 				const sticker	= data.sticker;
 
-				// --------------------------------
+				//---------------------------------
 				// Calculate Coordinates
-				// --------------------------------
+				//---------------------------------
 				// Capture existing coordinates.
 				//const old	= { x:sticker.x, y:sticker.y, z:sticker.z };
 				// Change the x-value of the sticker.
@@ -60745,9 +63179,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				}
 				console.log( '........' );*/
 
-				// --------------------------------
+				//---------------------------------
 				// Update Coordinates
-				// --------------------------------
+				//---------------------------------
 				// Move sticker to (x,y) coordinate.
 				sticker.move( x, y );
 				// Rearrange sticker z-coordinate.
@@ -60765,9 +63199,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					form.setValue( 'z', data.z );
 				}
 
-				// --------------------------------
+				//---------------------------------
 				// Sort Curator Stickers (by Z-coordinate)
-				// --------------------------------
+				//---------------------------------
 				// Resort the sticker dropdown.
 				s.curator.resortOptions(
 					( a, b ) => {
@@ -60829,9 +63263,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Create a layer using active layer's index.
 				const layer	= frame._createLayerAt( index );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 				return layer; // [AnimationLayer] instance
@@ -60896,9 +63330,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				const frame	= layer.getFrame();
 				frame._removeLayerAt( lindex );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 
@@ -60932,9 +63366,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				if ( index===null ) index = s.findex;
 				const frame	= s.ani.createFrameAt( index );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 				return frame; // [AnimationFrame] instance
@@ -61010,9 +63444,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Remove frame from animation.
 				s.ani.removeFrameAt( findex );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 
@@ -61131,25 +63565,25 @@ function log( message ) { console.log(message); }
 async function jestBootup( request ) {
 	try {
 		console.log( 'jestAlert: content.js response' );
-		// --------------------------------
+		//---------------------------------
 		// Handle content by status
-		// --------------------------------
+		//---------------------------------
 		switch ( JestEnvironmentStatus ) {
 			case 'shutdown': // environment not running
 				if ( request.action==='openJestEnvironment' ) {
 					(async () => {
 						console.log( 'jestAlert: openJestEnvironment message received.' );
 						try {
-							// --------------------------------
+							//---------------------------------
 							// Load up the helper utility
-							// --------------------------------
+							//---------------------------------
 							// Generate the Jest interface [object]
 							console.log( 'jestAlert: Create interface.' );
 							jsos = new JSOSInterface();
 
-							// --------------------------------
+							//---------------------------------
 							// Load up the enviroment
-							// --------------------------------
+							//---------------------------------
 							// Generate the Jest environment
 							console.log( 'jestAlert: Create environment.' );
 							JestEnvironment = new JSOSEnvironment();
@@ -61157,16 +63591,16 @@ async function jestBootup( request ) {
 							setStatus( 'running' );
 							jsos.build(); // build the JSOS
 
-							// --------------------------------
+							//---------------------------------
 							// Import libraries
-							// --------------------------------
+							//---------------------------------
 							// Harlequin
 							JestEnvironment.librarian.ship( 'Harlequin' );
 							JestEnvironment.librarian.libs.Harlequin.ship( ['HarlequinWindow'] );
 
-							// --------------------------------
+							//---------------------------------
 							// Open the game application
-							// --------------------------------
+							//---------------------------------
 							//JestEnvironment.execute( 'JestPlay' );
 							//const app  = JestEnvironment.apps.JestPlay;
 
@@ -61176,9 +63610,9 @@ async function jestBootup( request ) {
 							//JestEnvironment.execute( 'JestAnimator' );
 							//const app  = JestEnvironment.apps.JestAnimator;
 
-							// --------------------------------
+							//---------------------------------
 							// Setup application
-							// --------------------------------
+							//---------------------------------
 							await app.setup();	// setup the application
 							await app.launch();	// auto-launch
 						}

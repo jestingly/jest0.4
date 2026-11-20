@@ -123,6 +123,8 @@
 <script src="js/apps/jest/components/editing/tools/JestToolbox.js"></script>
 <script src="js/apps/jest/components/editing/tools/JestTool.js"></script>
 <script src="js/apps/jest/components/editing/tools/JestToolCrate.js"></script>
+<script src="js/apps/jest/components/editing/tools/JestFileRelationship.js"></script>
+<script src="js/apps/jest/components/editing/tools/JestFileRelationshipLevel.js"></script>
 <script src="js/apps/jest/components/editing/tools/JestFileView.js"></script>
 <script src="js/apps/jest/components/editing/tools/JestFileViewEditor.js"></script>
 <script src="js/apps/jest/components/editing/tools/JestFileViewEditorPainter.js"></script>
@@ -172,6 +174,8 @@
 <script src="js/apps/jest/clients/plugins/jest/parsers/json.plugin.js"></script>
 <script src="js/apps/jest/clients/plugins/creator/settings/system.plugin.js"></script>
 <script src="js/apps/jest/clients/plugins/creator/settings/tiler/editor.plugin.js"></script>
+<script src="js/apps/jest/clients/plugins/creator/settings/tiler/overworld.tool.js"></script>
+<script src="js/apps/jest/clients/plugins/creator/settings/tiler/overworld.plugin.js"></script>
 <script src="js/apps/jest/clients/plugins/creator/methods/painter.plugin.js"></script>
 <script src="js/apps/jest/clients/plugins/creator/methods/editor.plugin.js"></script>
 <script src="js/apps/jest/clients/plugins/creator/methods/keyboard.plugin.js"></script>

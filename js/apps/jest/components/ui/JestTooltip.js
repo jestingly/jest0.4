@@ -39,16 +39,16 @@ class JestTooltip extends JestElement {
 	// * name    - unique [string] value of component name in the system.
 	// * classes - [array] of classes to add to panel element.
 	build( name='tooltip', classes=[] ) {
-		// --------------------------------
+		//---------------------------------
 		// Construct Main Panel
-		// --------------------------------
+		//---------------------------------
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-tooltip'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Tooltip Content Box
-		// --------------------------------
+		//---------------------------------
 		// Add internal box to display text.
 		this.panel.addElements([{
 			name     : 'box',
@@ -59,9 +59,9 @@ class JestTooltip extends JestElement {
 		// Append DOM element to the document.
 		document.body.appendChild( this.panel.el );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Mouse Follower
-		// --------------------------------
+		//---------------------------------
 		// Construct the mouse follower [object].
 		this.mouseFollower =
 			new JestMouseFollower(

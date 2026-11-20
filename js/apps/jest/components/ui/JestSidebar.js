@@ -13,9 +13,9 @@ class JestSidebar extends JestElement {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23,9 +23,9 @@ class JestSidebar extends JestElement {
 		super( client );
 	}
 	
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.

@@ -23,9 +23,9 @@ JestAppsRegistry.AppJestPlay =
 		board			= null;				// [JestElement] Board for editing the file.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -33,9 +33,9 @@ JestAppsRegistry.AppJestPlay =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -46,9 +46,9 @@ JestAppsRegistry.AppJestPlay =
 		// Build the gameboard, user, components, etc.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async build() {
-			// --------------------------------
+			//---------------------------------
 			// Call Super
-			// --------------------------------
+			//---------------------------------
 			//await super.build();
 			try { await super.build(); }
 			catch ( err ) {
@@ -56,17 +56,17 @@ JestAppsRegistry.AppJestPlay =
 				throw err;
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get loading-screen loadbar.
 			const loadbar	= this.spline.getScreen('loading').loadbar;
 			// Update progress bar to show a tool has loaded.
 			loadbar.update( 1, 3 ); // step 1 (initialization)
 
-			// --------------------------------
+			//---------------------------------
 			// Create Application Interface [object]
-			// --------------------------------
+			//---------------------------------
 			// Build the panels for the main application screen.
 			this.panel.addElements([
 				// Build the panel
@@ -84,14 +84,14 @@ JestAppsRegistry.AppJestPlay =
 				}]);
 			loadbar.update();
 
-			// --------------------------------
+			//---------------------------------
 			// Define Propert(ies)
-			// --------------------------------
+			//---------------------------------
 			const self		= this;
 
-			// --------------------------------
+			//---------------------------------
 			// Load Default Game Image(s)
-			// --------------------------------
+			//---------------------------------
 			// Load available skins
 			/*const imageFiles	= [];
 			for ( let i=0; i<=31; i++ ) {
@@ -108,15 +108,15 @@ JestAppsRegistry.AppJestPlay =
 					])
 				);*/
 
-			// --------------------------------
+			//---------------------------------
 			// Create Camera [object]
-			// --------------------------------
+			//---------------------------------
 			const camera		= new JestCamera( this );
 			this.camera			= camera;					// cross-ref JestCamera [object] reference
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Gameboard [object]
-			// --------------------------------
+			//---------------------------------
 			const gameboard		= this.gameboard;			// get gameboard reference
 			gameboard.display.addCanvas( 'world' );			// create gameboard world canvas
 			//this.windows[0].expand( 480, 270 );			// auto-resize the window
@@ -126,9 +126,9 @@ JestAppsRegistry.AppJestPlay =
 			// Disable right-click on canvas.
 			canvas.el.addEventListener( 'contextmenu', e => e.preventDefault() );
 
-			// --------------------------------
+			//---------------------------------
 			// Create Editor Panel [object]
-			// --------------------------------
+			//---------------------------------
 			// Create editor panel to store the editing/playing area.
 			this.editor		=
 				this.panel.refs.interface.refs.center.createPanel({
@@ -142,23 +142,23 @@ JestAppsRegistry.AppJestPlay =
 			this.editor.addPanel( 'gameboard', canvas );
 			//console.log( gameboard );
 
-			// --------------------------------
+			//---------------------------------
 			// Animation Handler [object]
-			// --------------------------------
+			//---------------------------------
 			// Assign the gameboard canvas to the animator for animation rendering
 			const animator		= this.animator; // access ref
 			animator.canvas		= canvas; // Animator canvas is the world "screen"
 
-			// --------------------------------
+			//---------------------------------
 			// Sound Handling [object]
-			// --------------------------------
+			//---------------------------------
 			// Preload some sounds
 			const soundNames	= [ 'steps.wav', 'steps2.wav', 'sword.wav' ];
 			await this.soundboard.preload( soundNames );
 
-			// --------------------------------
+			//---------------------------------
 			// Load Tileset [objects]
-			// --------------------------------
+			//---------------------------------
 			// Load a default tileset.
 			const tileset		=
 				await gameboard.addTileset( 'pics1' )
@@ -169,16 +169,16 @@ JestAppsRegistry.AppJestPlay =
 			//console.log( tileset ); return;
 			// Add canvas to window viewport.
 
-			// --------------------------------
+			//---------------------------------
 			// Create Overworld [objects]
-			// --------------------------------
+			//---------------------------------
 			// Create overworld
 			const overworld		= new JestOverworld( this, 'map1' );
 			await overworld.setup();
 
-			// --------------------------------
+			//---------------------------------
 			// Load Level [object]
-			// --------------------------------
+			//---------------------------------
 			// Load the *.nw file(s)
 			const levelNames	= [
 				/*'destinyg_a1.nw', 'destinyg_b1.nw', 'destinyg_c1.nw', 'destinyg_d1.nw',
@@ -196,9 +196,9 @@ JestAppsRegistry.AppJestPlay =
 						console.warn( `Not all levels were loaded: ${err.message}` );
 					});
 
-			// --------------------------------
+			//---------------------------------
 			// Create Level [objects]
-			// --------------------------------
+			//---------------------------------
 			// Load every test level using the board or layers from its file version.
 			const levels = await this.loadLevels( levelNames );
 			console.log( levels );
@@ -228,9 +228,9 @@ JestAppsRegistry.AppJestPlay =
 			overworld.addLevel( levels['level9.nw'],  1, 2 );  // taylor richards
 			overworld.addLevel( levels['level10.nw'], 3, 2 );  // master-li fields
 
-			// --------------------------------
+			//---------------------------------
 			// Create the server connect [object]
-			// --------------------------------
+			//---------------------------------
 			const online = new JestOnline( this );	// server interactor
 			this.online  = online;
 			// Add online mode events.
@@ -255,9 +255,9 @@ JestAppsRegistry.AppJestPlay =
 					this.playerLeave( e, uid, username );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create the user [object]
-			// --------------------------------
+			//---------------------------------
 			const user   = new JestUser( this, 0 ); // user character
 			await user.setup();
 				/*.catch(
@@ -268,9 +268,9 @@ JestAppsRegistry.AppJestPlay =
 			user.level   = /*'destinyg_b3';//*/ 'level13.nw';
 			user.anchor.move( 10, 5 );
 
-			// --------------------------------
+			//---------------------------------
 			// Add Ticker Event(s)
-			// --------------------------------
+			//---------------------------------
 			this.timers['ani'].register(
 				'tick', 'render',
 					e => {
@@ -278,9 +278,9 @@ JestAppsRegistry.AppJestPlay =
 						this.draw( e );
 					});
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Debugging
-			// --------------------------------
+			//---------------------------------
 			// Default inspector drawing canvas to gameboard
 			this.inspector.canvas	= canvas;
 			this.inspector.on();
@@ -292,21 +292,21 @@ JestAppsRegistry.AppJestPlay =
 			this.inspector.anchors.add( user.anchor );
 			user.anchor.show( '#00f', 50 );
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize the plugins.
 			//await JestPlay.initPlugins();
 
-			// --------------------------------
+			//---------------------------------
 			// Connect to the server [object]
-			// --------------------------------
+			//---------------------------------
 			await this.online.connect( this.config.server );
 			loadbar.update(); // step 2
 
-			// --------------------------------
+			//---------------------------------
 			// Successfully Exit Build
-			// --------------------------------
+			//---------------------------------
 			// Reveal the application screen.
 			this.spline.goToScreen( 'application' );
 			// App built, set built status
@@ -314,9 +314,9 @@ JestAppsRegistry.AppJestPlay =
 			return true;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Drawing
-		// --------------------------------
+		//---------------------------------
 		// Load test levels and register them with the gameboard.
 		// RETURNS: [object] Levels keyed by their requested filenames.
 		// * filenames - [array] Remote level filenames already loaded by Secretary.
@@ -347,9 +347,9 @@ JestAppsRegistry.AppJestPlay =
 			return levels; // [object]
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Drawing
-		// --------------------------------
+		//---------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
@@ -373,9 +373,9 @@ JestAppsRegistry.AppJestPlay =
 			/*ctx.fillStyle = "#FF00FF";
 			ctx.fillRect( 0, 0, this.canvas.el.width, this.canvas.el.height );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Render JANI Inside of Animator
-			// --------------------------------
+			//---------------------------------
 			// Draw all relevant animation view(s).
 			let views	= [];
 			for ( const worldling of this.gameboard.worldlings ) {
@@ -456,9 +456,9 @@ JestAppsRegistry.AppJestPlay =
 			document.body.removeChild(downloadLink);				// File: giantMap.js, line 58, char #1
 		}*/
 
-		// --------------------------------
+		//---------------------------------
 		// Online Mode Handling
-		// --------------------------------
+		//---------------------------------
 		// Current user joined the server.
 		// RETURNS: [void].
 		// * e			- player event data [object] sent from server.

@@ -22,9 +22,9 @@ class JestFile extends JestElement {
 	// Contextual attachment properties
 	context			= null;			// [object] base [object] data.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.

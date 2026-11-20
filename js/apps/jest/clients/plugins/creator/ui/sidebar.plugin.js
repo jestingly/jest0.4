@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/sidebar.plugin.
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create sidebar board [object]
-			// --------------------------------
+			//---------------------------------
 			// Create possible modes.
 			//const modes	= [ 'draw', 'fill', 'erase', 'select' ];
 			client.sidebar	= new JestCollapsibleMenu( client );

@@ -11,25 +11,25 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestForm.js loaded' );
 // Create a form for grouping input field(s).
 class JestForm extends JestMenu {
 	// Object properties
-	fields		= {};			// [object] Input fields included in the form.
+	fields = {};   // [object] Input fields included in the form.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- client [object] that this piece belongs to.
+	// * client - client [object] that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='form', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];

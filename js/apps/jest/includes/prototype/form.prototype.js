@@ -5,9 +5,9 @@
 //-------------------------------------------------------
 console.log( 'jestAlert: js/apps/jest/includes/prototype/form.prototype.js loaded' );
 
-/*// -------------------------
+/*//--------------------------
 // Layer Handling
-// -------------------------
+//--------------------------
 // Updates the layer selector slider range to match.
 // current selected tab's animation layer.
 // * count - [int] Total number of layers (sets max to count-1).

@@ -10,16 +10,16 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestUser.js loaded' );
 //-------------------------
 // Represents a user object with animations for different parts (head, sword, body).
 class JestUser extends JestPlayer {
-	// --------------------------------
+	//---------------------------------
 	// Core [objects] & Input/Output
-	// --------------------------------
+	//---------------------------------
 	// Track keys
 	keysListen		= [];				// [array] of registered keyboard inputs the user can input
 	keys			= {};				// [object] of actual keyboard keys being pressed
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the User.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -86,24 +86,24 @@ class JestUser extends JestPlayer {
 		super.teardown(); // call parent destructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Setup Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Setup the user [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Call parent setup method(s)
 		await super.setup();		// call parent setup method
 
-		// --------------------------------
+		//---------------------------------
 		// Boundaries Checking
-		// --------------------------------
+		//---------------------------------
 		// Setup onwall collider.
 		this.setupCollider();
 
-		// --------------------------------
+		//---------------------------------
 		// Graphical Setup
-		// --------------------------------
+		//---------------------------------
 		// Setup the user avatar.
 		await this.setupAvatar();
 			/*.catch(
@@ -111,31 +111,31 @@ class JestUser extends JestPlayer {
 					console.warn( `User avatar failed to setup: ${err}` );
 				});*/
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Listener(s)
-		// --------------------------------
+		//---------------------------------
 		// Set other event(s)
 		this.register( 'gearshift', 'avatar', (e)=>this.changeJani(e) ); // change avatar animation
 		// Setup key event listener(s)
 		this.client.io.register( 'keyPress', 'userKeyListener', this.keyPress.bind(this) );
 		this.client.io.register( 'keyRelease', 'userKeyListener', this.keyRelease.bind(this) );
 
-		// --------------------------------
+		//---------------------------------
 		// Start Worldling [object]
-		// --------------------------------
+		//---------------------------------
 		super.start();		// start the worldling [object]
 
-		// --------------------------------
+		//---------------------------------
 		// Set User Mode
-		// --------------------------------
+		//---------------------------------
 		this.jot( false, 'mode', 'idle' );
 		this.status	= 2; // ready
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Key Listener(s) & Handling
-	// --------------------------------
+	//---------------------------------
 	// Register key presses.
 	// * data	- [object] Data passed from keyboard listener event.
 	keyPress( data ) {
@@ -162,9 +162,9 @@ class JestUser extends JestPlayer {
 		//console.log( `Key released: ${data.key} (Mapped: ${key})`, this.keys );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Loop
-	// --------------------------------
+	//---------------------------------
 	// Central user timeout loop.
 	// * e	- [object] of central pulse event data.
 	// RETURNS: [void].
@@ -179,9 +179,9 @@ class JestUser extends JestPlayer {
 	// Handle user input.
 	// RETURNS: [void].
 	input() {
-		// --------------------------------
+		//---------------------------------
 		// Determine Active Keycode(s)
-		// --------------------------------
+		//---------------------------------
 		// Generate [object] of modes user is actively trying to shift into (by keypress)
 		// Get current time
 		const now			= performance.now();
@@ -200,9 +200,9 @@ class JestUser extends JestPlayer {
 				this.gears[mode].signaled		= null;			// 🚨 Reset signaled on release
 			}
 		}
-		// --------------------------------
+		//---------------------------------
 		// Check For User Gear Change
-		// --------------------------------
+		//---------------------------------
 		// Determine current user mode & make move(s)
 		const currentMode	= this.skim( 'mode' );
 		const gearshifts	= this.gears[ currentMode ].gearshifts; // get current user gear
@@ -372,16 +372,16 @@ class JestUser extends JestPlayer {
 	// * dx		- [float] Value of how much to move the user's x.
 	// * dy		- [float] Value of how much to move the user's y.
 	move( remote, dx, dy ) {
-		// --------------------------------
+		//---------------------------------
 		// Interrupt For Remote Change
-		// --------------------------------
+		//---------------------------------
 		// If serverside change, automove player
 		if ( remote )
 			return super.move( true, dx, dy );	// delegate movement to parent
 
-		// --------------------------------
+		//---------------------------------
 		// Continue For Local Change
-		// --------------------------------
+		//---------------------------------
 		// Declare variable(s)
 		let testX, testY;
 		const tileGrid	= this.client.config.tileGrid;

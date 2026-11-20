@@ -2854,6 +2854,7 @@ button.jest-button.jest-style-harlequin:active {
 		padding             : 0;
 		overflow            : hidden;
 	}
+
 	body {
 		width               : 100%;
 		height              : 100%;
@@ -2862,7 +2863,6 @@ button.jest-button.jest-style-harlequin:active {
 		margin              : 0;
 		padding             : 0;
 	}
-
 
 	/*==================================================
 	Header Styles
@@ -3608,6 +3608,34 @@ button.jest-button.jest-style-harlequin:active {
 	.jest-creator-status .statusbar .display strong {
 		color           : #eb394b;
 	}
+
+	/*==================================================
+	 Canvas Board Neighbor Styling
+	==================================================*/
+	.jest-viewport-creator .board.has-level-neighbors {
+		display               : grid;
+		grid-template-columns : var(--level-neighbor-margin) max-content var(--level-neighbor-margin);
+		grid-template-rows    : var(--level-neighbor-margin) max-content var(--level-neighbor-margin);
+		justify-content       : safe center;
+		align-content         : start;
+	}
+
+	.jest-viewport-creator .board.has-level-neighbors > .level-neighbor-workspace {
+		grid-area             : 2 / 2;
+		margin                : 0;
+		box-shadow            : none;
+	}
+
+	.jest-viewport-creator .board > .level-neighbor-preview {
+		margin                : 0;
+		box-shadow            : none;
+		pointer-events        : none;
+		image-rendering       : pixelated;
+	}
+
+	.jest-viewport-creator .board > .level-neighbor-preview[hidden] {
+		display               : none;
+	}
 }
 
 /* --- BEGIN js/apps/jest/clients/css/JestTiler.css --- */
@@ -3624,6 +3652,751 @@ button.jest-button.jest-style-harlequin:active {
 		flex-direction : column;
 		user-select    : none;
 	}*/
+}
+
+/* --- BEGIN js/apps/jest/clients/plugins/creator/settings/tiler/css/overworld.css --- */
+@layer layout {
+	/*==================================================
+	  Design Tokens — Black & Red
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) {
+		--ow-ink        : #050506;
+		--ow-panel      : #0b0b0d;
+		--ow-surface    : #111114;
+		--ow-surface-hi : #17171b;
+		--ow-line       : #26262c;
+		--ow-line-hi    : #3a3a42;
+		--ow-text       : #f4f4f6;
+		--ow-dim        : #8a8a94;
+		--ow-faint      : #55555e;
+		--ow-red        : #ff2a45;
+		--ow-red-hot    : #ff4d63;
+		--ow-red-deep   : #b3081f;
+		--ow-red-glow   : rgba( 255, 42, 69, 0.55 );
+		--ow-red-wash   : rgba( 255, 42, 69, 0.10 );
+		--ow-ease       : cubic-bezier( 0.22, 1, 0.36, 1 );
+		--ow-spring     : cubic-bezier( 0.34, 1.56, 0.64, 1 );
+		--ow-mono       : ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+		--ow-sans       : 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	}
+
+
+	/*==================================================
+	  Overworld Modal Stacking
+	==================================================*/
+	/* Keep the main overworld editor above the standard interface. */
+	.jest-overworld-modal {
+		z-index: 10000;
+	}
+
+	/* Keep the level picker above the main overworld editor. */
+	.jest-overworld-picker {
+		z-index: 10001;
+	}
+
+	/* Cinematic scrim: deep black vignette with a blurred backdrop. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) {
+		background           : radial-gradient( ellipse at 50% 35%, rgba(60,0,10,.45) 0%, rgba(0,0,0,.82) 60% ), rgba(0,0,0,.55 );
+		-webkit-backdrop-filter: blur( 10px ) saturate( 0.7 );
+		backdrop-filter      : blur( 10px ) saturate( 0.7 );
+		animation            : ow-scrim-in 380ms var( --ow-ease ) both;
+		font-family          : var( --ow-sans );
+	}
+
+	/* The picker sits over the overview, so keep its scrim lighter. */
+	.jest-overworld-picker {
+		background: radial-gradient( ellipse at 50% 40%, rgba(40,0,8,.35), rgba(0,0,0,.6) 70% );
+	}
+
+
+	/*==================================================
+	  Shared Modal Containers
+	==================================================*/
+	.jest-overworld-modal .modal-box,
+	.jest-overworld-picker .modal-box {
+		position     : relative;
+		width        : min( 560px, 92vw );
+		max-height   : 92vh;
+		overflow     : auto;
+		box-sizing   : border-box;
+		padding      : 30px 30px 26px;
+		border       : 1px solid var( --ow-line );
+		border-radius: 18px;
+		background   :
+			linear-gradient( 180deg, rgba(255,42,69,.07), transparent 140px ),
+			var( --ow-panel );
+		color        : var( --ow-text );
+		box-shadow   :
+			0 0 0 1px rgba(0,0,0,.9),
+			0 40px 120px rgba(0,0,0,.85),
+			0 0 80px rgba(255,42,69,.10),
+			inset 0 1px 0 rgba(255,255,255,.05);
+		animation    : ow-box-in 560ms var( --ow-ease ) both;
+		transition   : transform 420ms var( --ow-ease ), filter 420ms var( --ow-ease ), opacity 420ms var( --ow-ease );
+		scrollbar-width: thin;
+		scrollbar-color: var( --ow-red-deep ) transparent;
+	}
+
+	/* Hairline red light bleeding across the top edge. */
+	.jest-overworld-modal .modal-box::before,
+	.jest-overworld-picker .modal-box::before {
+		content        : '';
+		position       : absolute;
+		top            : 0;
+		left           : 12%;
+		right          : 12%;
+		height         : 1px;
+		background     : linear-gradient( 90deg, transparent, var( --ow-red ), transparent );
+		box-shadow     : 0 0 18px 1px var( --ow-red-glow );
+		pointer-events : none;
+		animation      : ow-hairline 900ms var( --ow-ease ) 150ms both;
+	}
+
+	/* Faint scanlines for that cold, technical finish. */
+	.jest-overworld-modal .modal-box::after,
+	.jest-overworld-picker .modal-box::after {
+		content        : '';
+		position       : absolute;
+		inset          : 0;
+		border-radius  : inherit;
+		background     : repeating-linear-gradient( 0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px );
+		pointer-events : none;
+		z-index        : 0;
+	}
+
+	/* The overview recedes while the picker is stacked above it. */
+	.jest-overworld-modal .modal-box[inert] {
+		transform: scale( 0.955 ) translateY( 10px );
+		filter   : blur( 2px ) brightness( 0.45 ) saturate( 0.6 );
+	}
+
+	/* Title: tracked caps with a red slash marker. */
+	.jest-overworld-modal .modal-title,
+	.jest-overworld-picker .modal-title,
+	.jest-overworld-modal .modal-box > :is( h1, h2, h3 ),
+	.jest-overworld-picker .modal-box > :is( h1, h2, h3 ) {
+		position       : relative;
+		margin         : 0 0 4px;
+		padding-left   : 18px;
+		font-size      : 15px;
+		font-weight    : 800;
+		letter-spacing : 0.22em;
+		text-transform : uppercase;
+		color          : var( --ow-text );
+		animation      : ow-rise 600ms var( --ow-ease ) 120ms both;
+	}
+
+	/*.jest-overworld-modal .modal-title::before,
+	.jest-overworld-picker .modal-title::before,
+	.jest-overworld-modal .modal-box > :is( h1, h2, h3 )::before,
+	.jest-overworld-picker .modal-box > :is( h1, h2, h3 )::before {
+		content      : '';
+		position     : absolute;
+		left         : 0;
+		top          : 50%;
+		width        : 7px;
+		height       : 16px;
+		transform    : translateY( -50% ) skewX( -18deg );
+		background   : var( --ow-red );
+		box-shadow   : 0 0 14px var( --ow-red-glow );
+		animation    : ow-pulse 2.4s ease-in-out infinite;
+	}*/
+
+	/* Soften the supporting modal text beneath the main title. */
+	.jest-overworld-modal .modal-text,
+	.jest-overworld-picker .modal-text {
+		margin         : 0 0 4px 18px;
+		color          : var( --ow-dim );
+		font-size      : 11px;
+		letter-spacing : 0.12em;
+		text-transform : uppercase;
+		animation      : ow-rise 600ms var( --ow-ease ) 200ms both;
+	}
+
+	/* Hide the Modal class input because the graphical picker replaces it. */
+	.jest-overworld-modal .modal-input,
+	.jest-overworld-picker .modal-input {
+		display: none;
+	}
+
+
+	/*==================================================
+	  Overworld Relationship Grid
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-overview,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-picker-content {
+		position: relative;
+		z-index : 1;
+	}
+
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-grid {
+		display              : grid;
+		width                : 100%;
+		aspect-ratio         : 1;
+		gap                  : 6px;
+		grid-template-columns: minmax( 0, var( --ow-edge ) ) minmax( 0, var( --ow-main ) ) minmax( 0, var( --ow-edge ) );
+		grid-template-rows   : minmax( 0, var( --ow-edge ) ) minmax( 0, var( --ow-main ) ) minmax( 0, var( --ow-edge ) );
+		margin               : 22px 0 14px;
+		perspective          : 1200px;
+	}
+
+	/* Keep zero-padding neighbor targets visible and clickable. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-grid.is-zero {
+		grid-template-columns: 30px minmax( 0, 1fr ) 30px;
+		grid-template-rows   : 30px minmax( 0, 1fr ) 30px;
+	}
+
+
+	/*==================================================
+	  Neighbor Slots
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot {
+		position  : relative;
+		min-width : 0;
+		min-height: 0;
+		overflow  : hidden;
+		padding   : 0;
+		margin    : 0;
+		/* Staggered entrance — each slot lands a beat after the last. */
+		animation : ow-slot-in 560ms var( --ow-ease ) both;
+		animation-delay: calc( 180ms + var( --ow-i, 0 ) * 55ms );
+	}
+
+	.ow-grid > .ow-slot:nth-child( 2 )  { --ow-i: 1; }
+	.ow-grid > .ow-slot:nth-child( 3 )  { --ow-i: 2; }
+	.ow-grid > .ow-slot:nth-child( 4 )  { --ow-i: 3; }
+	.ow-grid > .ow-slot:nth-child( 5 )  { --ow-i: 4; }
+	.ow-grid > .ow-slot:nth-child( 6 )  { --ow-i: 5; }
+	.ow-grid > .ow-slot:nth-child( 7 )  { --ow-i: 6; }
+	.ow-grid > .ow-slot:nth-child( 8 )  { --ow-i: 7; }
+	.ow-grid > .ow-slot:nth-child( 9 )  { --ow-i: 8; }
+
+	/* Stretch each button across the full directional slot. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot > button {
+		position     : absolute;
+		inset        : 0;
+		width        : 100%;
+		height       : 100%;
+		min-width    : 0;
+		padding      : 0;
+		border       : 0;
+		border-radius: 0;
+		background   : transparent;
+		color        : inherit;
+		cursor       : pointer;
+		outline      : none;
+	}
+
+	/* Base cell skin shared by neighbor and center cells. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center {
+		box-sizing   : border-box;
+		border       : 1px solid var( --ow-line );
+		border-radius: 8px;
+		background   :
+			repeating-linear-gradient( 45deg, rgba(255,255,255,.02) 0 6px, transparent 6px 12px ),
+			var( --ow-surface );
+		color        : var( --ow-dim );
+		transition   :
+			border-color 260ms var( --ow-ease ),
+			box-shadow   260ms var( --ow-ease ),
+			transform    360ms var( --ow-ease ),
+			background   260ms var( --ow-ease );
+	}
+
+	/* Raise labels and controls above their canvas previews. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot > *,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card > * {
+		position: relative;
+		z-index : 1;
+	}
+
+	/* Previews: desaturated and dim until the slot is engaged. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot canvas,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center canvas,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card canvas {
+		position       : absolute;
+		inset          : 0;
+		width          : 100%;
+		height         : 100%;
+		z-index        : 0;
+		image-rendering: pixelated;
+		opacity        : 0.38;
+		filter         : grayscale( 1 ) contrast( 1.15 ) brightness( 0.9 );
+		pointer-events : none;
+		transition     : opacity 360ms var( --ow-ease ), filter 360ms var( --ow-ease ), transform 600ms var( --ow-ease );
+		animation      : ow-canvas-in 520ms var( --ow-ease ) both;
+	}
+
+	/* Corner pips on empty slots — a quiet "dock here" cue. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot::before {
+		content       : '+';
+		position      : absolute;
+		inset         : 0;
+		display       : grid;
+		place-items   : center;
+		z-index       : 0;
+		font-size     : 20px;
+		font-weight   : 200;
+		/*color         : var( --ow-faint );*/
+		transition    : color 260ms, transform 360ms var( --ow-spring ), opacity 260ms;
+		pointer-events: none;
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked::before { opacity: 0; }
+
+	/* Direction labels: small tracked caps pinned to the bottom edge. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot .button-title {
+		position       : absolute;
+		left           : 0;
+		right          : 0;
+		bottom         : 0;
+		display        : block;
+		max-width      : 100%;
+		overflow       : hidden;
+		white-space    : nowrap;
+		text-overflow  : ellipsis;
+		padding        : 14px 8px 6px;
+		box-sizing     : border-box;
+		font-size      : 10px;
+		font-weight    : 700;
+		letter-spacing : 0.14em;
+		text-transform : uppercase;
+		text-align     : left;
+		color          : var( --ow-dim );
+		/*background     : linear-gradient( 0deg, rgba(0,0,0,.92), transparent );*/
+		transition     : color 260ms, transform 360ms var( --ow-ease );
+	}
+
+	/* Linked relationships: red border, live color preview, soft glow. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked {
+		border-color: var( --ow-red );
+		background  : linear-gradient( 180deg, var( --ow-red-wash ), rgba(0,0,0,.5) ), var( --ow-surface );
+		box-shadow  : 0 0 0 1px rgba(255,42,69,.25), 0 0 26px -4px var( --ow-red-glow ), inset 0 0 30px rgba(255,42,69,.10);
+		color       : var( --ow-text );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked canvas {
+		opacity: 0.78;
+		filter : grayscale( 0.35 ) contrast( 1.1 ) sepia( 0.25 ) hue-rotate( -25deg ) saturate( 1.6 );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked .button-title {
+		color: var( --ow-red-hot );
+	}
+	/* Live status dot on linked slots. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked::after {
+		content      : '';
+		position     : absolute;
+		top          : 7px;
+		right        : 7px;
+		width        : 6px;
+		height       : 6px;
+		z-index      : 2;
+		border-radius: 50%;
+		background   : var( --ow-red );
+		box-shadow   : 0 0 10px 2px var( --ow-red-glow );
+		animation    : ow-pulse 1.8s ease-in-out infinite;
+	}
+
+	/* Hover / keyboard focus: the slot lifts and ignites. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:hover,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:focus-within {
+		border-color: var( --ow-red-hot );
+		background  : var( --ow-surface-hi );
+		box-shadow  : 0 0 0 1px var( --ow-red ), 0 10px 40px -6px var( --ow-red-glow ), inset 0 0 24px rgba(255,42,69,.12);
+		transform   : translateY( -2px ) scale( 1.025 );
+		z-index     : 3;
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:hover canvas,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:focus-within canvas {
+		opacity  : 0.95;
+		filter   : grayscale( 0 ) contrast( 1.08 ) saturate( 1.2 );
+		transform: scale( 1.06 );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:hover::before,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:focus-within::before {
+		color    : var( --ow-red-hot );
+		transform: rotate( 90deg ) scale( 1.4 );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:hover .button-title,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:focus-within .button-title {
+		color    : #fff;
+		transform: translateY( -1px );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot:active {
+		transform: translateY( 0 ) scale( 0.985 );
+		transition-duration: 90ms;
+	}
+
+
+	/*==================================================
+	  Current Level Preview
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center {
+		position   : relative;
+		overflow   : hidden;
+		grid-area  : 2 / 2;
+		border     : 1px solid var( --ow-red );
+		background : #000;
+		box-shadow : 0 0 0 1px rgba(0,0,0,.8), 0 0 40px -6px var( --ow-red-glow ), inset 0 0 40px rgba(0,0,0,.6);
+		animation  : ow-center-in 700ms var( --ow-spring ) 100ms both;
+	}
+
+	/* Center keeps full-color preview, tinted by a subtle red vignette. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center canvas {
+		opacity: 1;
+		filter : none;
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center::before {
+		content       : '';
+		position      : absolute;
+		inset         : 0;
+		z-index       : 1;
+		background    : radial-gradient( ellipse at center, transparent 55%, rgba(0,0,0,.65) 100% );
+		pointer-events: none;
+	}
+
+	/* Sweeping scanner line across the active level. */
+	/*:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center::after {
+		content       : '';
+		position      : absolute;
+		left          : 0;
+		right         : 0;
+		height        : 38%;
+		z-index       : 1;
+		background    : linear-gradient( 180deg, transparent, rgba(255,42,69,.18) 80%, rgba(255,42,69,.55) 100% );
+		border-bottom : 1px solid var( --ow-red-hot );
+		pointer-events: none;
+		animation     : ow-scan 3.6s linear infinite;
+	}*/
+
+	/* "YOU ARE HERE" caption on a frosted bar. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-center span {
+		position       : absolute;
+		z-index        : 2;
+		bottom         : 10px;
+		left           : 10px;
+		right          : 10px;
+		overflow       : hidden;
+		white-space    : nowrap;
+		text-overflow  : ellipsis;
+		padding        : 8px 12px;
+		border         : 1px solid rgba(255,255,255,.08);
+		border-left    : 2px solid var( --ow-red );
+		border-radius  : 6px;
+		background     : rgba( 5, 5, 6, 0.72 );
+		-webkit-backdrop-filter: blur( 8px );
+		backdrop-filter: blur( 8px );
+		font-family    : var( --ow-mono );
+		font-size      : 11px;
+		letter-spacing : 0.06em;
+		color          : var( --ow-text );
+	}
+
+
+	/*==================================================
+	  Helper and Error Messages
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-hint {
+		color         : var( --ow-dim );
+		font-size     : 11px;
+		letter-spacing: 0.06em;
+		margin        : 8px 0;
+	}
+
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-error {
+		color         : var( --ow-red-hot );
+		min-height    : 1.3em;
+		font-size     : 11px;
+		font-family   : var( --ow-mono );
+		letter-spacing: 0.04em;
+		animation     : ow-shake 420ms var( --ow-ease );
+	}
+
+
+	/*==================================================
+	  Open-Level Rolodex
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-reel {
+		display    : flex;
+		align-items: center;
+		gap        : 14px;
+		margin     : 24px 0 18px;
+	}
+
+	/* Selected level: a lit, framed viewport. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card {
+		position     : relative;
+		flex         : 1;
+		min-width    : 0;
+		aspect-ratio : 1;
+		background   : #000;
+		border       : 1px solid var( --ow-red );
+		border-radius: 12px;
+		overflow     : hidden;
+		box-shadow   :
+			0 0 0 1px rgba(0,0,0,.9),
+			0 0 50px -8px var( --ow-red-glow ),
+			0 20px 50px rgba(0,0,0,.7),
+			inset 0 0 40px rgba(0,0,0,.5);
+		animation    : ow-card-in 640ms var( --ow-spring ) 120ms both;
+	}
+
+	/* Corner brackets framing the card. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card::before {
+		content       : '';
+		position      : absolute;
+		inset         : 10px;
+		z-index       : 2;
+		pointer-events: none;
+		background    :
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) top left     / 14px 1px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) top left     / 1px 14px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) top right    / 14px 1px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) top right    / 1px 14px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) bottom left  / 14px 1px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) bottom left  / 1px 14px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) bottom right / 14px 1px no-repeat,
+			linear-gradient( var( --ow-red-hot ), var( --ow-red-hot ) ) bottom right / 1px 14px no-repeat;
+		opacity       : 0.9;
+	}
+
+	/* Full-strength preview with a directional slide on every step. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card canvas {
+		opacity  : 1;
+		filter   : contrast( 1.05 ) saturate( 1.1 );
+		animation: ow-card-swap-none 1ms both;
+	}
+	.ow-card[data-dir="next"] canvas { animation: ow-swap-next 480ms var( --ow-ease ) both; }
+	.ow-card[data-dir="prev"] canvas { animation: ow-swap-prev 480ms var( --ow-ease ) both; }
+	.ow-card[data-dir="none"] canvas { animation: ow-canvas-in 520ms var( --ow-ease ) both; }
+
+	/* Filename footer. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-card span {
+		position       : absolute;
+		bottom         : 0;
+		left           : 0;
+		right          : 0;
+		z-index        : 3;
+		padding        : 28px 16px 14px;
+		color          : var( --ow-text );
+		font-family    : var( --ow-mono );
+		font-size      : 12px;
+		letter-spacing : 0.06em;
+		text-align     : center;
+		background     : linear-gradient( 0deg, rgba(0,0,0,.95) 10%, transparent );
+		overflow       : hidden;
+		white-space    : nowrap;
+		text-overflow  : ellipsis;
+	}
+
+	/* Position counter. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-count {
+		margin        : 0;
+		color         : var( --ow-dim );
+		text-align    : center;
+		font-family   : var( --ow-mono );
+		font-size     : 11px;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+
+
+	/*==================================================
+	  Rolodex Navigation
+	==================================================*/
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow {
+		flex      : 0 0 46px;
+		font-size : 24px;
+		text-align: center;
+	}
+
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow > button {
+		display      : grid;
+		place-items  : center;
+		width        : 46px;
+		height       : 46px;
+		padding      : 0;
+		cursor       : pointer;
+		color        : var( --ow-text );
+		background   : var( --ow-surface );
+		border       : 1px solid var( --ow-line-hi );
+		border-radius: 50%;
+		font-size    : 22px;
+		line-height  : 1;
+		transition   :
+			background   220ms var( --ow-ease ),
+			border-color 220ms var( --ow-ease ),
+			box-shadow   220ms var( --ow-ease ),
+			transform    260ms var( --ow-spring ),
+			color        220ms;
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow > button:hover:not( :disabled ) {
+		background  : var( --ow-red );
+		border-color: var( --ow-red-hot );
+		color       : #fff;
+		box-shadow  : 0 0 28px -2px var( --ow-red-glow );
+		transform   : scale( 1.12 );
+	}
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow > button:active:not( :disabled ) {
+		transform: scale( 0.92 );
+		transition-duration: 80ms;
+	}
+	/* Nudge the chevron toward its direction on hover. */
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow:first-child > button:hover:not( :disabled ) { padding-right: 3px; }
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow:last-child  > button:hover:not( :disabled ) { padding-left : 3px; }
+
+
+	/*==================================================
+	  Modal Action Buttons
+	==================================================*/
+	/*.jest-overworld-modal .modal-buttons,
+	.jest-overworld-picker .modal-buttons {
+		position       : relative;
+		z-index        : 1;
+		display        : flex;
+		gap            : 10px;
+		justify-content: flex-end;
+		margin-top     : 22px;
+		padding-top    : 20px;
+		border-top     : 1px solid var( --ow-line );
+		animation      : ow-rise 600ms var( --ow-ease ) 320ms both;
+	}*/
+
+	/* Ghost by default. */
+	/*.jest-overworld-modal .modal-buttons button,
+	.jest-overworld-picker .modal-buttons button {
+		position      : relative;
+		overflow      : hidden;
+		cursor        : pointer;
+		padding       : 11px 20px;
+		color         : var( --ow-dim );
+		background    : transparent;
+		border        : 1px solid var( --ow-line-hi );
+		border-radius : 9px;
+		font-family   : var( --ow-sans );
+		font-size     : 11px;
+		font-weight   : 700;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		transition    :
+			color        200ms var( --ow-ease ),
+			border-color 200ms var( --ow-ease ),
+			background   200ms var( --ow-ease ),
+			box-shadow   260ms var( --ow-ease ),
+			transform    220ms var( --ow-spring );
+	}
+	.jest-overworld-modal .modal-buttons button:hover:not( :disabled ),
+	.jest-overworld-picker .modal-buttons button:hover:not( :disabled ) {
+		color       : var( --ow-text );
+		border-color: var( --ow-red );
+		background  : var( --ow-red-wash );
+		transform   : translateY( -1px );
+	}
+	.jest-overworld-modal .modal-buttons button:active:not( :disabled ),
+	.jest-overworld-picker .modal-buttons button:active:not( :disabled ) {
+		transform: translateY( 0 ) scale( 0.97 );
+		transition-duration: 80ms;
+	}*/
+
+	/* Primary action (last button): solid red with a light sweep. */
+	/*.jest-overworld-modal .modal-buttons button:last-child,
+	.jest-overworld-picker .modal-buttons button:last-child {
+		color      : #fff;
+		border-color: var( --ow-red-hot );
+		background : linear-gradient( 180deg, var( --ow-red-hot ), var( --ow-red-deep ) );
+		box-shadow : 0 8px 28px -8px var( --ow-red-glow ), inset 0 1px 0 rgba(255,255,255,.25);
+	}
+	.jest-overworld-modal .modal-buttons button:last-child:hover:not( :disabled ),
+	.jest-overworld-picker .modal-buttons button:last-child:hover:not( :disabled ) {
+		background : linear-gradient( 180deg, #ff6176, var( --ow-red ) );
+		box-shadow : 0 12px 36px -6px var( --ow-red-glow ), inset 0 1px 0 rgba(255,255,255,.35);
+	}
+	.jest-overworld-modal .modal-buttons button:last-child::after,
+	.jest-overworld-picker .modal-buttons button:last-child::after {
+		content       : '';
+		position      : absolute;
+		top           : 0;
+		bottom        : 0;
+		left          : -60%;
+		width         : 40%;
+		background    : linear-gradient( 100deg, transparent, rgba(255,255,255,.35), transparent );
+		transform     : skewX( -20deg );
+		pointer-events: none;
+	}
+	.jest-overworld-modal .modal-buttons button:last-child:hover::after,
+	.jest-overworld-picker .modal-buttons button:last-child:hover::after {
+		animation: ow-sweep 700ms var( --ow-ease );
+	}*/
+
+	/* "Clear slot" reads as a destructive-but-quiet action. */
+	/*.jest-overworld-picker .modal-buttons button:nth-last-child( 2 ):not( :first-child ) {
+		margin-right : auto;
+		border-style : dashed;
+	}
+	.jest-overworld-picker .modal-buttons button:nth-last-child( 2 ):not( :first-child ):hover:not( :disabled ) {
+		color: var( --ow-red-hot );
+	}
+
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .modal-buttons button:focus-visible,
+	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-arrow > button:focus-visible {
+		outline       : 2px solid var( --ow-red-hot );
+		outline-offset: 3px;
+	}*/
+
+
+	/*==================================================
+	  Tool Launcher and Disabled State
+	==================================================*/
+	.tool-overworld .ow-launcher > button {
+		cursor: pointer;
+	}
+
+	.jest-overworld-picker button:disabled {
+		cursor : not-allowed;
+		opacity: 0.3;
+		filter : grayscale( 1 );
+	}
+
+
+	/*==================================================
+	  Keyframes
+	==================================================*/
+	@keyframes ow-scrim-in   { from { opacity: 0; } to { opacity: 1; } }
+	@keyframes ow-box-in     {
+		from { opacity: 0; transform: translateY( 28px ) scale( 0.94 ); filter: blur( 8px ); }
+		60%  { filter: blur( 0 ); }
+		to   { opacity: 1; transform: none; filter: none; }
+	}
+	@keyframes ow-hairline   { from { transform: scaleX( 0 ); opacity: 0; } to { transform: scaleX( 1 ); opacity: 1; } }
+	@keyframes ow-rise       { from { opacity: 0; transform: translateY( 10px ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-slot-in    { from { opacity: 0; transform: scale( 0.82 ) translateY( 8px ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-center-in  { from { opacity: 0; transform: scale( 0.6 ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-card-in    { from { opacity: 0; transform: scale( 0.85 ) rotateX( 14deg ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-canvas-in  { from { opacity: 0; transform: scale( 1.08 ); } }
+	@keyframes ow-swap-next  { from { opacity: 0; transform: translateX( 38% ) scale( 1.05 ); filter: blur( 6px ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-swap-prev  { from { opacity: 0; transform: translateX( -38% ) scale( 1.05 ); filter: blur( 6px ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-card-swap-none { from { opacity: 1; } to { opacity: 1; } }
+	@keyframes ow-label-in   { from { opacity: 0; transform: translateY( 8px ); } to { opacity: 1; transform: none; } }
+	@keyframes ow-pulse      { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+	@keyframes ow-scan       { from { top: -40%; } to { top: 100%; } }
+	@keyframes ow-sweep      { from { left: -60%; } to { left: 130%; } }
+	@keyframes ow-shake      {
+		10%, 90% { transform: translateX( -1px ); }
+		20%, 80% { transform: translateX( 2px ); }
+		30%, 50%, 70% { transform: translateX( -3px ); }
+		40%, 60% { transform: translateX( 3px ); }
+	}
+
+	/* Respect people who prefer reduced motion. */
+	@media ( prefers-reduced-motion: reduce ) {
+		:is( .jest-overworld-modal, .jest-overworld-picker ),
+		:is( .jest-overworld-modal, .jest-overworld-picker ) *,
+		:is( .jest-overworld-modal, .jest-overworld-picker ) *::before,
+		:is( .jest-overworld-modal, .jest-overworld-picker ) *::after {
+			animation-duration       : 1ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration      : 1ms !important;
+		}
+	}
 }
 
 /* --- BEGIN js/apps/jest/clients/plugins/creator/online/cloud/css/cloud.css --- */

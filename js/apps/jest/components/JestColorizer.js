@@ -20,9 +20,9 @@ class JestColorizer extends JestSavable {
 		// Call the parent object constructor
 		super( client );				// construct the parent
 		this.client		= client;		// store the client [object] reference
-		// --------------------------------
+		//---------------------------------
 		// Setup object
-		// --------------------------------
+		//---------------------------------
 		this.setup();					// setup the object
 		this.build();					// render the object
 	}

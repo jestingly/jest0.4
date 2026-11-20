@@ -21,9 +21,9 @@ class JestMatrix extends JestGamepiece {
 	// * client		- client [object] that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor [object]
-		// --------------------------------
+		//---------------------------------
 		// Create an anchor [object] for moving & size specifications
 		const anchor	= new Anchor();		// create central anchor
 		anchor.move( 0, 0 );				// move anchor to default position

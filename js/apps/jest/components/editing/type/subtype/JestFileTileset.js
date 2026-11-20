@@ -13,9 +13,9 @@ class JestFileTileset extends JestFileImage {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -73,9 +73,9 @@ class JestFileTileset extends JestFileImage {
 			// Use "stem" as shorthand for filename.
 			const stem		= this.stem;
 			const extension	= this.extension;
-			// --------------------------------
+			//---------------------------------
 			// Load Tileset [objects]
-			// --------------------------------
+			//---------------------------------
 			console.log( `Attempting to download tileset from server...` );
 			// Load a default tileset
 			const tileset	=

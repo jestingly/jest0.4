@@ -13,9 +13,9 @@ class JSOSUtility extends JSOSReadWrite {
 	// Known SVG tag list (render-critical)
 	svgTags			= null;				// [Set<string>] svgTags which use NS element methods.
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
 	// * options		- [object] Configuration options for the class [object].
@@ -33,9 +33,9 @@ class JSOSUtility extends JSOSReadWrite {
 				]);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Unique Key Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate a unique ID.
 	// RETURNS: [void].
 	generateKey() {
@@ -52,9 +52,9 @@ class JSOSUtility extends JSOSReadWrite {
 		return skey;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Release Key
-	// -------------------------------
+	//--------------------------------
 	// Removes a used key from the tracking set.
 	// * key	- [string] Unique key to remove.
 	releaseKey( key ) {

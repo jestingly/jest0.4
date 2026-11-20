@@ -18,26 +18,38 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			// Appropriately label each history item.
 			client.register(
 				'history:logged', 'labelItem',
-				( item, log ) => {
+				( view, item, log ) => {
+					//--------------------------------
+					// Set History Item Log Title
+					//--------------------------------
 					// Check for history label.
 					if ( log.history )
-						return item.setLabel( log.history );
-					// Switch log action & determine label.
-					switch ( log.action ) {
-						case 'fillTile': // use a fill tile
-							item.setLabel( 'Tiles changed.' );
-							break;
-						case 'sparseRegion': // draw a series of tile(s)
-							item.setLabel( 'Sparse region laid.' );
-							break;
-						case 'fillRegion': // drop a clone of the region
-							item.setLabel( 'Region filled.' );
-							break;
-						case 'dropRegion': // drop a clone of the region
-							item.setLabel( 'Region placed.' );
-							break;
-						//default: console.warn( `Revert Action Unknown: ` );
+						item.setLabel( log.history );
+					else {
+						// Switch log action & determine label.
+						switch ( log.action ) {
+							case 'fillTile': // use a fill tile
+								item.setLabel( 'Tiles changed.' );
+								break;
+							case 'sparseRegion': // draw a series of tile(s)
+								item.setLabel( 'Sparse region laid.' );
+								break;
+							case 'fillRegion': // drop a clone of the region
+								item.setLabel( 'Region filled.' );
+								break;
+							case 'dropRegion': // drop a clone of the region
+								item.setLabel( 'Region placed.' );
+								break;
+							// Unknown action.
+							default: return; //console.warn( `Revert Action Unknown: ` );
+						}
 					}
+
+					//--------------------------------
+					// Known Action Marks File Changed (Saveable)
+					//--------------------------------
+					// The file has changed & can now be saved again.
+					view.file.jot( "changed", true );
 				});
 		},
 
@@ -371,64 +383,38 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			}
 
 			//--------------------------------
-			// Utility: center of visible gameboard
+			// Get Visible Level Center
 			//--------------------------------
-			// RETURNS: { x, y } in *pixel* coordinates local to the canvas
-			// * units	- [int] set grid dimension units
+			// RETURNS: [object] Center of the visible active level as { x, y }.
+			// * units - [number] Canvas pixels per returned unit.
 			proto.getVisibleLevelCenter = function( units=1 ) {
-				//--------------------------------
-				// Access Drawing Workspace Area
-				//--------------------------------
-				// Get level canvas.
-				const canvas	= this.gameboard.display.getCanvas('workspace').el;
+				// Resolve the editable rectangle and the board that scrolls it.
+				const canvas   = this.gameboard.display.getCanvas( 'workspace' );
+				const board    = canvas.el.parentElement;
+				const level    = canvas.getRinkClientBounds();
+				if ( !board || !level ) return { x: 0, y: 0 };
 
-				//--------------------------------
-				// Calculate Position & Dimensions
-				//--------------------------------
-				// NOTE: If your canvas is inside a scrollable DIV, use that instead:
-				const container	= canvas.parentElement;		// access canvas parent
-				const visibleW	= container.clientWidth;
-				const visibleH	= container.clientHeight;
-				const scrollX	= container.scrollLeft;
-				const scrollY	= container.scrollTop;
-				const canvasW	= canvas.width;				// canvas width (in pixels)
-				const canvasH	= canvas.height;			// canvas height (in pixels)
+				// Measure the board's visible area inside its borders and scrollbars.
+				const rect     = board.getBoundingClientRect();
+				const left     = rect.left + board.clientLeft;
+				const top      = rect.top + board.clientTop;
+				const right    = left + board.clientWidth;
+				const bottom   = top + board.clientHeight;
 
-				//--------------------------------
-				// Calculate Center
-				//--------------------------------
-				// Begin center calculation(s).
-				let centerX, centerY;
+				// Find the midpoint of the visible portion of the active level.
+				const midX     = (Math.max(left,level.left) + Math.min(right,level.right)) / 2;
+				const midY     = (Math.max(top,level.top) + Math.min(bottom,level.bottom)) / 2;
 
-				// Horizontal center
-				// container wider than canvas → full canvas visible
-				if ( visibleW>=canvasW ) centerX = canvasW / 2;
-				else {
-					const halfVW	= visibleW / 2;
-					const minMidX	= halfVW;
-					const maxMidX	= canvasW - halfVW;
-					const rawMidX	= scrollX + halfVW;
-					centerX			= Math.min( Math.max(rawMidX,minMidX), maxMidX );
-				}
+				// Convert to level-local pixels. If the level is fully offscreen,
+				// use its nearest edge on the axis where there is no overlap.
+				const { w, h } = canvas.getRinkBounds();
+				const x        = (midX-level.left) / level.scaleX;
+				const y        = (midY-level.top) / level.scaleY;
+				const localX   = Math.max( 0, Math.min(x,w-1) );
+				const localY   = Math.max( 0, Math.min(y,h-1) );
 
-				// Vertical center
-				if ( visibleH>=canvasH ) centerY = canvasH / 2;
-				else {
-					const halfVH	= visibleH / 2;
-					const minMidY	= halfVH;
-					const maxMidY	= canvasH - halfVH;
-					const rawMidY	= scrollY + halfVH;
-					centerY			= Math.min( Math.max(rawMidY,minMidY), maxMidY );
-				}
-
-				//--------------------------------
-				// Return Center in Units (e.g. Tiles)
-				//--------------------------------
-				// Confine centerX and centerY to units.
-				centerX	= Math.floor( centerX / units );
-				centerY	= Math.floor( centerY / units );
-				return { x: centerX, y: centerY }; // return coordinates
-			}
+				return { x: Math.floor(localX/units), y: Math.floor(localY/units) };
+			};
 
 			// Fill a region in the level matrix with a tile.
 			// RETURNS: [boolean] `true` on success else `false` on fail.

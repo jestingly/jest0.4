@@ -16,9 +16,9 @@ class JestButton extends JestElement {
 	clicker			= null;			// Panel [object] that contains button DOM.
 	title			= null;			// OSElement [object] that contains the display text.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -29,9 +29,9 @@ class JestButton extends JestElement {
 		//this.modes = modes ?? [];
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Autogenerate the button interior content.
 	// RETURNS: [void].
 	// * text		- [string] value of button text content.
@@ -82,9 +82,9 @@ class JestButton extends JestElement {
 		this.title		= this.clicker.refs.title; // get [object] ref
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Rename the button.
 	// RETURNS: [void].
 	// * name		- [string] Value name of button to change to.
@@ -93,9 +93,9 @@ class JestButton extends JestElement {
 		this.title.setHTML( name );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the button.
 	// RETURNS: [void].
 	// * type		- [string] Value of type of toggle: 'enable', 'activate', etc.
@@ -172,9 +172,9 @@ class JestButton extends JestElement {
 			this.panel.refs.clicker.removeClass( 'active' );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handler(s)
-	// --------------------------------
+	//---------------------------------
 	// Mouse clicks down on button.
 	// RETURNS: [void].
 	// * e		- [object] mousedown event.

@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// User Login/Sign-up Authentication
-			// --------------------------------
+			//---------------------------------
 			// Build the GUI.
 			client.login.build(); // setup login/logout badge
 			// Add a login panel to the top right of the app interface.
@@ -31,16 +31,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 						topright.addPanel( 'login', client.login.badge );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Setup Login Notification Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Wire global failed account signup event.
 			client.login.register(
 				'signupFail', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Failed to create account! ${message}`,
@@ -61,9 +61,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loginFail', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Failed to log in! ${message}`,
@@ -84,9 +84,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loginRequired', 'default',
 				message => {
-					// --------------------------------
+					//---------------------------------
 					// Send User Failed Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Login required to perform action: ${message}`,
@@ -107,9 +107,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 			client.login.register(
 				'loggedIn', 'accountActionLoggedIn',
 				username => {
-					// --------------------------------
+					//---------------------------------
 					// Send User "Logged In" Notification
-					// --------------------------------
+					//---------------------------------
 					// Send user a simple notification.
 					client.noticer.notify({
 						text     : `Successfully logged in as ${username}!`,
@@ -127,9 +127,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/login/login
 				});
 			//this.login.register( 'logout', 'tiler', () => this.clearUserUI() );
 
-			// --------------------------------
+			//---------------------------------
 			// Autocheck Login Session
-			// --------------------------------
+			//---------------------------------
 			// Check if user is logged in.
 			await client.login.checkLoginSession(); // try to checkin
 			// Prompt user with a login screen if no session is active.

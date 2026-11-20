@@ -21,9 +21,9 @@ class JestWebsocket extends OSCallback {
 	connected		= false;			// true only when socket is fully open
 	trying			= false;			// true only during each individual connect attempt
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	constructor() {
 		// Call the parent object constructor

@@ -18,9 +18,9 @@ class JSOSEnvironment extends OSElement {
 	// * options		- [object] Configuration options for the class [object].
 	constructor( options={} ) {
 		super( options );	// call parent constructor
-		// --------------------------------
+		//---------------------------------
 		// Setup & Render Environment
-		// --------------------------------
+		//---------------------------------
 		// Setup the [object]
 		this.setup();		// setup the enviroment
 		this.render();		// render the enviroment
@@ -55,19 +55,19 @@ class JSOSEnvironment extends OSElement {
 	// Insert environment HTML into the page
 	generateEnvironment() {
 		console.log( 'jestAlert: Generating environment ...' );
-		// --------------------------------
+		//---------------------------------
 		// Clear environment
-		// --------------------------------
+		//---------------------------------
 		// Remove jest environment if open
 		//this.removeEnvironment();
-		// --------------------------------
+		//---------------------------------
 		// Create environment
-		// --------------------------------
+		//---------------------------------
 		// Insert the environment into the DOM
 		document.body.appendChild( this.el );
-		// --------------------------------
+		//---------------------------------
 		// Setup the enviroment
-		// --------------------------------
+		//---------------------------------
 		// Setup the environment HTML block
 		this.setupEnvironment();
 	}
@@ -76,9 +76,9 @@ class JSOSEnvironment extends OSElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] Value of application name.
 	async execute( name='' ) {
-		// --------------------------------
+		//---------------------------------
 		// Load Application [object]
-		// --------------------------------
+		//---------------------------------
 		// Build class name
 		const className		= 'App'+name;
 		console.log( `jestAlert: Opening application "${className}" ...` );
@@ -89,9 +89,9 @@ class JSOSEnvironment extends OSElement {
 		// Create class instance of application [object]
 		const app			= new AppClass();			// Create the application [object]
 		this.apps[name]		= app;						// Save the application in open apps
-		// --------------------------------
+		//---------------------------------
 		// Add Application Dock Shortcut
-		// --------------------------------
+		//---------------------------------
 		// Determine if dock icon should be created.
 		console.log( 'jestAlert: Application `'+this.name+'` calling dock shortcut ...' );
 		app.dockShortcut(); // create dock shortcut
@@ -103,14 +103,14 @@ class JSOSEnvironment extends OSElement {
 		console.log( 'jestAlert: Setting up the environment ...' );
 		// Ensure previous environment exists
 		if ( this.el ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Core [objects]
-			// --------------------------------
+			//---------------------------------
 			const librarian		= new OSLibrarian();
 			this.librarian		= librarian;
-			// --------------------------------
+			//---------------------------------
 			// Add status dock menu to the environment
-			// --------------------------------
+			//---------------------------------
 			const dock			= new Dock( { id: 'jest-dock' } );
 			this.dock			= dock; // quick-reference
 			this.el.appendChild( this.dock.el );

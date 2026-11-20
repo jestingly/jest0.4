@@ -15,9 +15,9 @@ class JestListColumnatedItem extends JestListItem {
 	columns		= [];
 	values		= {};
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.

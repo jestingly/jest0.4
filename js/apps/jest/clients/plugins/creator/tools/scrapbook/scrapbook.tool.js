@@ -16,9 +16,9 @@ class JestToolScrapbook extends JestTool {
 	frameRange		= null;				// JestInputRange [object] for navigating frame(s).
 	layerRange		= null;				// JestInputRange [object] for navigating layer(s).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -51,9 +51,9 @@ class JestToolScrapbook extends JestTool {
 			{ name: 'buttons',  tag: 'div', classes: [ 'selector-buttons' ] }
 			]); // add to form*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Button Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar
@@ -61,9 +61,9 @@ class JestToolScrapbook extends JestTool {
 		// Add toolbar to client interface.
 		this.panel.refs.buttons.addPanel( 'toolbar', toolbar.panel );*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Image File Select Input [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const filetypes		= this.client.imager.filetypes.join( ', .' );
 		const imageSelect	= new JestInputFileSelect( this.client, `.${filetypes}` );
@@ -104,9 +104,9 @@ class JestToolScrapbook extends JestTool {
 		this.layerRange	= layerRange; // store ref
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -126,9 +126,9 @@ class JestToolScrapbook extends JestTool {
 		this.target	= target;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the scrapbook tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {

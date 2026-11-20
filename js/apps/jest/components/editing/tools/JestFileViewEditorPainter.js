@@ -12,9 +12,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainter extends JestFileViewEditor {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.

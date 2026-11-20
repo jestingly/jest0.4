@@ -29,9 +29,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Pencil Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a pencil tool to the level canvas board.
 			const tool    = new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -760,21 +760,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/paintbrush/p
 			const matrix4 = client.grapher.fillMatrixPerimeter( matrix3, ['a','b'], 0 );
 			console.log( matrix4 );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Settings Change Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Create event for when the magnification zoom value changes.
 			client.register(
 				'levelZoomed', 'paintbrushZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Match the tool grid to the active level view zoom.
 					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});

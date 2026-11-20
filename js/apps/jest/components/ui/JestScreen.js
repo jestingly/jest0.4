@@ -15,9 +15,9 @@ class JestScreen extends JestDisplay {
 	active			= null;			// [bool] whether button is active.
 	timeToLive		= null;			// [int|null] Time to live (in cycles) before light clean-up.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -25,9 +25,9 @@ class JestScreen extends JestDisplay {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.

@@ -253,9 +253,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					client.sidebar.refit( 'scrapbook' );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Group Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sprite group modal.
 			client.addModal(
 				'newGroup',
@@ -306,9 +306,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.modals.newGroup.register(
 				'preopen', 'reset', e=>client.modals.newGroup.resetInputs() );
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Sprite Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sprite modal.
 			client.addModal(
 				'newSprite',
@@ -360,9 +360,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.modals.newSprite.register(
 				'preopen', 'reset', e=>client.modals.newSprite.resetInputs() );
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'scrapbookRemember',
 				() => {
@@ -374,23 +374,23 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 			client.tabbarFile.register(
 				'tabChange', 'scrapbookRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
-					// --------------------------------
+					//---------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.reloadGroups( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Image File Select [object] Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Add hidden image file select input to curator toolbar.
 			curator.toolbar.panel.addPanel( 'flipbooker', tool.panel );
 			// Add image button to curator.
@@ -455,9 +455,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					client.soundboard.playSound( 'jest_success', 'mp3', 1.1 );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Edit/Undo Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Handle edit / undo event(s).
 			client.register(
 				'revert', 'scrapbookTool',
@@ -685,9 +685,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Apply Changes to Field(s) Button
-			// --------------------------------
+			//---------------------------------
 			// Add apply button to curator.
 			curator.toolbar.createButton( { name: 'apply', text: 'Apply' } );
 			curator.toolbar.buttons.apply.register(
@@ -952,9 +952,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Other Action Button(s)
-			// --------------------------------
+			//---------------------------------
 			// Add create button to curator.
 			curator.toolbar.createButton( { name: 'create', text: 'Create' } );
 			curator.toolbar.buttons.create.register(
@@ -1036,16 +1036,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					data.path		= path;		// capture path
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Begin Data For New Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new sprite group.
 					const object	= await client.addGroup( tool, data );
 					if ( object===null ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `groupAdd`,
@@ -1108,16 +1108,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					data.name		= name;		// capture sprite name
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Create Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new sprite.
 					const object	= client.addSprite( tool, data );
 					if ( object===null ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `spriteAdd`,
@@ -1246,9 +1246,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					if ( !confirm(`Are you sure you want to remove ${type} "${data.name}"?`) )
 						return; // user aborted
 
-					// --------------------------------
+					//---------------------------------
 					// Emit Item Pre-Remove Event
-					// --------------------------------
+					//---------------------------------
 					// Emit event signaling item was manually removed by user.
 					//s.curator.emit( `manual:${type}:pre:remove`, null, snapshot, object );
 
@@ -1267,9 +1267,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 						default: break;
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `${type}Remove`,
@@ -1287,9 +1287,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					const snapshot	= s.janiView.governor.log( 'edit', log );
 					s.file.jot( 'changed', true );
 
-					// --------------------------------
+					//---------------------------------
 					// Emit Item Removed Event
-					// --------------------------------
+					//---------------------------------
 					// Emit event signaling item was manually removed by user.
 					s.curator.emit( `manual:${type}:removed`, null, snapshot, object );
 				});
@@ -1511,9 +1511,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool,true)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Create Blank Group
-					// --------------------------------
+					//---------------------------------
 					// Create [JestCuratorObject] instance.
 					const data		=
 						{
@@ -1526,9 +1526,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 						};
 					const object	= curator.addObject( 'group', data, false );
 
-					// --------------------------------
+					//---------------------------------
 					// Load Sprite Group(s)
-					// --------------------------------
+					//---------------------------------
 					// Iterate all animation groups.
 					const groups	= s.ani.groups;
 					for ( const [group,filename] of Object.entries(groups) ) {
@@ -1636,9 +1636,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				data.path	= data?.path ? data.path : '';
 				data.image	= null; // by default image is null
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Check if group already exists.
 				if ( !s.ani.hasGroup(data.name) ) {
 					//--------------------------------
@@ -2261,9 +2261,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				data.sw		= data.sw ?? 0;	// source width
 				data.sh		= data.sh ?? 0;	// source height
 
-				// --------------------------------
+				//---------------------------------
 				// Create New [AnimationSprite]
-				// --------------------------------
+				//---------------------------------
 				// Create [AnimationSprite] instance.
 				if ( !data?.sprite || !(data.sprite instanceof AnimationSprite) ) {
 					// Add next sprite id to curator sprite data.
@@ -2289,9 +2289,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/scrapbook/sc
 				// Ensure sprite is in the animation.
 				s.ani.addSprite( data.sprite );
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the sprite to the curator.
 				if ( true ) {
 					// Add the sprite to the curator.

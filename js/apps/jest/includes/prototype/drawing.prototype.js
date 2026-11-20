@@ -12,18 +12,18 @@ console.log( 'jestAlert: js/apps/jest/includes/prototype/drawing.prototype.js lo
 // RETURNS: [bool] if canvas is ready / readable.
 // * canvas - [HTMLCanvasElement] to check
 Jest.prototype.isCanvasEmpty = function( canvas ) {
-	// --------------------------------
+	//---------------------------------
 	// Validate Argument(s)
-	// --------------------------------
+	//---------------------------------
 	// Check if canvas is a valid type.
 	if ( !(canvas instanceof HTMLCanvasElement) ) {
 		console.warn( `Canvas is not of type HTMLCanvasElement` );
 		return true; // empty
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Determine If Canvas Is Empty
-	// --------------------------------
+	//---------------------------------
 	// Get the internal width and height
 	const width		= canvas.width;
 	const height	= canvas.height;
@@ -35,18 +35,18 @@ Jest.prototype.isCanvasEmpty = function( canvas ) {
 // RETURNS: [bool] if canvas is empty picture.
 // * canvas - [HTMLCanvasElement] to check
 Jest.prototype.isCanvasBlank = function( canvas ) {
-	// --------------------------------
+	//---------------------------------
 	// Validate Argument(s)
-	// --------------------------------
+	//---------------------------------
 	// Check if canvas is a valid type.
 	if ( !(canvas instanceof HTMLCanvasElement) ) {
 		console.warn( `Canvas is not of type HTMLCanvasElement` );
 		return false; // abort
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Determine If Canvas Is Empty
-	// --------------------------------
+	//---------------------------------
 	// Access the canvas drawable context.
 	const context	= canvas.getContext( '2d' );
 	// Get all pixel data as a Uint32Array for better performance

@@ -14,9 +14,9 @@ class JestGovernor extends JestElement {
 	stacks		= {};			// [object] { states: [ … ], index: number, limit: number }
 	queue		= {};			// [object] Map of { [key]: object } pending metadata to merge on next log
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -26,9 +26,9 @@ class JestGovernor extends JestElement {
 		this.jot( 'reverting', false ); // not active
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Stack Handling
-	// --------------------------------
+	//---------------------------------
 	// Initialize (or re-initialize) a stack under `key`, with an optional limit.
 	// If the stack already exists, this will override its limit and clear history.
 	// RETURNS: [void].
@@ -46,9 +46,9 @@ class JestGovernor extends JestElement {
 		this.emit( `init`, null, key, limit ); // emit event
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Queue Metadata for Next Log
-	// --------------------------------
+	//---------------------------------
 	// Queues extra data to be merged into the next log() snapshot.
 	// * key   – [string] The stack key
 	// * data  – [object] Metadata to merge into next log state
@@ -58,9 +58,9 @@ class JestGovernor extends JestElement {
 		Object.assign( this.queue[key], data );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Dequeue Metadata Before Log
-	// --------------------------------
+	//---------------------------------
 	// Removes any queued metadata waiting to be merged into the next log().
 	// * key   – [string] Stack key to clear metadata for
 	// * fields – [array] Optional [array] of specific field names to remove
@@ -91,9 +91,9 @@ class JestGovernor extends JestElement {
 		// Ensure the stack exists (default limit = 100)
 		if ( !this.stacks[key] ) this.init( key );
 
-		// --------------------------------
+		//---------------------------------
 		// Log New Result
-		// --------------------------------
+		//---------------------------------
 		const stack		= this.stacks[key];
 		const i			= stack.index;
 		const lastIndex	= stack.states.length - 1;
@@ -129,18 +129,18 @@ class JestGovernor extends JestElement {
 		// Emit new event signaling that undo is possible.
 		this.emit( `undoable`, null, key, stack.states.length );
 
-		// --------------------------------
+		//---------------------------------
 		// Clear Overflowed States
-		// --------------------------------
+		//---------------------------------
 		// Call overflow check.
 		this.overflow( key );
 		// Return snapshot.
 		return snapshot; // log [object]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Append to Current State
-	// --------------------------------
+	//---------------------------------
 	// Merge additional metadata into the *current* state (if exists).
 	// RETURNS: [bool] true if successful, else false
 	// * key		– [string] stack key
@@ -164,9 +164,9 @@ class JestGovernor extends JestElement {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get Current Log Reference
-	// --------------------------------
+	//---------------------------------
 	// Gets a *live reference* to the actual current snapshot object.
 	// WARNING: modifying this directly alters undo history!
 	// RETURNS: [object|null] the actual state object or null
@@ -177,9 +177,9 @@ class JestGovernor extends JestElement {
 		return stack.states[stack.index]; // live reference
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get Stack (if exists)
-	// --------------------------------
+	//---------------------------------
 	// Attempt to get a stack.
 	// RETURNS: [void].
 	// * key	– [string] Value of which stack to get.
@@ -191,9 +191,9 @@ class JestGovernor extends JestElement {
 		return this.stacks[key]; // return stack
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Revert Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Attempt to undo an action inside an open level file.
 	// RETURNS: [void].
 	// * count	- signed [int] value to iterate (negative for undo).
@@ -325,9 +325,9 @@ class JestGovernor extends JestElement {
 		return false; // no overflow
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Log New Result
-	// --------------------------------
+	//---------------------------------
 	// Peek at the current state without modifying anything.
 	// RETURNS: the JSON snapshot at `index`, or null if stack is empty.
 	current( key ) {
@@ -352,9 +352,9 @@ class JestGovernor extends JestElement {
 		this.overflow( key, newLimit );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Reporting Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Does `key` exist and have at least one recorded state?
 	hasState( key ) {
 		const stack	= this.stacks[key];

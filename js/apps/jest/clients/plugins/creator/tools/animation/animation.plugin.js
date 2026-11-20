@@ -74,16 +74,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/animation/an
 			let toggle		= false; // sounds off by default
 			inputLoop.setChecked( toggle );
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh Animation Options on Tab Change
-			// --------------------------------
+			//---------------------------------
 			// Create event for when tab is changed, to switch file.
 			client.tabbarFile.register(
 				'tabChange', 'animationRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Refresh Animation Setting(s) Form
-					// --------------------------------
+					//---------------------------------
 					// Reload options form to reflect animation setting(s).
 					client.refreshAnimationControls();
 				});

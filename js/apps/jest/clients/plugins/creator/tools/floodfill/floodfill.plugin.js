@@ -593,7 +593,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 			// Replace tile hook, within floodfill tool.
 			tool.register(
 				'applyReplace', 'replaceTile',
-				( tile ) => {
+				tile => {
 					// Block action if app is busy.
 					if ( client.busy() ) return; // app busy‐gate
 					//--------------------------------
@@ -718,6 +718,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 
 					//console.log( 'applyReplace9' );
 					layer.fillRegion( x, y, 1, 1, newTile );
+				});
+
+			// Register event when floodfill has finished.
+			tool.register(
+				'floodFilled', 'endOperation',
+				count => {
+					// Play sound indicating a fill took place.
 					client.soundboard.playSound( 'jest_pour', 'mp3', 1.05 );
 				});
 
@@ -734,21 +741,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 			const record	= client.secretary.getRecord( 'json/patterns.json' );
 			tool.curators.primary.importObjects( record ); // import json [objects]
 
-			// --------------------------------
+			//---------------------------------
 			// Settings Change Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Create event for when the magnification zoom value changes.
 			client.register(
 				'levelZoomed', 'floodfillZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Match the tool grid to the active level view zoom.
 					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});
@@ -789,6 +796,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/floodfill/fl
 				// Get the click position on the level.
 				const canvas	= this.gameboard.display.getCanvas( 'workspace' ); // get rendering canvas
 				const pos		= canvas.mousePos( e );
+				// Require a starting tile on the active level.
+				if ( !canvas.containsRinkPoint(pos) ) return false;
 				const units		= tool.anchor.units; // tile units
 				const x			= Math.floor( pos.x / units );
 				const y			= Math.floor( pos.y / units );

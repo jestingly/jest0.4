@@ -26,9 +26,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/swatches/swa
 		// Called once when plugin is registered.
 		// * client - [object] reference to JestTiler
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Swatch Panel
-			// --------------------------------
+			//---------------------------------
 			// Create swatch panel [object].
 			const tool	= new JestSwatches( this );
 			client.swatchPanel	= tool;

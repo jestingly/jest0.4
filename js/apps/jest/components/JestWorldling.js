@@ -20,9 +20,9 @@ class JestWorldling extends JestSavable {
 	// Movement propert(ies)
 	focus    = null;      // [object] Anchor used to focus the graphical visual location (x,y).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the the worldling [object].
 	// RETURNS: [void].
 	// * client  - [object] Application client that this piece belongs to.
@@ -34,9 +34,9 @@ class JestWorldling extends JestSavable {
 		this.status  = 0;      // set default status "creating"
 		// Set remote value
 		this._remote = remote===true;
-		// --------------------------------
+		//---------------------------------
 		// Attach [object] to Gameboard
-		// --------------------------------
+		//---------------------------------
 		// Add the worldling object to the gameboard.
 		this.client.gameboard.addWorldling( this );
 	}
@@ -52,15 +52,15 @@ class JestWorldling extends JestSavable {
 		this.client.gameboard.removeWorldling( this );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization Methods
-	// --------------------------------
+	//---------------------------------
 	// Setup the worldling [object].
 	// RETURNS: [boolean] `true` if yes, else `false` if not.
 	setup() {
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor Point [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create focal anchor [object] for animation rendering in viewport camera
 		// NOTE: Focus is in 1px units because it is relative to viewport canvas, not level grid.
 		const focus = new Anchor();      // create focal point
@@ -76,9 +76,9 @@ class JestWorldling extends JestSavable {
 		return true; // successfully started
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Loop
-	// --------------------------------
+	//---------------------------------
 	// Central worldling render loop.
 	// RETURNS: [bool] whether render succeeded or not.
 	// * elapsedTime  - how much time has passed since the ticker started.
@@ -111,9 +111,9 @@ class JestWorldling extends JestSavable {
 		return true; // rendered
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Gameboard Information
-	// --------------------------------
+	//---------------------------------
 	// Determine whether [object] is remote (serverside) or local.
 	// RETURNS: [bool] whether [object] is serverside or local.
 	get remote() {
@@ -148,9 +148,9 @@ class JestWorldling extends JestSavable {
 		this._status = val;        // update status
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// World Positioning
-	// --------------------------------
+	//---------------------------------
 	// Get the user's level (world tile map JestLevel [object]).
 	// RETURNS: [object] JestLevel or [...] on fail.
 	get level() {
@@ -207,9 +207,9 @@ class JestWorldling extends JestSavable {
 		this._visible = val===true;
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Visual Handling
-	// --------------------------------
+	//---------------------------------
 	// Get the object's AnimationView (visual [object]).
 	// RETURNS: [object] AnimationView or [...] on fail.
 	get view() {
@@ -230,9 +230,9 @@ class JestWorldling extends JestSavable {
 		this._view = view; // change view
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Game Methods
-	// --------------------------------
+	//---------------------------------
 	// Check if the [object] is onwall.
 	// RETURNS: [boolean] `true` if yes, else `false` if not.
 	// * anchor        - [object] Anchor (units must match tileGrid).

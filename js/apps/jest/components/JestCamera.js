@@ -12,9 +12,9 @@ class JestCamera extends JestMatrix {
 	// Object properties
 	padding			= 0;			// [int] Optional padding around the viewport (in pixels).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * padding	- [int] Optional extra padding (in pixels) around the viewport.
@@ -26,9 +26,9 @@ class JestCamera extends JestMatrix {
 		this.anchor.move( 0, 0 );	// [object] Anchor is inherited
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get [object] Coordinates
-	// --------------------------------
+	//---------------------------------
 	// Get level positioning for user's current level.
 	// RETURNS: [object|null] `{ ... }` if found, else `null`.
 	//		Returns the world & global coordinates of the user's current level.
@@ -77,9 +77,9 @@ class JestCamera extends JestMatrix {
 			};
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Screen Calculating
-	// --------------------------------
+	//---------------------------------
 	// Get the viewport dimensions (in pixels) directly from gameboard's anchor.
 	// RETURNS: [object] { width, height }
 	//		Gets the viewport (visible area) width/height, pulled from the gameboard.anchor.
@@ -133,9 +133,9 @@ class JestCamera extends JestMatrix {
 			};
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Coordinate Conversion Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Convert a point from global space to screen space (relative to the camera’s viewport).
 	// RETURNS: [object] { x, y } Screen coordinates.
 	// * globalX	- [int] X coordinate in global space.
@@ -279,9 +279,9 @@ class JestCamera extends JestMatrix {
 			: { level: level.name, x: newX, y: newY };
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Central Rendering Loop
-	// --------------------------------
+	//---------------------------------
 	// Update the camera position so that the given global coordinate (typically the user's position)
 	// is centered, clamped to the world boundaries.
 	update() {

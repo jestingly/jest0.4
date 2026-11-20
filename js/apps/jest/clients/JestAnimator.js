@@ -28,9 +28,9 @@ JestAppsRegistry.AppJestAnimator =
 		board			= null;				// [JestElement] Board for editing the jani.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -38,9 +38,9 @@ JestAppsRegistry.AppJestAnimator =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -54,9 +54,9 @@ JestAppsRegistry.AppJestAnimator =
 			// call parent launch method
 			const ok = await super.launch();
 			if ( !ok ) return false; // failed
-			// --------------------------------
+			//---------------------------------
 			// Post Launch Action(s)
-			// --------------------------------
+			//---------------------------------
 			// Disable all side panels.
 			this.sidebar.disableAllSections();
 			// Force open an empty new jani.
@@ -75,9 +75,9 @@ JestAppsRegistry.AppJestAnimator =
 		// Setup the animator work station inside the app.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async configure() {
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get the jani editing canvas
 			const gameboard	= this.gameboard;   // get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
@@ -88,22 +88,22 @@ JestAppsRegistry.AppJestAnimator =
 			// Get the file menu.
 			const filemenu	= this.filemenu;    // get ref
 
-			// --------------------------------
+			//---------------------------------
 			// Animation Handler [object]
-			// --------------------------------
+			//---------------------------------
 			// Assign the gameboard canvas to the animator for animation rendering
 			const animator	= this.animator;    // access ref
 			animator.canvas	= canvas;           // animator canvas is workspace canvas
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Animator UI Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize user interface plugin(s).
 			await JestAnimator.initPlugins( 'ui', this );
 
-			// --------------------------------
+			//---------------------------------
 			// Extend File Menu [object]
-			// --------------------------------
+			//---------------------------------
 			const animatorActions	= [
 				{ name: 'undo',     text: 'Undo' },
 				{ name: 'redo',     text: 'Redo' },
@@ -136,15 +136,15 @@ JestAppsRegistry.AppJestAnimator =
 			// Delete tool tip:
 			fmBtns.delete.clicker.addAttribute( 'data-tooltip-keys', 'Delete' );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Animator Tool Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize tools plugins.
 			await JestAnimator.initPlugins( 'tools', this );
 
-			/*// --------------------------------
+			/*//---------------------------------
 			// Load Default Game Image(s)
-			// --------------------------------
+			//---------------------------------
 			const fileBufferLoad	= [];
 			// Load default GIF skins.
 			for ( let i=0; i<=31; i++ )
@@ -160,9 +160,9 @@ JestAppsRegistry.AppJestAnimator =
 				]);
 			await this.imager.loadFiles( fileBufferLoad );*/
 
-			// --------------------------------
+			//---------------------------------
 			// Miscellaneous Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Register cabinet file saved event(s).
 			this.register(
 				'file:saved', 'appResponse',
@@ -325,9 +325,9 @@ JestAppsRegistry.AppJestAnimator =
 				cabFile.register(
 					'openFile', 'loadObjects',
 					( { jani } ) => {
-						// --------------------------------
+						//---------------------------------
 						// Emit Successful Load Event
-						// --------------------------------
+						//---------------------------------
 						// Emit an app-jani "open jani file" data event.
 						this.emit( 'loadFileData', null, cabFile, { jani } )
 					});
@@ -383,23 +383,6 @@ JestAppsRegistry.AppJestAnimator =
 				// Set edit history state (undo/redo) limit.
 				view.governor.init( 'edit', 20 );
 
-				// Add file change event listener.
-				view.governor.register(
-					'changed', 'fileChange',
-					( state, snapshot ) => {
-						// Check if the file has changed.
-						switch ( snapshot.action ) {
-							case "dropRegion":
-							case "fillRegion":
-							case "fillTile":
-							case "sparseRegion":
-								// The file has changed.
-								view.file.jot( "changed", true );
-								break;
-							default: break;
-						}
-					});
-
 				// Listen for undo event.
 				view.register(
 					'undo', 'animatorListen',
@@ -431,7 +414,7 @@ JestAppsRegistry.AppJestAnimator =
 					'history:logged', 'labelItem',
 					( item, log ) => {
 						// Broadcast event to custom label history states.
-						this.emit( 'history:logged', null, item, log );
+						this.emit( 'history:logged', null, view, item, log );
 					});
 
 				// Add history panel to the sidebar menu.
@@ -591,9 +574,9 @@ JestAppsRegistry.AppJestAnimator =
 				};
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Enable & Disable
-		// --------------------------------
+		//---------------------------------
 		// Enable the animator application.
 		// RETURNS: [void]
 		enable() {
@@ -702,16 +685,16 @@ JestAppsRegistry.AppJestAnimator =
 			this.emit( 'postupdate', null, e, state, enabled, mode );	// emit hook
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Rendering Method(s)
-		// --------------------------------
+		//---------------------------------
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e	- Ticker event [object] data about frame.
 		draw( e ) {
-			// --------------------------------
+			//---------------------------------
 			// Check State & Status
-			// --------------------------------
+			//---------------------------------
 			// Get active state info.
 			let state	= this.getState(); // get current program state
 			let snapshot, report, mode, enabled, key;
@@ -720,9 +703,9 @@ JestAppsRegistry.AppJestAnimator =
 			mode		= this.skim( 'mode' );
 			if ( !enabled ) return null;
 
-			// --------------------------------
+			//---------------------------------
 			// Check If Canvas Is Available
-			// --------------------------------
+			//---------------------------------
 			// Determine if editor canvas is set.
 			const editor    = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
@@ -744,15 +727,15 @@ JestAppsRegistry.AppJestAnimator =
 				e, state, enabled, mode,
 				editorCtx, sketchCtx );
 
-			// --------------------------------
+			//---------------------------------
 			// Draw Depending Upon Mode
-			// --------------------------------
+			//---------------------------------
 			// Handle mode.
 			switch ( mode ) {
 				case 'running':	// application is running
-					// --------------------------------
+					//---------------------------------
 					// Render the Editor Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
 					if ( state.janiView!==null ) {
 						//--------------------------------
@@ -857,9 +840,9 @@ JestAppsRegistry.AppJestAnimator =
 				default: break; // no mode to draw
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Render JANI Inside of Animator
-			// --------------------------------
+			//---------------------------------
 			// Draw all relevant animation view(s)
 			let views	= [];
 			const view	= state.jani.animation.getView( 'default' );
@@ -876,9 +859,9 @@ JestAppsRegistry.AppJestAnimator =
 			this.animator.render( e, views );	// render views
 			this.animator.draw( views );		// draw views
 
-			// --------------------------------
+			//---------------------------------
 			// Emit Final Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Emit post-draw hooks.
 			this.emit( 'draw', null,
 				e, state, enabled, mode,

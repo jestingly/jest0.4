@@ -16,9 +16,9 @@ class JestTileset extends JestSavable {
 	image			= null;				// [object] ElementImage of loaded image
 	tiledefs		= null;				// [object] JestTiledefs used to define tileset tile properties.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client that this piece belongs to.
 	// * name		- [string] Value of overworld tileset (e.g. 'pics1').
@@ -33,13 +33,13 @@ class JestTileset extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}
@@ -87,9 +87,9 @@ class JestTileset extends JestSavable {
 			throw new Error( `Argument "stem" must be of type [string].` );
 		}
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
-		// --------------------------------
+		//---------------------------------
 		// Load Tileset Image Data
-		// --------------------------------
+		//---------------------------------
 		// Try loading tileset image into gallery
 		await this.client.imager.loadFile( `tilesets/${stem}.png` )
 			.then(
@@ -114,17 +114,17 @@ class JestTileset extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * stem	- [string] Value of URL filename stem to load, without filetype (e.g. 'pics1')
 	async setTiledefs( stem ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.prove(stem,'string') )
 			throw new Error( `Argument 'stem' must be of type [string].` );
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
 		const filename	= `${stem}.tdefs`;
 
-		// --------------------------------
+		//---------------------------------
 		// Load Tileset Tiledefs Data
-		// --------------------------------
+		//---------------------------------
 		// Load tile definitions *.tdefs file
 		await this.client.secretary.loadFile( filename )
 			.then(
@@ -149,9 +149,9 @@ class JestTileset extends JestSavable {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// Tile‐Object Utilities
-	// -------------------------
+	//--------------------------
 	// Build a “generic” tile data object.
 	// RETURNS: { ts, tx, ty }
 	// * tileset	– [string] key used in this.client.gameboard.tilesets (e.g. "pics1").

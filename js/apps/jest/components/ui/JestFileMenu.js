@@ -14,9 +14,9 @@ class JestFileMenu extends JestMenu {
 	title		= null;			// OSElement [object] that contains the display text.
 	titleText	= null;			// [string] Value of title text (optional).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -24,9 +24,9 @@ class JestFileMenu extends JestMenu {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -50,9 +50,9 @@ class JestFileMenu extends JestMenu {
 		this.hideTitle(); // hide title by default
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Sub-Item Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Rename the menu title.
 	// RETURNS: [void].
 	// * val	- [string] Value name of menu to change to.

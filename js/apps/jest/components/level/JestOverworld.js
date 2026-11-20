@@ -15,9 +15,9 @@ class JestOverworld extends JestSavable {
 	matrix			= null;				// 2D [array] JestLevel [objects] being connected
 	width			= null;
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of overworld name (e.g. 'map1').
@@ -33,13 +33,13 @@ class JestOverworld extends JestSavable {
 	// Setup the object [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// render the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true;					// success
 	}
@@ -47,15 +47,15 @@ class JestOverworld extends JestSavable {
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering [canvas]
 		const canvas	= new ElementCanvas();
 		this.canvas		= canvas;
-		// --------------------------------
+		//---------------------------------
 		// Setup Sizing Method(s) [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'overworld', (w,h)=>this.resize(w,h) );
 		// Set tile size

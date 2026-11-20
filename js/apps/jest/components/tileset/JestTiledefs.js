@@ -13,9 +13,9 @@ class JestTiledefs extends JestSavable {
 	// Object properties
 	defs			= null;				// [object] of tileset definitions.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client that this piece belongs to.
 	// * name		- [string] Value of overworld tileset (e.g. 'pics1').
@@ -32,13 +32,13 @@ class JestTiledefs extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}

@@ -19,9 +19,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 			// Get the tileset view & its dimensional information.
 			const tilesetView = client.getState().tilesetView;
 
-			// --------------------------------
+			//---------------------------------
 			// Create Marquee Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Instantiate marquee tool
 			const tool   = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -175,15 +175,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 			client.tabbarTileset.register(
 				'tabChange', 'tilesetMarqueeGrid',
 				() => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
 
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Get the tileset view & its dimensional information.
 					const bounds = s.tilesetView.anchor.getZoomed();
 					// Match the marquee grid to the newly active tileset view.
@@ -205,18 +205,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 					const editorCtx  = editor.el.getContext( '2d' );
 					const paletteCtx = palette.el.getContext( '2d' );
 
-					// --------------------------------
+					//---------------------------------
 					// Draw Tool Visual(s)
-					// --------------------------------
+					//---------------------------------
 					// Get level marquee tool mode.
 					const toolMode   = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
 					if ( toolMode!=='selecting' && toolMode!=='selected'
 						 && toolMode!=='floating' && toolMode!=='dragging' ) return;
 
-					// -----------------------------
+					//------------------------------
 					// Validate Marquee Mask/Trace
-					// -----------------------------
+					//------------------------------
 					// Get tile measurements.
 					const units  = tool.anchor.units;
 					// Check if current marquee has either valid mask or traced rectangle.
@@ -240,9 +240,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/tile
 					// Exit if nothing to process
 					if ( !masked && !traced ) return;
 
-					// -------------------------------
+					//--------------------------------
 					// Mode: selected / selecting
-					// -------------------------------
+					//--------------------------------
 					// Visually show marquee semi-transparent rect.
 					switch ( toolMode ) {
 						case "selected":

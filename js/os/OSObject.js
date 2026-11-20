@@ -57,9 +57,9 @@ class OSObject extends OSCallback {
 	// * ...args	- [array] of breadcrumb [objects]
 	addBreadcrumbs( ...args ) {
 		//console.log( 'jestAlert: Adding breadcrumb trail ...' );
-		// --------------------------------
+		//---------------------------------
 		// Push argument(s)
-		// --------------------------------
+		//---------------------------------
 		for ( const arg of args ) {
 			if ( typeof arg==='object' )
 				this.breadcrumbs.push( arg );
@@ -79,9 +79,9 @@ class OSObject extends OSCallback {
 	// Create a quick reference
 	// RETURNS: [bool] `true` on success, else `false`.
 	ref( key, val ) {
-		// --------------------------------
+		//---------------------------------
 		// Store item in reference(s)
-		// --------------------------------
+		//---------------------------------
 		// Determine the key
 		let keyUnique	= key || jsos.generateKey();
 		while ( this.refs.hasOwnProperty(keyUnique) )

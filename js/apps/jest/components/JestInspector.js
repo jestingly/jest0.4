@@ -17,9 +17,9 @@ class JestInspector extends JestGamepiece {
 	anchors			= null;			// [array] Of [objects] to visually render.
 	running			= false;		// [bool] whether inspector is running.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the game piece [object].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
@@ -28,9 +28,9 @@ class JestInspector extends JestGamepiece {
 		this.anchors	= new Set();	// make anchors a set of [objects]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Debug Handling
-	// --------------------------------
+	//---------------------------------
 	// Turn the debugger on.
 	// RETURNS: [void].
 	// * options [object] of options to turn on
@@ -49,9 +49,9 @@ class JestInspector extends JestGamepiece {
 		//this.client.timeout.register( 'tick', 'debugging' );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Debug Option Toggling
-	// --------------------------------
+	//---------------------------------
 	// Turn the debugger on.
 	// RETURNS: [void].
 	// * options [object] of options to turn on
@@ -86,9 +86,9 @@ class JestInspector extends JestGamepiece {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the debugger ElementCanvas [object]
 	// * canvas		- [object] ElementCanvas object to draw debugging options onto
 	set canvas( canvas ) {

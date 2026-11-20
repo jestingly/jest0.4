@@ -26,9 +26,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 		// * close		- [bool] `true` or `false` whether to include close button
 		windowHeaderConfig( icon, title, minimize=true, maximize=true, close=true ) {
 			let elements	= []; // begin configuration elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Create Window Icon & Title
-			// --------------------------------
+			//---------------------------------
 			// Determine icon
 			if ( icon!==null ) {
 				const configIcon	=
@@ -49,9 +49,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 					text:		title,
 				};
 			elements.push( configTitle ); // push into elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Create Controls
-			// --------------------------------
+			//---------------------------------
 			let controls	= [];
 			// Determine minimize button
 			if ( minimize===true ) {
@@ -112,9 +112,9 @@ JestLibraryRegistry.LibraryHarlequinWindow =
 					elements:	controls
 				};
 			elements.push( configControls ); // push into elements [array]
-			// --------------------------------
+			//---------------------------------
 			// Wrap-Up & Return
-			// --------------------------------
+			//---------------------------------
 			// Return successful configuration [array]
 			return elements;
 		}

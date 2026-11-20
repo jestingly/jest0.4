@@ -12,14 +12,18 @@ class ElementCanvas extends OSElement {
 	anchor     = null;     // [object] Anchor for matrix handling.
 	width      = 100;      // [int] value of canvas width
 	height     = 100;      // [int] value of canvas height
+	// Canvas drawing propert(ies)
+	alpha      = 0;        // [Number] value of current drawing alpha translucency
+	// Object propert(ies)
+	rink       = null;     // [object|null] Rink rectangle in canvas pixels.
 
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
-	// * options		- [object] Configuration options for the class [object].
+	// * options - [object] Configuration options for the class [object].
 	constructor( options={} ) {
-		// --------------------------------
+		//---------------------------------
 		// Configure DOM "Canvas" Data
-		// --------------------------------
+		//---------------------------------
 		options.tag  = 'canvas';
 		super( options ); // call OSObject parent constructor
 		// Handle default canvas size
@@ -33,15 +37,15 @@ class ElementCanvas extends OSElement {
 	// Setup the [object].
 	// RETURNS: [boolean] true or false.
 	setup() {
-		// --------------------------------
+		//---------------------------------
 		// Setup Canvas [object]
-		// --------------------------------
+		//---------------------------------
 		super.setup(); // call parent setup method
 		// Ensure class(es) include element base class(es)
 		this.classes.push( 'jest-canvas' );
-		// --------------------------------
+		//---------------------------------
 		// Create Anchor [object]
-		// --------------------------------
+		//---------------------------------
 		// Create an anchor [object] for moving & size specifications
 		const anchor = new Anchor();    // create central anchor
 		anchor.move( 0, 0 );            // move anchor to default position
@@ -52,25 +56,25 @@ class ElementCanvas extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] true or false.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Add Event Handler(s)
-		// --------------------------------
+		//---------------------------------
 		// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'canvas', (w,h)=>this.resize(w,h) );
-		// --------------------------------
+		//---------------------------------
 		// Render Canvas
-		// --------------------------------
+		//---------------------------------
 		super.render(); // call parent render method
-		// --------------------------------
+		//---------------------------------
 		// Default Orientation(s)
-		// --------------------------------
+		//---------------------------------
 		this.resize ( this.width, this.height );
 		return true;    // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Sizing & Positioning Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Resize the DOM canvas.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * width	- [int] Value of new width.
@@ -98,9 +102,35 @@ class ElementCanvas extends OSElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
+	// Set the alpha translucency drawing mode (0-1).
+	// RETURNS: [boolean] `true` on success else `false` on fail.
+	// * value  - [number] Value of translucency alpha to set canvas drawing mode to.
+	setAlpha( value=1 ) {
+		//--------------------------------
+		// Validate Argument(s)
+		//--------------------------------
+		// Require argument to be a number.
+		if ( !Number.isFinite(value) ) {
+			console.warn( 'setAlpha(): Argument must be a number.' );
+			return false; // fail
+		}
+		// Clamp value between 0 and 1.
+		value = Math.max( 0, Math.min(1,value) );
+		
+		//--------------------------------
+		// Configure Pixel Translucency
+		//--------------------------------
+		// Access the destination canvas drawing context.
+		const ctx  = this.el.getContext( '2d' );
+		// Set opacity (0.0 = invisible, 1.0 = solid)
+		ctx.globalAlpha = value;
+		// Proceed to change the alpha translucency.
+		this.alpha = value;
+	}
+
 	// Render a canvas into this canvas.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * canvas	- [ElementCanvas] Source canvas to render.
@@ -314,5 +344,67 @@ class ElementCanvas extends OSElement {
 		// Collapse canvas.
 		this.resize( 0, 0 );
 		return true; // success
+	}
+
+	//--------------------------------
+	// Get Canvas Mouse Position
+	//--------------------------------
+	// RETURNS: [object] Pointer position in editable pixels.
+	// * event - [MouseEvent] Pointer event to convert.
+	mousePos( event ) {
+		// Resolve the pointer in canvas backing pixels using the existing conversion.
+		const point	 = super.mousePos( event );
+		const bounds = this.getRinkBounds();
+		// Keep signed coordinates so a drag can continue past the level edge.
+		return { x: point.x-bounds.x, y: point.y-bounds.y };
+	}
+
+	//--------------------------------
+	// Get Rink Canvas Bounds
+	//--------------------------------
+	// Set an internal rink (e.g. bleeds, margins, padding).
+	// RETURNS: [void].
+	setRinkBounds( x, y, w, h, cols, rows ) {
+		// Set the internal bleed margin(s) rink.
+		this.rink = { x, y, w, h, cols, rows };
+	}
+
+	// Get the arbitrary rink boundaries.
+	// RETURNS: [object] Rink rectangle as { x, y, w, h }.
+	getRinkBounds() {
+		// Use the entire canvas by default.
+		return this.rink ?? { x: 0, y: 0, w: this.width, h: this.height };
+	}
+
+	//--------------------------------
+	// Get Rink Client Bounds
+	//--------------------------------
+	// RETURNS: [object|null] Rink rectangle in viewport coordinates.
+	getRinkClientBounds() {
+		// Measure the displayed canvas and find the editable pixel rectangle.
+		const rect = this.el.getBoundingClientRect();
+		const { x, y, w, h } = this.getRinkBounds();
+
+		// A collapsed or hidden canvas cannot receive a drop.
+		if ( !this.el.width || !this.el.height || !rect.width || !rect.height || !w || !h )
+			return null; // fail
+
+		// Convert backing pixels to viewport distances on both axes.
+		const scaleX = rect.width / this.el.width;
+		const scaleY = rect.height / this.el.height;
+		const left   = rect.left + x*scaleX;
+		const top    = rect.top + y*scaleY;
+		return { left, top, right: left+w*scaleX, bottom: top+h*scaleY, scaleX, scaleY };
+	}
+
+	//--------------------------------
+	// Test Rink Position
+	//--------------------------------
+	// RETURNS: [boolean] `true` if local point is inside the rink.
+	// * point - [object] Coordinates returned by mousePos().
+	containsRinkPoint( point ) {
+		// Test against the active level's size in canvas pixels.
+		const { w, h } = this.getRinkBounds();
+		return point.x>=0 && point.y>=0 && point.x<w && point.y<h;
 	}
 }

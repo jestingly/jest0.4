@@ -14,9 +14,9 @@ class JestFileJani extends JestFileImage {
 	//modes			= null;				// [array] of possible modes.
 	view			= null;				// AnimationView [object]
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.

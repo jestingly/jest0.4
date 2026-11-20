@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/actionbar.plugi
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Actionbar Toolbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the actionbar toolbar.
 			const actionbar  = new JestToolbar( client );
 			client.actionbar = actionbar; // set actionbar

@@ -37,9 +37,9 @@ class JestToolMarquee extends JestTool {
 	transform     = null;       // Immutable source kept until the floating selection is dropped.
 	transformDrag = null;       // Current handle drag and its starting bounds.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -71,9 +71,9 @@ class JestToolMarquee extends JestTool {
 		this.tracer.graticulate( this.anchor.units ); // match
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Marquee Drawing Target
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -93,9 +93,9 @@ class JestToolMarquee extends JestTool {
 		this.target	= target;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the marquee tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -142,9 +142,9 @@ class JestToolMarquee extends JestTool {
 		return true;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Option(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the multiselectability of the marquee.
 	// RETURNS: [void]
 	// * enable	- [bool] Whether to allow multiselectability (true) or not (false).
@@ -194,12 +194,10 @@ class JestToolMarquee extends JestTool {
 		//-------------------------
 		// Create the mouse click event for selection start.
 		this.target.register(
-			'mousedown', 'selectStart',
-			e=>this.checkClick(e), 'dom' );
+			'mousedown', 'selectStart', e=>this.checkClick(e), 'dom' );
 		// Update the cursor when the pointer moves over the canvas.
 		this.target.register(
-			'mousemove', 'transformCursor',
-			e=>this.updateTransformCursor(e), 'dom' );
+			'mousemove', 'transformCursor', e=>this.updateTransformCursor(e), 'dom' );
 		//-------------------------
 		// Emit Reset Event
 		//-------------------------
@@ -216,8 +214,8 @@ class JestToolMarquee extends JestTool {
 	// RETURNS: [object] { x, y, w, h } in pixel units or [null] for deselect.
 	getBounds() {
 		// If no selection is made, return null.
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode==='empty' ) return null;
 		// Get anchor's logical (grid) values
 		const x	= this.anchor.x * this.anchor.units;
@@ -244,27 +242,31 @@ class JestToolMarquee extends JestTool {
 		// Calibrate Mode
 		//-------------------------
 		// Mode / enableability requirement
-		const enabled  = this.skim( 'enabled' );
-		let mode       = this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		let mode      = this.skim( 'mode' );
 		if ( !enabled ) return;
+
+		// Require a click inside the defined rink before changing the selection.
+		const mouse   = this.target.mousePos( e );
+		if ( !this.target.containsRinkPoint(mouse) ) return;
 
 		//-------------------------
 		// Check Keyboard Action
 		//-------------------------
 		// Get keyboard modifiers.
-		const mod      = this.getModifiers( e );
+		const mod     = this.getModifiers( e );
 		// Determine if shift key is pressed.
-		const add      = mod.shift;
+		const add     = mod.shift;
 		// Check for alt/option key.
-		const sub      = mod.alt;
+		const sub     = mod.alt;
 
 		//-------------------------
 		// Check Click Context
 		//-------------------------
 		// Determine if adding or subtracting.
-		const restart  = !( add || sub );
+		const restart = !( add || sub );
 		// Check if click is inside an active selection.
-		let inside     = this.isClickInsideSelection( e );
+		let inside    = this.isClickInsideSelection( e );
 
 		//-------------------------
 		// Capture Existing State
@@ -312,8 +314,8 @@ class JestToolMarquee extends JestTool {
 					if ( inside ) { // clicked existing marque
 						// Check if selection has been floated yet (clicked / dragged).
 						if ( mode==='selected' ) { // check if lifting embedded
-							this.jot( 'mode', 'floating' );		// marquee is floating
-							this.emit( 'floated', null, this );	// embedded selection lifted
+							this.jot( 'mode', 'floating' );     // marquee is floating
+							this.emit( 'floated', null, this ); // embedded selection lifted
 						}
 					}
 					// Outside selection, restart a new selection
@@ -333,16 +335,15 @@ class JestToolMarquee extends JestTool {
 		}
 
 		// Return helper data.
-		mode		= this.skim( 'mode' ); // update mode
-		const info	= { enabled, mode, add, sub, restart, inside }; // return info
+		mode        = this.skim( 'mode' ); // update mode
+		const info  = { enabled, mode, add, sub, restart, inside }; // return info
 
 		//-------------------------
 		// Calculate Coordinates
 		//-------------------------
 		// Convert mouse event to tile‐coordinates
-		const mouse	= this.target.mousePos( e );
-		const tileX	= Math.floor( mouse.x/this.anchor.units );
-		const tileY	= Math.floor( mouse.y/this.anchor.units );
+		const tileX = Math.floor( mouse.x/this.anchor.units );
+		const tileY = Math.floor( mouse.y/this.anchor.units );
 
 		//-------------------------
 		// Delegate to Task
@@ -370,16 +371,16 @@ class JestToolMarquee extends JestTool {
 		const click = this.target.mousePos( e );
 
 		// Convert pixel to grid coordinate
-		const gx = Math.floor( click.x / this.anchor.units );
-		const gy = Math.floor( click.y / this.anchor.units );
+		const gx    = Math.floor( click.x / this.anchor.units );
+		const gy    = Math.floor( click.y / this.anchor.units );
 
 		// Check if inside bounding box
 		if ( !this.client.grapher.isPointInBounds(gx,gy,this.bounds) )
 			return false; // not inside selection
 
 		// Convert to mask-local space
-		const mx = gx - this.bounds.x;
-		const my = gy - this.bounds.y;
+		const mx    = gx - this.bounds.x;
+		const my    = gy - this.bounds.y;
 
 		// Verify that the mask contains the cell and is active
 		return !!( this.mask[my] && this.mask[my][mx] );
@@ -389,14 +390,14 @@ class JestToolMarquee extends JestTool {
 	// Marquee Rect Handling Method(s)
 	//-----------------------------
 	// Create a select rect.
-	// * x,y	- [int] Coordinates (in tile units) of rect top-left location.
-	// * w,h	- [int] Dimensions (in tile units) of rect width x height.
-	// action	- [string] Value of action name: 'add', 'sub', 'replace'
+	// * x,y   - [int] Coordinates (in tile units) of rect top-left location.
+	// * w,h   - [int] Dimensions (in tile units) of rect width x height.
+	// action  - [string] Value of action name: 'add', 'sub', 'replace'
 	createRect( x, y, w, h, type='add' ) {
 		// Validate argument(S).
 		if ( !['add','sub','replace'].includes(type) ) {
 			console.warn( `Unknown argument for marquee rect type ${type}` );
-			return false;
+			return false; // abort
 		}
 		// Compute rectangle
 		const rect = { x, y, w, h, type };
@@ -438,14 +439,10 @@ class JestToolMarquee extends JestTool {
 		// Clamp Boundaries
 		//-------------------------
 		// Don't go below 0
-		tx	= Math.max( 0, tx );
-		ty	= Math.max( 0, ty );
-		// Get target width/height (in tile units)
-		const tw	= this.target.width  / this.anchor.units;
-		const th	= this.target.height / this.anchor.units;
+		const { cols: tw, rows: th } = this.getTargetGridSize();
 		// Don't go beyond the matrix
-		this.clickX	= Math.min( tx, tw ),
-		this.clickY	= Math.min( ty, th );
+		this.clickX = Math.min( tx, tw ),
+		this.clickY = Math.min( ty, th );
 		// Begin tracing the new selection.
 		this.tracer.move( this.clickX, this.clickY ); // move anchor to new location
 		this.tracer.resize( 0, 0 ); // resize the anchor
@@ -480,26 +477,25 @@ class JestToolMarquee extends JestTool {
 		// Require the tool to be available.
 		if ( !this.usable() ) return; // tool unavailable
 		// Mode / enableability requirement
-		const enabled	= this.skim( 'enabled' );
-		const mode		= this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='selecting' ) return;
 
 		//-------------------------
 		// Calculate Size & Location
 		//-------------------------
 		// Use helper method to calculate.
-		const mod		= this.getModifiers( e );
-		const click		= this.target.mousePos( e );
-		const tw		= this.target.width  / this.anchor.units;
-		const th		= this.target.height / this.anchor.units;
-		const tileX		= Math.floor( click.x / this.anchor.units );
-		const tileY		= Math.floor( click.y / this.anchor.units );
+		const mod     = this.getModifiers( e );
+		const click   = this.target.mousePos( e );
+		const { cols: tw, rows: th } = this.getTargetGridSize();
+		const tileX   = Math.floor( click.x / this.anchor.units );
+		const tileY   = Math.floor( click.y / this.anchor.units );
 		const { startX, startY, width, height } =
 			this.applyModifiersToRect( mod, this.clickX, this.clickY, tileX, tileY, tw, th );
 
-		// -----------------------------
+		//------------------------------
 		// Update & Emit Event(s)
-		// -----------------------------
+		//------------------------------
 		// Move and resize the anchor
 		this.tracer.move( startX, startY );
 		this.tracer.resize( width, height );
@@ -520,9 +516,9 @@ class JestToolMarquee extends JestTool {
 		const { x, y, w, h } = this.tracer.getBounds();
 		const units  = this.anchor.units;
 
-		// ------------------------------
+		//-------------------------------
 		// Compute rect & preserve action
-		// ------------------------------
+		//-------------------------------
 		// Get keyboard modifiers.
 		const mod    = this.getModifiers( e );
 		// Reset the marquee tool for new selection.
@@ -710,9 +706,9 @@ class JestToolMarquee extends JestTool {
 		this.emit( 'selected', null, this );
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Cancel a Selection
-	// -------------------------------
+	//--------------------------------
 	// Cancel a selection.
 	// RETURNS: [void].
 	cancel() {
@@ -729,21 +725,13 @@ class JestToolMarquee extends JestTool {
 		this.reset(); // reset the marquee
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Compute Selection Mask
-	// -------------------------------
+	//--------------------------------
 	// Merges all rects (add/sub/replace) into a boolean mask
 	// and asks the canvas to redraw the overlay.
 	// RETURNS: [void].
 	_computemask() {
-		//-------------------------
-		// Setup Computation Vars
-		//-------------------------
-		// Setup grid dimensions in tiles.
-		const units = this.anchor.units;
-		const cols  = this.target.width  / units;
-		const rows  = this.target.height / units;
-
 		//-------------------------
 		// Find total bounding box
 		//-------------------------
@@ -925,9 +913,9 @@ class JestToolMarquee extends JestTool {
 		this.target.register( 'mousemove', 'dragging', e=>this.dragSelection(e), 'window' );
 		this.target.register( jsos.mouseUps, 'dragged', e=>this.endDragSelection(e), 'window' );
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Duplicate Selection
-		// -----------------------------
+		//------------------------------
 		// Get key modifiers.
 		const mod = this.getModifiers( e );
 		// If user holds Alt/Option while dragging, emit 'duplicate'.
@@ -1045,9 +1033,9 @@ class JestToolMarquee extends JestTool {
 		this.emit( 'deselected', null, this );
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Get Modifiers
-	// -----------------------------
+	//------------------------------
 	// Returns modifier flags based on current mouse event.
 	getModifiers( e ) {
 		return {
@@ -1059,9 +1047,9 @@ class JestToolMarquee extends JestTool {
 			};
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Modifier Helper: Apply Square or Axis Lock
-	// -----------------------------
+	//------------------------------
 	// Adjusts width, height, startX/startY based on modifier flags.
 	applyModifiersToRect( mod, clickX, clickY, tileX, tileY, tw, th ) {
 		// Calculate bounds before moving anchor
@@ -1088,9 +1076,9 @@ class JestToolMarquee extends JestTool {
 		width      = endX - startX;
 		height     = endY - startY;
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Force Square Mode
-		// -----------------------------
+		//------------------------------
 		// If both Shift+Alt/Option are held, force square selection box.
 		// Square modifier
 		/*if ( mod.square ) {
@@ -1106,9 +1094,9 @@ class JestToolMarquee extends JestTool {
 			height	= Math.min( size, th-startY );
 		}
 
-		// -----------------------------
+		//------------------------------
 		// Modifier: Lock Axis (Shift)
-		// -----------------------------
+		//------------------------------
 		// If only Shift is held (without Alt), lock to dominant axis.
 		// NOTE: This is the axis-lock modifier plug.
 		else if ( mod.axisLock ) {
@@ -1120,9 +1108,9 @@ class JestToolMarquee extends JestTool {
 		return { startX, startY, width, height };
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Selection State
-	// --------------------------------
+	//---------------------------------
 	// Capture the current marquee without modifying it.
 	// RETURNS: [void].
 	getSelectionState() {
@@ -1203,9 +1191,9 @@ class JestToolMarquee extends JestTool {
 		return true;
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Transform Method(s)
-	// -----------------------------
+	//------------------------------
 	// Find which resize handle, if any, was clicked.
 	// RETURNS: [string|null] Handle name: nw, n, ne, e, se, s, sw or w.
 	// * e - Mouse event in workspace coordinates.
@@ -1224,6 +1212,8 @@ class JestToolMarquee extends JestTool {
 
 		// Get the mouse position in the same canvas coordinate space.
 		const mouse   = this.target.mousePos( e );
+		// Limit handle hit-testing to the permittable rink area.
+		if ( !this.target.containsRinkPoint(mouse) ) return null;
 
 		// Keep handles in a consistent clickable size in canvas pixels.
 		const hitSize = 9;
@@ -1346,8 +1336,7 @@ class JestToolMarquee extends JestTool {
 		const units  = this.anchor.units;
 		const tileX  = Math.round( mouse.x/units );
 		const tileY  = Math.round( mouse.y/units );
-		const cols   = this.target.width / units;
-		const rows   = this.target.height / units;
+		const { cols, rows } = this.getTargetGridSize();
 
 		// Start with the bounds that were visible when this drag began.
 		const start  = this.transformDrag.bounds;
@@ -1461,6 +1450,17 @@ class JestToolMarquee extends JestTool {
 
 		// An empty string restores the canvas's normal CSS cursor.
 		canvas.style.cursor = cursors[handle] ?? '';
+	}
+
+	//--------------------------------
+	// Get Target Grid Size
+	//--------------------------------
+	// RETURNS: [object] Editable tile counts as { cols, rows }.
+	getTargetGridSize() {
+		// Use the level's exact tile counts when the workspace supplies them.
+		const units	= this.anchor.units;
+		const { w, h, cols=w/units, rows=h/units } = this.target.getRinkBounds();
+		return { cols, rows };
 	}
 
 	//-------------------------

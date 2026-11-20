@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Get File Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Get the tabbar.
 			const tabbarFile	= client.tabbarFile; // get tabbar
 			const button		= client.tabbarFile.buttons.new; // new file (+) button
@@ -106,9 +106,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 			// * prevView	- [object] JestFileView to deactivate from editing.
 			//   action	- [string] Type of action taking place: 'open', 'switch', 'close', etc.
 			proto.tabbarFileChange = async function( nextView, prevView=null, action=null ) {
-				// --------------------------------
+				//---------------------------------
 				// Teardown Previous View (if supplied)
-				// --------------------------------
+				//---------------------------------
 				// Check if a previous view is hiding.
 				if ( prevView!==null ) {
 					//--------------------------------
@@ -119,9 +119,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					this.sidebar.refit( 'history' ); // refit history
 				}
 
-				// --------------------------------
+				//---------------------------------
 				// Resize Gameboard Canvas to Match File Dimensions
-				// --------------------------------
+				//---------------------------------
 				// Attempt to get the canvas.
 				const workspace	= this.gameboard.display.getCanvas( 'workspace' );
 				const sketchpad	= this.gameboard.display.getCanvas( 'sketchpad' );
@@ -137,10 +137,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					//--------------------------------
 					// Resize Canvases
 					//--------------------------------
-					// Resize canvases to match new active target's viewport.
-					const bounds = nextView.anchor.getZoomed();
-					workspace.resize( bounds.display.w, bounds.display.h );
-					sketchpad.resize( bounds.display.w, bounds.display.h );
+					// Resize canvases to match active tab's level viewport.
+					this.layoutLevelWorkspace( nextView, workspace, sketchpad );
 
 					//--------------------------------
 					// Switch Active File In Cabinet
@@ -162,11 +160,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarFil
 					nextView.history.show();         // show history
 					this.sidebar.refit( 'history' ); // refit history
 				}
+				// No view found.
 				else {
-					// --------------------------------
+					//---------------------------------
 					// Check If Canvas Is Available
-					// --------------------------------
+					//---------------------------------
 					// Shrink gameboard to invisible.
+					workspace.rink = null;
 					workspace.resize( 0, 0 );
 					// Clear the canvas contents.
 					workspace.clear();

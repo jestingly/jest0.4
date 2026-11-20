@@ -15,9 +15,9 @@ class JestFileViewer extends JestElement {
 	listView	= null;			// [JestListColumnated]
 	client		= null;			// CMS client
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.

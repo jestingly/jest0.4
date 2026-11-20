@@ -176,9 +176,9 @@ class JestInputNumber extends JestInput {
 		}
 	}
 
-	// -------------------------
+	//--------------------------
 	// Convenient Method(s)
-	// -------------------------
+	//--------------------------
 	// Updates the slider range to match limit(s).
 	// current selected tab's animation layer.
 	//   min – [number] minimum value (default = 0)

@@ -181,9 +181,9 @@ class JestToolbox extends JestElement {
 		this.emit( 'postequip', null, toolName );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Clear Active Tool
-	// --------------------------------
+	//---------------------------------
 	// Disables all tools except those co-opted by new activeTool.
 	// * nameOrTool – optional [string|object] Tool name or tool whose co-opted tools should NOT be disabled.
 	clearActiveTool( nameOrTool ) {

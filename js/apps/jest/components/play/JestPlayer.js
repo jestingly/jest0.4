@@ -10,16 +10,16 @@ console.log( 'jestAlert: js/apps/jest/components/play/JestPlayer.js loaded' );
 //-------------------------
 // Represents a root player [object] with animations for different parts (head, sword, body).
 class JestPlayer extends JestHuman {
-	// --------------------------------
+	//---------------------------------
 	// Account Propert(ies)
-	// --------------------------------
+	//---------------------------------
 	// World data
 	id				= null;				// [int] Value of guest account ID (e.g. 120145).
 	username		= null;				// [string] Value of user username (e.g. 'Antago').
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Initializes the Guest.
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.

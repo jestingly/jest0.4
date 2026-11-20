@@ -14,9 +14,9 @@ class JestGamepiece extends OSCallback {
 	client		= null;				// [object] Application client reference.
 	_skey		= null;				// [string] Value of unique [object] key.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Initializes the game piece [object].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
@@ -27,9 +27,9 @@ class JestGamepiece extends OSCallback {
 		this.skey	= key;			// set unique key as [object] system key
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Unique Key Handling
-	// --------------------------------
+	//---------------------------------
 	// Get the [object] unique system key value.
 	// RETURNS: [string] Value of unique [object] skey.
 	get skey() {

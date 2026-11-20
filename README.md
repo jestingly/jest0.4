@@ -1,4 +1,4 @@
-# jest0.42
+# jest0.43
 
 ```text
 //-------------------------------------------------------
@@ -20,6 +20,12 @@ Edit the following files to configure your application:
 • css/vars_local.css
 • js/apps/jest/components/JestConfiguration_loc.js
 • js/apps/jest/components/JestConfiguration_rem.js
+
+//-------------------------------------------------------
+       DEVELOPER NOTES • CHANGES from v0.42 to v0.43
+//-------------------------------------------------------
+
+• You can now view an overworld "neighboring levels" preview during editing.
 
 //-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.41 to v0.42

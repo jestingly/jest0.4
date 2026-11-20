@@ -58,13 +58,13 @@ class DockShortcut extends OSElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
 		console.log( 'jestAlert: Rendering dock shortcut ...' );
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();					// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Add icon to dock app
-		// --------------------------------
+		//---------------------------------
 		// Create icon
 		const options	=
 			{
@@ -76,9 +76,9 @@ class DockShortcut extends OSElement {
 		icon.el.src		= jestGetURL( this.app.icon );
 		this.el.appendChild( icon.el );	// add icon to the dock appl
 		this.icon		= icon;			// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Add tooltip to shortcut
-		// --------------------------------
+		//---------------------------------
 		/*const tooltip	= new Tooltip( { text: this.app.name } );
 		this.el.appendChild( tooltip.el ); // add tooltip to the dock shortcut
 		this.tooltip	= tooltip;		// cross-reference*/

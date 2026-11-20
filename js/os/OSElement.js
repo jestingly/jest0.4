@@ -8,22 +8,22 @@ console.log( 'jestAlert: js/os/OSElement.js loaded' );
 // Jest HTML DOM Element class
 class OSElement extends OSEventTarget {
 	// Element properties
-	el				= null;		// DOM element [object]
-	tag				= null;		// DOM element type [string]
-	id				= null;		// id [string] attribute value of DOM element
-	classes			= null;		// class(es) [stray] attribute value of DOM element
-	attributes		= null;		// [object] of attributes
-	text			= null;		// [string] value of inner text
+	el         = null;      // DOM element [object]
+	tag        = null;      // DOM element type [string]
+	id         = null;      // id [string] attribute value of DOM element
+	classes    = null;      // class(es) [stray] attribute value of DOM element
+	attributes = null;      // [object] of attributes
+	text       = null;      // [string] value of inner text
 
 	// Creates the class [object] with configurable components.
 	// RETURNS: [object] A new instance.
-	// * options		- [object] Configuration options for the class [object].
+	// * options - [object] Configuration options for the class [object].
 	constructor( options={} ) {
 		super( options ); // call parent constructor
-		this.tag			= options.tag || 'div';			// [string] value of HTML markup tag
+		this.tag			= options.tag || 'div';   // [string] value of HTML markup tag
 		// Setup element properties
-		this.id				= options.id ?? null;			// HTML id [string] value
-		this.classes		= options.classes ?? [];		// HTML class(es) [stray] value(s)
+		this.id				= options.id ?? null;     // HTML id [string] value
+		this.classes		= options.classes ?? [];  // HTML class(es) [stray] value(s)
 		let	classesDataType	= jsos.datatype( this.classes );
 		if ( classesDataType!=='array' )
 			this.classes	= classesDataType==='string' ? [this.classes] : [];
@@ -31,35 +31,35 @@ class OSElement extends OSEventTarget {
 		this.text			= options.text ?? '';
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the DOM element [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	setup() {
-		return super.setup();	// call parent setup method
+		return super.setup(); // call parent setup method
 	}
 
 	// Render the OSElement [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
-		this.createElement();				// Create the DOM element [object]
-		this.initCallbacks();				// apply initial callback(s)
-		//this._attachEventListeners();		// apply callback listeners
-		return true;						// sucess
+		//---------------------------------
+		this.createElement();   // Create the DOM element [object]
+		this.initCallbacks();   // apply initial callback(s)
+		//this._attachEventListeners(); // apply callback listeners
+		return true; // sucess
 	}
 
 	// Creates the DOM element for the [object].
 	// RETURNS: [object] The created DOM element.
 	createElement() {
 		// Create the DOM element for the panel.
-		const el	= jsos.generateElement( this.tag, this.id, this.classes, this.text, this.objectURL );
-		this.el		= el;					// cross-reference to DOM element
+		const el = jsos.generateElement( this.tag, this.id, this.classes, this.text, this.objectURL );
+		this.el  = el;                  // cross-reference to DOM element
 		// Inject inner text content.
-		this.el.innerHTML	= this.text;	// clear existing content
+		this.el.innerHTML = this.text;  // clear existing content
 		// Use enhanced attribute method instead of raw loop
 		if ( typeof this.attributes==='object' && this.attributes!==null )
 			this.addAttributes( this.attributes );
@@ -335,24 +335,26 @@ class OSElement extends OSEventTarget {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Inner Content Handling
-	// --------------------------------
+	//---------------------------------
 	// Set the inner text of an element.
 	// NOTE: This replaces all the inner content.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	// * text	- [string] Content to display insid the element.
 	setText( text ) {
 		// Replace text content with text.
 		this.el.textContent = text;
+		return this; // return element
 	}
 	// Set the inner HTML of an element.
 	// NOTE: This replaces all the inner content.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	// * text	- [string] HTML to display insid the element.
 	setHTML( text ) {
 		// Replace inner HTML with text.
 		this.el.innerHTML = text;
+		return this; // return element
 	}
 
 	//--------------------------------
@@ -516,23 +518,25 @@ class OSElement extends OSEventTarget {
 	// Show DOM Element
 	//--------------------------------
 	// Makes DOM element visible.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	show() {
 		// See if element exists.
 		if ( !this.el ) return;
 		// Remove "hidden" class from element.
 		this.removeClass( 'hidden' );
+		return this; // return element
 	}
 
 	//--------------------------------
 	// Hide DOM Element
 	//--------------------------------
 	// Hides DOM element from document.
-	// RETURNS: [void]
+	// RETURNS: [OSElement] reference for chainlinking.
 	hide() {
 		// See if element exists.
 		if ( !this.el ) return;
 		// Add "hidden" class to element.
 		this.addClass( 'hidden' );
+		return this; // return element
 	}
 }

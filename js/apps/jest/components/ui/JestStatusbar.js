@@ -13,9 +13,9 @@ class JestStatusbar extends JestElement {
 	// Object properties
 	status			= null;				// [object] Panel used for general text status display.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -23,9 +23,9 @@ class JestStatusbar extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -34,9 +34,9 @@ class JestStatusbar extends JestElement {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['statusbar'].mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Status Bar Display(s)
-		// --------------------------------
+		//---------------------------------
 		// Create statusbar & status display.
 		const status	= new JestDisplay( this );
 		status.build( 'status', ['status'] );	// build display
@@ -67,9 +67,9 @@ class JestStatusbar extends JestElement {
 		return super.jot( key, val ); // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Log & Display Status-Text
-	// --------------------------------
+	//---------------------------------
 	// Log the message inside the status bar (without updating).
 	// RETURNS: [void]
 	// * text	- [string] Content to save as the status bar status.
@@ -91,21 +91,21 @@ class JestStatusbar extends JestElement {
 	// RETURNS: [void]
 	// * text	- [string] Content to display in the status bar.
 	update() {
-		// --------------------------------
+		//---------------------------------
 		// Get Initial Message & Parse
-		// --------------------------------
+		//---------------------------------
 		// Parse the message & emit an event (for optional additional parsing).
 		const message	= this.skim( 'message' );
 		this.jot( 'parsed', message ); // raw message
-		// --------------------------------
+		//---------------------------------
 		// Emit Parse Event (for external parsing)
-		// --------------------------------
+		//---------------------------------
 		// Emit queued event.
 		this.emit( 'parsed', null, message );
 		const parsed	= this.skim( 'parsed' );
-		// --------------------------------
+		//---------------------------------
 		// Update Statusbar Visible Message
-		// --------------------------------
+		//---------------------------------
 		// Display status inside statusbar DOM.
 		if ( this.status?.panel?.el )
 			this.status.panel.setHTML( parsed );

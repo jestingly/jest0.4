@@ -39,9 +39,9 @@ class JestCloud extends JestElement {
 		this.initModalRename();    // create rename modal
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -80,9 +80,9 @@ class JestCloud extends JestElement {
 		// Add file browser to the cloud panel.
 		this.container.addPanel( 'browser', fileViewer.panel );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar  = new JestToolbar( this );
 		this.toolbar   = toolbar; // set toolbar

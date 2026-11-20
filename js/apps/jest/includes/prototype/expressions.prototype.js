@@ -5,18 +5,18 @@
 //-------------------------------------------------------
 console.log( 'jestAlert: js/apps/jest/includes/prototype/expressions.prototype.js loaded' );
 
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // fornest( root, pathArray, handler )
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // Iterates a nested iterable by following a chain of
 // string keys inside an object. When the final nested
 // container is reached, iterate its entries and call handler.
-// ---------------------------------------------------------
+//----------------------------------------------------------
 // * root			[object] Root object container.
 // * pathArray		[array]  Array of string keys representing
 //							the nested lookup path.
 // * handler		[func]   Function receiving (key, val).
-// ---------------------------------------------------------
+//----------------------------------------------------------
 function fornest( root, pathArray, handler ) {
 	//-----------------------------------------------------
 	// Validate input

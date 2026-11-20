@@ -40,7 +40,7 @@ class JestListItem extends JestElement {
 
 	//--------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -50,9 +50,9 @@ class JestListItem extends JestElement {
 		if ( classes===null ) classes = [];
 		super.build( "div", name, ['jest-list-item'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Creating List Item
-		// --------------------------------
+		//---------------------------------
 		// Create item as Panel [object].
 		//const icon	= new Panel({ tag: 'img', classes: ['item-icon'], attributes: { src: this.data?.iconURL ?? 'default.png' } });
 		//this.panel.addPanel( 'icon',  icon );

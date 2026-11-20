@@ -56,18 +56,18 @@ class Jest extends Application {
 	noticer			= null;					// JestNoticer [object] for
 	//modal			= null;					// Modal [object] for action confirmation handling.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Creates the application.
 	// * options	- [object] Configuration options for the application.
 	constructor() {
 		super(); // call the parent application constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Check if the client type matches value.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * name	- [string] value of client name.
@@ -76,9 +76,9 @@ class Jest extends Application {
 		return name===this.id ? true : false;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the application.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
@@ -92,23 +92,23 @@ class Jest extends Application {
 		// call parent launch method
 		if ( !super.launch() ) return false; // failed
 
-		// --------------------------------
+		//---------------------------------
 		// Create State Handler [objects]
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the settings [object].
 		this.settings	= {}; // fresh empty settings [object] to start
 		// Instantiate the governor.
 		this.governor	= new JestGovernor( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Validation Handler(s)
-		// --------------------------------
+		//---------------------------------
 		// Instantiate the parser [object].
 		this.parser		= new JestParser( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Window [object]
-		// --------------------------------
+		//---------------------------------
 		// Initialize modal-specific components
 		const title		= this.name+' '+this.version+' Window';
 		const windowObj	=
@@ -119,9 +119,9 @@ class Jest extends Application {
 				});
 		if ( windowObj===null ) return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Application Window
-		// --------------------------------
+		//---------------------------------
 		console.log( 'jestAlert: Application `'+this.name+'` launch() opening application window ...' );
 		let open		= this.setupWindow( windowObj );
 		if ( open!==true ) {
@@ -129,26 +129,26 @@ class Jest extends Application {
 			return false; // fail
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Open the window
-		// --------------------------------
+		//---------------------------------
 		// Open application window.
 		windowObj.open();			// open window
 		// App open, idle window
 		this.gearshift( 'idle' );	// idle window
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Building Application [object]
-		// --------------------------------
+		//---------------------------------
 		this.suspend();		// mark application as busy
 		//try { await this.build(); }
 		//catch ( err ) { throw new Error(`${this.name} v. ${this.version} build failed: ${err}`); }
 		await this.build();
 		this.resume();		// mark application available
 
-		// --------------------------------
+		//---------------------------------
 		// Shift Application Into Gear
-		// --------------------------------
+		//---------------------------------
 		// Change mode to running.
 		this.jot( 'mode', 'idle' );				// 🚫 pause everything first
 		this.jot( 'enabled', false );			// 🚫 pause everything first
@@ -164,9 +164,9 @@ class Jest extends Application {
 		// Require windowObj to be part of application windows
 		if ( !this.windows.includes(windowObj) )
 			return false; // "window" not part of application
-		// --------------------------------
+		//---------------------------------
 		// Setup Windo Header
-		// --------------------------------
+		//---------------------------------
 		// Configure the window panel(s)
 		// Build the header
 		/*const header	=
@@ -175,9 +175,9 @@ class Jest extends Application {
 				classes:	[ 'jest-window-header', 'jest-style-harlequin', 'jest-freezeframe' ],
 				elements:	JestEnvironment.librarian.libs.HarlequinWindow.windowHeaderConfig( this.icon, this.name+' '+this.version )
 			};*/
-		// --------------------------------
+		//---------------------------------
 		// Setup Window Body
-		// --------------------------------
+		//---------------------------------
 		// Build the body
 		const body		=
 			{
@@ -186,9 +186,9 @@ class Jest extends Application {
 			};
 		if ( this.id!==null )
 			body.classes.push( `jest-viewport-${this.id}` );
-		// --------------------------------
+		//---------------------------------
 		// Setup Window Footer
-		// --------------------------------
+		//---------------------------------
 		// Build the footer
 		/*const footer	=
 			{
@@ -198,9 +198,9 @@ class Jest extends Application {
 			};*/
 		// Add window elements
 		windowObj.addElements( [ /*header,*/ body, /*footer*/ ] );
-		// --------------------------------
+		//---------------------------------
 		// Setup [JestSpline] Viewport (simply fills body)
-		// --------------------------------
+		//---------------------------------
 		// Create a JestSpline for screen management.
 		this.spline		= new JestSpline( this );
 		this.spline.build(); // build it
@@ -216,9 +216,9 @@ class Jest extends Application {
 	// Build the configuration, inspector, timer, i/o, etc.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async build() {
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Build
-		// --------------------------------
+		//---------------------------------
 		// Determine logic based upon requested status change
 		const currentMode   = this.skim( 'status' );
 		if ( currentMode!=='idle' )
@@ -229,20 +229,20 @@ class Jest extends Application {
 		// Instantiate some variables
 		this.parsers        = {}; // Being the blank parsers [object] for storing parser [objects]
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Pane [object]
-		// --------------------------------
+		//---------------------------------
 		console.log( 'jestAlert: Application `'+this.name+'` building interface ...' );
 
-		// --------------------------------
+		//---------------------------------
 		// Configuration [object]
-		// --------------------------------
+		//---------------------------------
 		const config        = new JestConfiguration( this );
 		this.config         = config;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Default Screen
-		// --------------------------------
+		//---------------------------------
 		// Register the default application loading screen.
 		const screenLoad    = new JestScreen( this );
 		screenLoad.build( 'screen', ['jest-screen-loading-default'] ); // build it
@@ -295,9 +295,9 @@ class Jest extends Application {
 		// Default application to show the loading screen.
 		this.spline.goToScreen( 'loading' );
 
-		// --------------------------------
+		//---------------------------------
 		// Algorithmic [object]
-		// --------------------------------
+		//---------------------------------
 		const grapher       = new Grapher();
 		this.grapher        = grapher;
 		// Setup the graph matrix.
@@ -305,72 +305,79 @@ class Jest extends Application {
 		const length        = config.levelGrid;			// get default level W x H
 		grapher.resize( length, length );				// set graph W x H
 
-		// --------------------------------
+		//---------------------------------
 		// Core Interraction [object]
-		// --------------------------------
+		//---------------------------------
 		// Mouse-event delegation.
 		this.delegator      = new Delegator();
 		// Create context listener (for window / lost context).
 		this.interactor     = new JestInteractor( this );
 		this.interactor.enable(); // enable it
 
-		// --------------------------------
+		//---------------------------------
 		// Inspector / Debugging [object]
-		// --------------------------------
+		//---------------------------------
 		const inspector     = new JestInspector( this );
 		this.inspector      = inspector;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Internal Timer [object]
-		// --------------------------------
+		//---------------------------------
 		// Central game timeout loop
 		this.timers['ani']  = new Timeout( 'raf' );		// Intervals are 16.67ms delay for ~60 FPS (1000ms / 60 ≈ 16.67ms).
 		this.timers['ani'].start();						// start ticking
 		//timers['ani'].register( 'tick', 'game', this.update.bind(this,...args) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Input-Output Handler [object]
-		// --------------------------------
+		//---------------------------------
 		const io            = new JestInputOutput();	// input-output handling
 		this.io             = io;						// set cross-reference to [object] property
 		this.timers['ani'].register( 'tick', 'input-output', e=>io.update(e) );
 
-		// --------------------------------
+		//---------------------------------
 		// File Handling [objects]
-		// --------------------------------
+		//---------------------------------
 		this.transmitter    = new JestTransmitter( this );
 
-		// --------------------------------
+		//---------------------------------
 		// File Handling [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the cabinet [object] for file [object] organization.
-		this.cabinet        = new JestCabinet( this );
+		this.cabinet     = new JestCabinet( this );
 		// Create the secretary [object] for file handling
-		this.secretary      = new JestSecretary( this, `${this.config.webfiles}` );
+		this.secretary   = new JestSecretary( this, `${this.config.webfiles}` );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Main Screen [object]
-		// --------------------------------
+		//---------------------------------
 		// Register the main application screen.
-		const screenMain    = new JestScreen( this );
+		const screenMain = new JestScreen( this );
 		screenMain.build(); // build it
 		// Build the panel
-		this.panel          = screenMain.panel;			// assign main screen as the main panel
+		this.panel       = screenMain.panel; // assign main screen as the main panel
 		this.spline.registerScreen( 'application', screenMain );
 
-		// --------------------------------
-		// Login Handler [object]
-		// --------------------------------
-		// Create the login handler [object] for account interfacing.
-		const login         = new JestLogin( this );
-		this.login          = login; // keep ref
+		//---------------------------------
+		// Sound Handling [object]
+		//---------------------------------
+		// Create primary game soundboard (early) for registering system SFX playback.
+		const soundboard = new JestSoundboard( this, 'primary' );
+		this.soundboard  = soundboard;
 
-		// --------------------------------
+		//---------------------------------
+		// Login Handler [object]
+		//---------------------------------
+		// Create the login handler [object] for account interfacing.
+		const login      = new JestLogin( this );
+		this.login       = login; // keep ref
+
+		//---------------------------------
 		// Cloud Handler [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the cloud handler [object] for backing up data.
-		const cloud         = new JestCloud( this );
-		this.cloud          = cloud; // keep ref
+		const cloud      = new JestCloud( this );
+		this.cloud       = cloud; // keep ref
 
 		/*console.log('TEST: plugin types attached per class');
 		console.log('OSConfigurable.plugins:', Object.keys(OSConfigurable.plugins));
@@ -380,9 +387,9 @@ class Jest extends Application {
 		console.log('OSConfigurable.plugins === JestTiler.plugins:', OSConfigurable.plugins === JestTiler.plugins);
 		console.log('JestTiler.plugins === JestAnimator.plugins:', JestTiler.plugins === JestAnimator.plugins);*/
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize parser plugins.
 		await Jest.initPlugins( 'parsers', this );
 		// Add recognized filetype(s) to secretary
@@ -437,19 +444,19 @@ class Jest extends Application {
 		this.secretary.addFiletype(	// json filetype handler
 			'json', { extension: 'json', parse: 'json', parser: 'json' } );
 		// Create parser [objects]
-		this.parsers.sound		= new JestParserSound( this );
-		this.parsers.jani		= new JestParserJani( this );
+		this.parsers.sound    = new JestParserSound( this );
+		this.parsers.jani     = new JestParserJani( this );
 		await this.parsers.jani.setup(); // setup the janis parser
-		this.parsers.tiledefs	= new JestParserTiledefs( this );
-		this.parsers.level		= new JestParserLevel( this );
-		this.parsers.image		= new JestParserImage( this );
+		this.parsers.tiledefs = new JestParserTiledefs( this );
+		this.parsers.level    = new JestParserLevel( this );
+		this.parsers.image    = new JestParserImage( this );
 		await this.parsers.level.setup(); // setup the level parser
 
-		// --------------------------------
+		//---------------------------------
 		// Image File Organizing Handler
-		// --------------------------------
-		this.gallery		= new JestGallery( this, `${this.config.webfiles}/images`, 'images/default-placeholder.png', 5 );
-		this.imager			= new JestImager( this ); // downloads images
+		//---------------------------------
+		this.gallery = new JestGallery( this, `${this.config.webfiles}/images`, 'images/default-placeholder.png', 5 );
+		this.imager  = new JestImager( this ); // downloads images
 
 		//-------------------------
 		// Preload Core Graphics
@@ -476,9 +483,9 @@ class Jest extends Application {
 		        console.warn( `Failed to preload graphic: ${file}` );
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Register Image Directories
-		// --------------------------------
+		//---------------------------------
 		/*// Register & set default fallback image directory.
 		this.gallery.registerCategory( 'WEB', 'web' );
 		this.gallery.setFallbackCategory( 'WEB' ); // make fallback
@@ -491,33 +498,26 @@ class Jest extends Application {
 		this.gallery.registerCategory( 'SHIELD', 'shields' );
 		this.gallery.registerCategory( 'SWORD', 'swords' );*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Gameboard [object] (useful for organization)
-		// --------------------------------
-		this.gameboard		= new JestGameboard( this );
+		//---------------------------------
+		this.gameboard   = new JestGameboard( this );
 		//this.gameboard.anchor.resize( 480, 270 );		// set board width & height
 
-		// --------------------------------
+		//---------------------------------
 		// Animation Handler [object]
-		// --------------------------------
+		//---------------------------------
 
 		// Create the fantascope [object] for jani handling
-		this.fantascope		= new JestFantascope( this );
+		this.fantascope  = new JestFantascope( this );
 		// Create the animator for animation rendering
-		this.animator		= new AnimationAnimator();	// Create a single Animator instance.
+		this.animator    = new AnimationAnimator();	// Create a single Animator instance.
 
-		// --------------------------------
-		// Sound Handling [object]
-		// --------------------------------
-		// Create primary game soundboard for handling SFX
-		const soundboard	= new JestSoundboard( this, 'primary' );
-		this.soundboard		= soundboard;
-
-		// --------------------------------
+		//---------------------------------
 		// Default Sound Effect(s)
-		// --------------------------------
+		//---------------------------------
 		// Preload default sounds.
-		const preloadMP3	=
+		const preloadMP3 =
 			[
 			'jest_complete.mp3', 'jest_success.mp3',
 			'jest_alert.mp3', 'jest_error.mp3',
@@ -527,10 +527,11 @@ class Jest extends Application {
 			'jest_swatch_add.mp3', 'jest_swatch_remove.mp3',
 			'jest_deflect.mp3', 'jest_login.mp3',
 			'jest_mouse_down.mp3', 'jest_mouse_up.mp3',
-			'jest_tab.mp3', 'jest_collapse.mp3'
+			'jest_tab.mp3', 'jest_collapse.mp3',
+			'jest_select0.mp3', 'jest_none.mp3'
 			];
 		await this.soundboard.preload( preloadMP3 );
-		const preloadWAV	=
+		const preloadWAV =
 			[
 			'jest_copy.wav', 'jest_undo.wav', 'jest_redo.wav', 'jest_delete.wav',
 			'jest_paste.wav', 'jest_float.wav', 'jest_unfloat.wav', 'jest_eyedrop.wav',
@@ -538,31 +539,31 @@ class Jest extends Application {
 			];
 		await this.soundboard.preload( preloadWAV );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Tooltip
-		// --------------------------------
+		//---------------------------------
 		// Initialize loader plugins.
-		this.tooltip		= new JestTooltip( this );
+		this.tooltip  = new JestTooltip( this );
 		this.tooltip.build(); // build the element
 		this.tooltip.enableLiveMode();
 
-		// --------------------------------
+		//---------------------------------
 		// Create Messaging System(s)
-		// --------------------------------
+		//---------------------------------
 		// Create a notification handler.
-		this.noticer		= new JestNoticer( this );
+		this.noticer  = new JestNoticer( this );
 		this.noticer.build(); // build the notification handler
 		this.spline.panel.addPanel( 'noticer', this.noticer.panel );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize loader plugins.
 		await Jest.initPlugins( 'loaders', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Register Window Event(s)
-		// --------------------------------
+		//---------------------------------
 		// Add window blur / focus events.
 		this.windows[0].register( 'visibilitychange', 'app',
 			( e ) => {
@@ -577,7 +578,7 @@ class Jest extends Application {
 		this.disable(); // disable app
 
 		// Create a generic modal message.
-		//const modal			= new JestModal();
+		//const modal = new JestModal();
 		return true; // success
 	}
 
@@ -590,9 +591,9 @@ class Jest extends Application {
 		return super.jot( key, val ); // success
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// UI / Modal Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Snapshot current status flags, then switch into an idle state
 	// (e.g. during window unfocus or modal operation).
 	// RETURNS: [void].
@@ -706,9 +707,9 @@ class Jest extends Application {
 		else return !stack.includes(false) && !stack.includes( allowed );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the button.
 	// RETURNS: [void].
 	enable() {

@@ -158,18 +158,18 @@ class OSCallback extends OSConfigurable {
 		return count;
 	}
 
-	// -------------------------
+	//--------------------------
 	// Helper: Is Promise-like
-	// -------------------------
+	//--------------------------
 	// RETURNS: [bool] Whether v is thenable (Promise-like).
 	// * v	- [any]
 	_isThenable( v ) {
 		return v!=null && (typeof v==='object' || typeof v==='function') && typeof v.then==='function';
 	}
 
-	// -------------------------
+	//--------------------------
 	// Helper: Parse stack for file:line:col
-	// -------------------------
+	//--------------------------
 	// RETURNS: [object] { file, line, col } best-effort from error stack.
 	// * err	- [Error]
 	_parseStack( err ) {
@@ -197,9 +197,9 @@ class OSCallback extends OSConfigurable {
 	}
 
 
-	// -------------------------
+	//--------------------------
 	// Trigger (Async-Aware)
-	// -------------------------
+	//--------------------------
 	// Triggers a specific callback by ID under an event name.
 	// RETURNS: [Promise<any>] Resolves/rejects based on the callback.
 	// * command	- [string] Name of the event.
@@ -287,9 +287,9 @@ class OSCallback extends OSConfigurable {
 	}
 
 
-	// -------------------------
+	//--------------------------
 	// EmitAsync (Configurable)
-	// -------------------------
+	//--------------------------
 	// Configurable async emitter.
 	// RETURNS: [Promise<void|any[]>] Serial resolves void; parallel resolves results array.
 	// * command	- [string] Name of event to emit.

@@ -16,9 +16,9 @@ class JestLoadbar extends JestElement {
 	current		= 0;			// [int] value of current load progress
 	total		= 1;			// [int] value of total to load
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -26,9 +26,9 @@ class JestLoadbar extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -37,9 +37,9 @@ class JestLoadbar extends JestElement {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( "div", name, ['jest-loadbar'].mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Loading Animated Bar Element
-		// --------------------------------
+		//---------------------------------
 		// Add bar element to loadbar panel.
 		this.panel.addElements([{
 			name		: 'bar',
@@ -47,9 +47,9 @@ class JestLoadbar extends JestElement {
 			classes     : [ 'jest-loadbar-bar' ]
 			}]);
 		this.bar		= this.panel.refs.bar;		// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Create Percent Text Element
-		// --------------------------------
+		//---------------------------------
 		// Add text element to bar.
 		this.bar.addElements([{
 			name		: 'text',
@@ -61,9 +61,9 @@ class JestLoadbar extends JestElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Action Handling
-	// --------------------------------
+	//---------------------------------
 	// Reset the loadbar to 0
 	// RETURNS: [void].
 	reset() {

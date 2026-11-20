@@ -14,15 +14,19 @@ class JestFileView extends JestTool {
 	canvas       = null;     // [object] ElementCanvas for drawing.
 	// Reference propert(ies)
 	file         = null;     // [object] JestFile being viewed.
+	// Reference propert(ies)
+	relationship = null;     // [JestFileRelationship] Links owned by this view.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
+		// Construct the relationship object owned by this view.
+		this.relationship = this.createRelationship();
 	}
 
 	//-------------------------
@@ -31,6 +35,8 @@ class JestFileView extends JestTool {
 	// Destroy the view [object]
 	// RETURNS: [void].
 	destroy() {
+		// Release all outgoing links when the view closes.
+		this.relationship?.destroy();
 		// Remove all event(s).
 		this.unregisterAll();
 	}
@@ -40,16 +46,16 @@ class JestFileView extends JestTool {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name     - unique [string] value of component name in the system.
+	// * classes  - [array] of classes to add to panel element.
 	build( name='file-view', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		const defaultClasses = [ 'file-view' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering [canvas]
 		const canvas = new ElementCanvas();
 		this.canvas  = canvas;
@@ -59,8 +65,17 @@ class JestFileView extends JestTool {
 		// Add canvas to palette element
 		this.panel.el.appendChild( canvas.el );
 		// Attach event(s) to re-scale the canvas to match its zoomed dimensions.
-		this.anchor.register(
-			['resize','zoom'], 'canvas', ()=>this.resize() );
+		this.anchor.register( ['resize','zoom'], 'canvas', ()=>this.resize() );
+	}
+
+	//--------------------------------
+	// Create File Relationship
+	//--------------------------------
+	// Create a generic file relationship [object].
+	// RETURNS: [JestFileRelationship] Relationship object for this view.
+	createRelationship() {
+		// Give generic file views named relationship slots.
+		return new JestFileRelationship( this );
 	}
 
 	//-------------------------
@@ -69,7 +84,7 @@ class JestFileView extends JestTool {
 	// Resize the canvas to match its raw dimensions at a requested magnification.
 	// NOTE: This is an event callback method.
 	// RETURNS: [void].
-	resize() {
+	/*resize() {
 		// Get real dimensions (after zoom).
 		const bounds = this.anchor.getZoomed();
 		// Update canvas dimensions
@@ -77,6 +92,25 @@ class JestFileView extends JestTool {
 		console.log( `Resizing canvas to: ${bounds.display.w}x${bounds.display.h}` );
 		// Emit the resized event.
 		this.emit( 'resize', null, bounds.display.w, bounds.display.h );
+	}*/
+
+	// Resize the canvas to match its raw dimensions.
+	// NOTE: This is an event callback method.
+	// RETURNS: [void].
+	resize() {
+		// Read logical dimensions before the workspace applies zoom.
+		const canvas = this.canvas;
+		if ( !canvas ) return;
+
+		// Obtain the canvas dimensions
+		const { w, h } = this.anchor.getBounds();
+		if ( canvas.width===w && canvas.height===h ) return;
+
+		// Reallocate only when the level's actual dimensions change.
+		console.log( `Resizing canvas to: ${w}x${h}` );
+		canvas.resize( w, h );
+		// Emit the resized event.
+		this.emit( 'resize', null, w, h );
 	}
 
 	/*//--------------------------------
@@ -144,9 +178,9 @@ class JestFileView extends JestTool {
 			};
 	}*/
 
-	// --------------------------------
+	//---------------------------------
 	// Open File
-	// --------------------------------
+	//---------------------------------
 	// Opens the file and triggers its view/render logic.
 	// RETURNS: [void].
 	// * file  - [object] JestFile being viewed.
@@ -184,9 +218,9 @@ class JestFileView extends JestTool {
 		return this.file;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void].
 	initView() {
@@ -197,9 +231,9 @@ class JestFileView extends JestTool {
 		this.anchor.graticulate( units ); // set grid size
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Render File
-	// --------------------------------
+	//---------------------------------
 	// Visualizes the file data onto the panel.
 	// RETURNS: [void].
 	renderFile() {

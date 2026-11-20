@@ -14,9 +14,9 @@ class JestFileViewEditor extends JestFileView {
 	governor		= null;				// [JestGovernor] object for state changes.
 	history			= null;				// [JestList] for visually logging state changes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.

@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/tabbarFile.plug
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create File Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the tabbar.
 			const tabbarFile	= new JestTabbar( client );
 			client.tabbarFile	= tabbarFile; // set tabbar

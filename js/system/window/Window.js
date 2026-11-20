@@ -46,9 +46,9 @@ class Window extends BaseWindow {
 	createPanel( data ) {
 		// Require this element to be created
 		if ( this.el===null ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Panel [object]
-		// --------------------------------
+		//---------------------------------
 		let element = null; // define element
 		switch ( data.type ) {
 			case "panel":

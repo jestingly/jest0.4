@@ -35,19 +35,19 @@ class Dock extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();					// call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Add shortcuts to dock
-		// --------------------------------
+		//---------------------------------
 		const shortcuts	= new DockShortcuts();
 		this.el.appendChild( shortcuts.el );
 		this.shortcuts	= shortcuts;	// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Add loadbar to dock
-		// --------------------------------
+		//---------------------------------
 		const loadbar	= new Loadbar();
 		this.el.appendChild( loadbar.el );
 		this.loadbar	= loadbar;		// cross-reference

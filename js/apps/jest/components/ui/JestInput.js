@@ -58,8 +58,8 @@ class JestInput extends JestElement {
 			classes:	[ 'hidden' ],
 			attributes:	{ for: this.id }
 			}]);
-		this.label		= this.panel.refs.label;	// quick-ref
-		this.setLabel( this.labelText );			// set initial label
+		this.label		= this.panel.refs.label; // quick-ref
+		this.setLabel( this.labelText );         // set initial label
 		this.hideLabel(); // hide the label by default
 
 		//--------------------------------

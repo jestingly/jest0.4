@@ -20,9 +20,9 @@ class JSOSInterface extends JSOSUtility {
 	// Setup the window [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create environment
-		// --------------------------------
+		//---------------------------------
 		// Create an OSElement to reference the window.
 		//this.window		= new OSElement();
 		//this.window.el	= window; // set window element as window

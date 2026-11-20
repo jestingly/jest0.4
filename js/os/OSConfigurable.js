@@ -37,11 +37,11 @@ class OSConfigurable {
 	//  - init(instance)				→ called in the constructor, to wire instance-level hooks
 	// * targetClass  - [string|null] optional name of the class to defer for
 	static use( type, plugin ) {
-		// -----------------------
+		//------------------------
 		// Because this.plugins is static to OSConfigurable,
 		// we will ensure that all children have their own
 		// class-specific plugins.
-		// -----------------------
+		//------------------------
 		// Shadow plugins per subclass if not already
 		if ( !Object.hasOwn( this, 'plugins' ) ) {
 			this.plugins = {}; // fork it

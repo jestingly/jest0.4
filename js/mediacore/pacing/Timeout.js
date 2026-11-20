@@ -19,9 +19,9 @@ class Timeout extends OSCallback {
 	pauseTime		= null;						// [number|null] Pause time of ticker.
 	timerId			= null;						// [] Timer ID if using setInterval
 
-	// --------------------------
+	//---------------------------
 	// Initialization
-	// --------------------------
+	//---------------------------
 	// Initializes the timeout.
 	// * delay	- [number] Time interval between ticks in milliseconds.
 	// * mode	- [string] 'timer' or 'raf'.
@@ -35,9 +35,9 @@ class Timeout extends OSCallback {
 		this.jot( mode );
 	}
 
-	// --------------------------
+	//---------------------------
 	// Overloaded Method(s)
-	// --------------------------
+	//---------------------------
 	// Sets the ticker mode.
 	// RETURNS: [void].
 	// * mode	- [string] 'timer' or 'raf' (requestAnimationFrame).
@@ -49,9 +49,9 @@ class Timeout extends OSCallback {
 		super.jot( 'mode', mode );
 	}
 
-	// --------------------------
+	//---------------------------
 	// Toggling Method(s)
-	// --------------------------
+	//---------------------------
 	// Starts the ticker.
 	// RETURNS: [void].
 	start() {
@@ -115,9 +115,9 @@ class Timeout extends OSCallback {
 	}
 
 
-	// --------------------------
+	//---------------------------
 	// Rendering
-	// --------------------------
+	//---------------------------
 	// Main tick method called on each frame.
 	// Calculates elapsed time, maintains consistent timing, and emits tick events.
 	// RETURNS: [void].

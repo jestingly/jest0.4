@@ -47,9 +47,9 @@ class JestLogin extends JestElement {
 	// Generate the top right login-badge.
 	// RETURNS: [void].
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create User Login UI
-		// --------------------------------
+		//---------------------------------
 		// Create a brand logo inside the system bar.
 		const badge =
 			new Panel({
@@ -251,7 +251,13 @@ class JestLogin extends JestElement {
 				// Attempt to login using username & password.
 				this.login( username, password );
 			});
-		modal.addButton( 'cancel', 'Close', () => modal.close() );
+		modal.addButton(
+			'cancel', 'Close',
+			() => {
+				// Close the dialog & play closed "cancel" SFX.
+				modal.close(); // close dialog
+				this.client.soundboard.playSound( 'jest_close0', 'mp3', 1.1 );
+			});
 
 		// Add modal to the DOM & close it.
 		document.body.appendChild( modal.panel.el ); // attach to DOM
@@ -476,9 +482,9 @@ class JestLogin extends JestElement {
 		return hasFieldError;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Reusable Login Requirement
-	// --------------------------------
+	//---------------------------------
 	// Check the current login state and explain why authentication is needed.
 	// RETURNS: [boolean] True when the requested action may continue.
 	// * options.action		- [string] Short action name shown in the notice.

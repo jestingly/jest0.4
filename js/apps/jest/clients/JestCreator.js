@@ -32,9 +32,9 @@ class JestCreator extends Jest {
 	board			= null;				// [JestElement] Board for editing the file.
 	sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * options	- [object] Configuration options for the application.
 	constructor() {
@@ -42,9 +42,9 @@ class JestCreator extends Jest {
 		super();
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Setup the application.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
@@ -64,28 +64,28 @@ class JestCreator extends Jest {
 	// Build the gameboard, user, components, etc.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async build() {
-		// --------------------------------
+		//---------------------------------
 		// Emit Initial Event(s)
-		// --------------------------------
+		//---------------------------------
 		this.emit( 'prebuild', null ); // emit a pre-build hook event
 
-		// --------------------------------
+		//---------------------------------
 		// Add Special HTML Class(es)
-		// --------------------------------
+		//---------------------------------
 		this.windows[0].refs.viewport.addClass( 'jest-viewport-creator' );
 
-		// --------------------------------
+		//---------------------------------
 		// Call Pre-Build Method (if exists)
-		// --------------------------------
+		//---------------------------------
 		try { await this.preset(); }
 		catch ( err ) {
 			console.error( `Pre-build failed: ${err}` );
 			throw err;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Call Super
-		// --------------------------------
+		//---------------------------------
 		await super.build();
 		// change mode async build() {
 		/*try { await super.build(); }
@@ -94,31 +94,31 @@ class JestCreator extends Jest {
 			throw err;
 		}*/
 
-		// --------------------------------
+		//---------------------------------
 		// Set & Get Quick-Refs
-		// --------------------------------
+		//---------------------------------
 		// Get loading-screen loadbar.
 		const loadbar	= this.spline.getScreen('loading').loadbar;
 		// Update progress bar to show a tool has loaded.
 		loadbar.update( 1, 10 ); // step 1 (initialization)
 		//this.windows[0].expand( 800, 300 ); // auto-resize the window
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize method plugin(s).
 		await JestCreator.initPlugins( 'methods', this );
 		loadbar.update(); // step 2
 
-		// --------------------------------
+		//---------------------------------
 		// Create Governor State(s)
-		// --------------------------------
+		//---------------------------------
 		// Instantiate some governor states.
 		this.governor.init( 'clipboard', 1 ); // clipboard has 1 history state
 
-		// --------------------------------
+		//---------------------------------
 		// Create Application Interface [object]
-		// --------------------------------
+		//---------------------------------
 		// Build the panels for the main application screen.
 		this.panel.addElements([
 			// Build the panel
@@ -161,23 +161,23 @@ class JestCreator extends Jest {
 			}]);
 		loadbar.update(); // step 3
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Gameboard [object]
-		// --------------------------------
+		//---------------------------------
 		this.gameboard.display.addCanvas( 'workspace' ); // create gameboard canvas
 		this.gameboard.display.addCanvas( 'sketchpad' ); // create sketchpad canvas
 		const canvas = this.gameboard.display.getCanvas( 'workspace' );
 		canvas.resize( 0, 0 );          // set default board width & height
 
-		// --------------------------------
+		//---------------------------------
 		// Animation Handler [object]
-		// --------------------------------
+		//---------------------------------
 		// Assign the gameboard canvas to the animator for animation rendering
 		this.animator.canvas = canvas;  // Animator canvas is the world "screen"
 
-		// --------------------------------
+		//---------------------------------
 		// Create File Menu [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the file menu.
 		const filemenu = new JestFileMenu( this );
 		this.filemenu  = filemenu;      // store ref
@@ -225,9 +225,9 @@ class JestCreator extends Jest {
 		// Trigger next update.
 		loadbar.update(); // step 4
 
-		// --------------------------------
+		//---------------------------------
 		// Create Input File Select [object]
-		// --------------------------------
+		//---------------------------------
 		// Add file open file-select input [object] to filemenu.
 		const fileSelect	= new JestInputFileSelect( this, this.filetypes );
 		this.fileSelect		= fileSelect;
@@ -249,17 +249,17 @@ class JestCreator extends Jest {
 				this.openFile( fileInfo );
 			});
 
-		// --------------------------------
+		//---------------------------------
 		// Create Easels for File View(s)
-		// --------------------------------
+		//---------------------------------
 		// Create easel(s) list for file view(s).
 		this.easels			= {}; // [object] of easels
 		// Create an easel for viewing & editing files.
 		this.easels.files	= new JestEasel( this );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar		= new JestToolbar( this );
 		this.toolbar		= toolbar; // set toolbar
@@ -275,21 +275,21 @@ class JestCreator extends Jest {
 			});
 		loadbar.update(); // step 5
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Creator UI Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize user interface plugin(s).
 		await JestCreator.initPlugins( 'ui', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Online Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize online plugin(s).
 		await JestCreator.initPlugins( 'online', this );
 
-		// --------------------------------
+		//---------------------------------
 		// Plugin Settings Hook(s)
-		// --------------------------------
+		//---------------------------------
 		// Initialize settings plugin(s).
 		await JestCreator.initPlugins( 'settings', this );
 		loadbar.update(); // step 6
@@ -307,9 +307,9 @@ class JestCreator extends Jest {
 			classes    : ['jest-sidebar-section-header-info']
 			});*/
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbox
-		// --------------------------------
+		//---------------------------------
 		const toolbox	= new JestToolbox( this ); // create toolbox
 		this.toolbox	= toolbox; // keep reference
 		// Register toolbox unequip tool event.
@@ -335,9 +335,9 @@ class JestCreator extends Jest {
 		//--------------------------------
 		await this.configure();
 
-		// --------------------------------
+		//---------------------------------
 		// Add Ticker Event(s)
-		// --------------------------------
+		//---------------------------------
 		// Register the core animation loop using a timer.
 		this.timers['ani'].register(
 			'tick', 'render',
@@ -353,9 +353,9 @@ class JestCreator extends Jest {
 		this.panel.refs.system.addPanel( 'topright', topright.panel );
 		loadbar.update();				// step 10
 
-		// --------------------------------
+		//---------------------------------
 		// Successfully Exit Build
-		// --------------------------------
+		//---------------------------------
 		// Reveal the application screen.
 		this.spline.goToScreen( 'application' );
 		// App built, set built status
@@ -378,9 +378,9 @@ class JestCreator extends Jest {
 	// e	- Ticker event [object] data about frame.
 	update( e ) { }
 
-	// --------------------------------
+	//---------------------------------
 	// Rendering Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Draw the central gameboard.
 	// RETURNS: [void].
 	// e	- Ticker event [object] data about frame.

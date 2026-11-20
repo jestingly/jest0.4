@@ -12,6 +12,7 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestModal.js loaded' );
 // Extends: JestElement
 class JestModal extends JestElement {
 	// Object properties
+	opened          = false;            // [boolean] Whether modal is open or closed
 	titleText		= '';				// [string] title of modal
 	bodyText		= '';				// [string] body content
 	noticeText		= '';				// [string] modal notice message
@@ -70,6 +71,9 @@ class JestModal extends JestElement {
 		this.box = this.panel.refs.box;
 		// Close on overlay click
 		this.panel.refs.overlay.register( 'click', 'close', ()=>this.close(), 'dom' );
+		// Auto-hide the modal for on-demand basis.
+		this.hide();         // hidden
+		this.opened = false; // not open
 	}
 
 	//--------------------------------
@@ -198,11 +202,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a dropdown [select] input to the modal.
 	// RETURNS: [JestInputSelect]
-	// * name			- [string] unique field key
-	// * id				- [string|null] HTML id override
-	// * defaultValue	- [string|null] selected value
-	// * options		- [array] list of value options
-	// * labelText		- [string|null] visible label
+	// * name         - [string] unique field key
+	// * id           - [string|null] HTML id override
+	// * defaultValue - [string|null] selected value
+	// * options      - [array] list of value options
+	// * labelText    - [string|null] visible label
 	addSelect( name, id=null, defaultValue=null, options=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -232,11 +236,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a radio button group to the modal.
 	// RETURNS: [JestInputRadioSet]
-	// * name			- [string] field name
-	// * id				- [string|null] HTML id
-	// * defaultValue	- [string|null] selected value
-	// * options		- [array] set of string labels
-	// * labelText		- [string|null] group label
+	// * name         - [string] field name
+	// * id           - [string|null] HTML id
+	// * defaultValue - [string|null] selected value
+	// * options      - [array] set of string labels
+	// * labelText    - [string|null] group label
 	addRadioSet( name, id=null, defaultValue=null, options=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -258,10 +262,10 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a numeric slider input (0–100 default).
 	// RETURNS: [JestInputRange]
-	// * name			- [string] unique name key
-	// * id				- [string|null] HTML id
-	// * defaultValue	- [number] initial slider value
-	// * labelText		- [string|null] field label
+	// * name         - [string] unique name key
+	// * id           - [string|null] HTML id
+	// * defaultValue - [number] initial slider value
+	// * labelText    - [string|null] field label
 	addRange( name, id=null, defaultValue=0, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -283,11 +287,11 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a numeric [step input] field.
 	// RETURNS: [JestInputNumber]
-	// * name			- [string] unique field key
-	// * id				- [string|null] optional HTML id
-	// * defaultValue	- [number] initial value
-	// * placeholder	- [string|null] placeholder hint
-	// * labelText		- [string|null] visible label
+	// * name         - [string] unique field key
+	// * id           - [string|null] optional HTML id
+	// * defaultValue - [number] initial value
+	// * placeholder  - [string|null] placeholder hint
+	// * labelText    - [string|null] visible label
 	addNumber( name, id=null, defaultValue=0, placeholder=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -309,10 +313,10 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Adds a file picker input (open file dialog).
 	// RETURNS: [JestInputFileSelect]
-	// * name			- [string] unique field name
-	// * id				- [string|null] HTML id override
-	// * defaultValue	- [string|null] initial file path
-	// * labelText		- [string|null] field label
+	// * name         - [string] unique field name
+	// * id           - [string|null] HTML id override
+	// * defaultValue - [string|null] initial file path
+	// * labelText    - [string|null] field label
 	addFileSelect( name, id=null, defaultValue=null, labelText=null ) {
 		// Check for existing field
 		if ( this.inputs[name] ) return this.inputs[name];
@@ -393,8 +397,8 @@ class JestModal extends JestElement {
 	//	• If the key already exists, remove the old button cleanly first.
 	//	• Uses a per-instance counter for id sequencing (no array .length hacks).
 	// RETURNS: [JestButton]
-	// * key	- [string] button key name (e.g., 'ok','cancel','overwrite')
-	// * label	- [string] button text
+	// * key      - [string] button key name (e.g., 'ok','cancel','overwrite')
+	// * label    - [string] button text
 	// * callback - [function|null] click handler
 	addButton( key, label, callback=null ) {
 		// If a button with this key exists, remove it before adding a new one.
@@ -415,8 +419,8 @@ class JestModal extends JestElement {
 		// Optional SFX (leave exactly as you had it)
 		button.register( 'mousedown', 'sfx',
 			() => this.client.soundboard.playSound( 'jest_mouse_down', 'mp3', 1.1 ) );
-		button.register( 'mouseup', 'sfx',
-			() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
+		//button.register( 'mouseup', 'sfx',
+			//() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
 
 		// Append into footer container
 		this.box.refs.buttons.addPanel( key, button.panel );
@@ -474,25 +478,29 @@ class JestModal extends JestElement {
 		// Reset the panel.
 		this.close(); // remove from visibility
 		// Clear the input.
-		this.setText( '' );		// clear input field
-		this.setTitle( '' );	// clear title
-		this.resetInputs();		// clear all input values
+		this.setText( '' );   // clear input field
+		this.setTitle( '' );  // clear title
+		this.resetInputs();   // clear all input values
 	}
 
 	// Close the dialog.
 	// RETURNS: [void]
-	// * data	- [any] optional override payload (if different from open)
+	// * data - [any] optional override payload (if different from open)
 	close( data=null ) {
+		// Prevent dialog from double-closing.
+		if ( !this.opened ) return; // abort
 		// Hide the panel.
 		this.hide(); // remove from visibility
 		// Emit close event.
 		this.emit( 'close', null, this.payload, data ); // emit close event
-		this.payload	= null; // clear context
+		this.payload = null; // clear context
 	}
 
 	// Hide the dialog.
 	// RETURNS: [void]
 	hide() {
+		// Set open-state to `false`.
+		this.opened = false; // log state
 		// Hide the panel.
 		this.panel.addClass( 'hidden' ); // hide the dialog
 	}
@@ -502,14 +510,16 @@ class JestModal extends JestElement {
 	//--------------------------------
 	// Open the dialog.
 	// RETURNS: [void]
-	// * data	- [any] optional payload for event context
+	// * data - [any] optional payload for event context
 	open( data=null ) {
+		// Prevent dialog from double-opening.
+		if ( this.opened ) return; // abort
 		// Store optional payload (accessible via open & close events).
-		this.payload	= data;	// store context
+		this.payload = data; // store context
 		// Emit pre-open event.
 		this.emit( 'preopen', null, this.payload );
 		// Open the panel.
-		this.show();			// show the dialog
+		this.show(); // show the dialog
 		// Play a "prompt" sound-effect for affirmation.
 		this.client.soundboard.playSound( 'jest_prompt', 'mp3', 1.1 );
 		// Emit open event.
@@ -519,7 +529,13 @@ class JestModal extends JestElement {
 	// Show the dialog.
 	// RETURNS: [void]
 	show() {
+		// Set open-state to `true`.
+		this.opened = true; // log state
 		// Hide the panel.
 		this.panel.removeClass( 'hidden' ); // show the dialog
 	}
+
+	// Determine if dialog is currently open or closed.
+	// REUTRNS: [boolean] `true` if dialog open, else `false`.
+	isOpened() { return this.opened; }
 }

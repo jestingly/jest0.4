@@ -697,4 +697,32 @@
 	.jest-creator-status .statusbar .display strong {
 		color           : #eb394b;
 	}
+
+	/*==================================================
+	 Canvas Board Neighbor Styling
+	==================================================*/
+	.jest-viewport-creator .board.has-level-neighbors {
+		display               : grid;
+		grid-template-columns : var(--level-neighbor-margin) max-content var(--level-neighbor-margin);
+		grid-template-rows    : var(--level-neighbor-margin) max-content var(--level-neighbor-margin);
+		justify-content       : safe center;
+		align-content         : start;
+	}
+
+	.jest-viewport-creator .board.has-level-neighbors > .level-neighbor-workspace {
+		grid-area             : 2 / 2;
+		margin                : 0;
+		box-shadow            : none;
+	}
+
+	.jest-viewport-creator .board > .level-neighbor-preview {
+		margin                : 0;
+		box-shadow            : none;
+		pointer-events        : none;
+		image-rendering       : pixelated;
+	}
+
+	.jest-viewport-creator .board > .level-neighbor-preview[hidden] {
+		display               : none;
+	}
 }

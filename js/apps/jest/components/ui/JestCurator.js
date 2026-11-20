@@ -81,9 +81,9 @@ class JestCurator extends JestElement {
 		this.panel.refs.selectwrap.addPanel( 'items', this.selectBox.panel );
 		// Select a default item.
 		this.typeBox.setValue( this.typeSelected );
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar

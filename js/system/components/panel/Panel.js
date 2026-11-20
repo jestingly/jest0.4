@@ -11,8 +11,8 @@ console.log( 'jestAlert: js/system/components/panel/Panel.js loaded' );
 // Provides a class for creating a panel [object].
 class Panel extends OSElement {
 	// Same constructor argument(s)
-	name		= null;				// [string] value of panel name (used for sorting)
-	type		= null;				// Type of panel (form, etc.)
+	name   = null;      // [string] value of panel name (used for sorting)
+	type   = null;      // Type of panel (form, etc.)
 
 	//-------------------------
 	// Constructor
@@ -21,11 +21,11 @@ class Panel extends OSElement {
 	constructor( options ) {
 		super( options ); // parent construct
 		// Handle option argument(s)
-		this.name		= options.name || null;				// [string] name of object
-		this.type		= options.type || 'unspecified';	// [string] value of type of panel
+		this.name = options.name || null;           // [string] name of object
+		this.type = options.type || 'unspecified';  // [string] value of type of panel
 		// Setup the panel before creating the element
-		this.setup();		// setup the panel
-		this.render();		// render the panel
+		this.setup();   // setup the panel
+		this.render();  // render the panel
 	}
 
 	//-------------------------
@@ -34,18 +34,18 @@ class Panel extends OSElement {
 	// Setup the panel [object].
 	// RETURNS: [boolean] true or false.
 	setup() {
-		super.setup(); // call parent setup method
+		super.setup();  // call parent setup method
 		// Ensure class(es) include panel base class(es)
 		this.classes.push( 'jest-panel' );
-		return true; // success
+		return true;    // success
 	}
 	// Render the panel [object].
 	// RETURNS: [boolean] true or false.
 	render() {
 		super.render(); // call parent render method
-		// --------------------------------
+		//---------------------------------
 		// Render the children
-		// --------------------------------
+		//---------------------------------
 		this.addElements( this._options.elements );	// Generate the panel elements
 	}
 
@@ -54,7 +54,7 @@ class Panel extends OSElement {
 	//-------------------------
 	// Dynamically updates the panel content.
 	// RETURNS: [void].
-	// * elements	- [array] New content definitions for the panel.
+	// * elements - [array] New content definitions for the panel.
 	addElements( elements ) {
 		// Require element data
 		if ( !elements ) return;
@@ -73,25 +73,25 @@ class Panel extends OSElement {
 		if ( this.el===null ) return false;
 		// Ensure panel element [object] contains breadcrumbs
 		data.breadcrumbs = [ ...this.breadcrumbs ];
-		// --------------------------------
+		//---------------------------------
 		// Create PanelElement [object]
-		// --------------------------------
+		//---------------------------------
 		let panel = null; // define element
 		/*switch ( data.type ) {
 			case 'form':
-				panel		= new PanelForm( data );
+				panel  = new PanelForm( data );
 				break;
 			case 'button':
-				panel		= new PanelFormButton( data );
+				panel  = new PanelFormButton( data );
 				break;
 			case 'dropdown':
-				panel		= new PanelFormDropdown( data );
+				panel  = new PanelFormDropdown( data );
 				break;
 			default:
-				panel		= new PanelElement( data );
+				panel  = new PanelElement( data );
 				break;
 		}*/
-		panel       = new Panel( data );
+		panel = new Panel( data );
 		// Append to DOM & return
 		const index = data?.index ?? null;
 		this.addPanel( data.name, panel );
@@ -101,14 +101,14 @@ class Panel extends OSElement {
 
 	// Add a panel [object].
 	// RETURNS: [void].
-	// * name		- [string] Value of Panel name.
-	// * panel		- Panel [object] to add to the window.
-	//   index		- [int|null] Value of index to insert child at.
+	// * name   - [string] Value of Panel name.
+	// * panel  - Panel [object] to add to the window.
+	//   index  - [int|null] Value of index to insert child at.
 	addPanel( name, panel, index=null ) {
 		// Append to DOM & return
 		this.insertAt( panel.el, index );
 		// Store quick-ref
-		const key         = name ?? null;
+		const key = name ?? null;
 		const breadcrumbs = [ ...this.breadcrumbs ];
 		this.addBreadcrumbs( breadcrumbs ); // copy breadcrumbs
 		this.ref( key, panel );
@@ -198,10 +198,10 @@ class Panel extends OSElement {
 		if ( this.el && this.el.parentNode )
 			this.el.parentNode.removeChild( this.el );
 		// Clear references and internal flags
-		this.refs		= {};
-		this.el			= null;
-		this.client		= null;
-		this._options	= null;
+		this.refs   = {};
+		this.el     = null;
+		this.client = null;
+		this._options    = null;
 		this.breadcrumbs = [];
 		// Optional logging
 		//console.log( `Panel.destroy(): '${this.name}' panel destroyed.` );

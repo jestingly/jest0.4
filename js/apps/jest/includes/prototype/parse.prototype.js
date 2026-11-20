@@ -335,3 +335,14 @@ Jest.prototype.cloneObray = function( list ) {
 	if ( !Array.isArray(list) ) return [];
 	return list.map( o => ({ ...o }) ); // shallow clone per object
 }
+
+//-------------------------
+// Handle Text Case
+//-------------------------
+// Capitalize the first letter.
+// RETURNS: Mutated [string] with the first character (if alphabetical) capitalized.
+// * str - [string] To capitalize.
+Jest.prototype.capitalize = function( str ) {
+  if (!str) return ""; // Prevents errors on empty strings
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}

@@ -17,9 +17,9 @@ class JestElement extends JestMatrix {
 	panel		= null;				// Panel [object] handling the DOM element.
 	contents	= null;				// [...] Backend contents of the element.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -27,9 +27,9 @@ class JestElement extends JestMatrix {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element panel.
 	// RETURNS: [void].
 	// * tag		- [string] value of DOM element tag (e.g. "div", "input").

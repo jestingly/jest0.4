@@ -26,10 +26,13 @@ Array.prototype.first = function() {
 //-----------------------------
 // Description: Merges this array with another and removes duplicates.
 // * otherArray - [array] Array to merge
-// RETURNS: [array] New array with unique strings
+// RETURNS: [array|string] New value(s) to merge as unique strings.
 Array.prototype.mergeUnique = function ( otherArray ) {
-	if ( !Array.isArray(otherArray) )
+	// The argument must be an array or a string.
+	if ( typeof otherArray==="string" )
+		otherArray = [otherArray]; // make [array]
+	else if ( !Array.isArray(otherArray) )
 		throw new TypeError('Argument must be an array');
-
+	// Concatenate arrays & filter out non-unique values.
 	return Array.from(new Set([...this, ...otherArray]));
 };

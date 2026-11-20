@@ -33,9 +33,9 @@ class DockShortcuts extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render();				// call parent setup method
 		return true;				// success
 	}

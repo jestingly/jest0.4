@@ -36,19 +36,19 @@ class Loadbar extends OSElement {
 	// Render the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	render() {
-		// --------------------------------
+		//---------------------------------
 		// Create the DOM Element
-		// --------------------------------
+		//---------------------------------
 		super.render(); // call parent setup method
-		// --------------------------------
+		//---------------------------------
 		// Create bar element [object]
-		// --------------------------------
+		//---------------------------------
 		const bar		= jsos.generateElement( 'div', null, ['jest-loadbar-bar'] );
 		this.el.appendChild( bar );
 		this.bar		= bar;				// cross-reference
-		// --------------------------------
+		//---------------------------------
 		// Create percent element [object]
-		// --------------------------------
+		//---------------------------------
 		const percent	= jsos.generateElement( 'div', null, ['jest-loadbar-text'], '0%' );
 		bar.appendChild( percent );			// add # percent to bar
 		this.percent	= percent;			// cross-reference

@@ -17,9 +17,9 @@ class JestTool extends JestElement {
 	// Tool properties
 	flags          = new Set();        // [Set<string>] App-defined tool requirements and capabilities.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -108,9 +108,9 @@ class JestTool extends JestElement {
 		return this._cooptedTools.includes( name );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Toggle enabled/disabled using [boolean] argument.
 	// RETURNS: [bool] true if state changed.
 	// * lever	– [bool] `true` to enable, `false` to disable.
@@ -163,9 +163,9 @@ class JestTool extends JestElement {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enabled() { return this.skim('enabled'); }
 
-	// --------------------------------
+	//---------------------------------
 	// Keyboard Handling Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Map a [key] to switch from one tool to another when held.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * key      – [string] e.g. "Alt", "Control"
@@ -183,9 +183,9 @@ class JestTool extends JestElement {
 	// * key	- [string] Variable key to set
 	// * val	- [any] Value to assign
 	jot( key, val ) {
-		// --------------------------
+		//---------------------------
 		// Intercept 'mode' Changes
-		// --------------------------
+		//---------------------------
 		// Only intercept if key='mode'
 		if ( key==='mode' ) {
 			// Check for previous (existing) value.
@@ -197,9 +197,9 @@ class JestTool extends JestElement {
 			if ( prev!==val && val )
 				this.emit( `enter:${val}` );
 		}
-		// --------------------------
+		//---------------------------
 		// Delegate to Base Jot Method
-		// --------------------------
+		//---------------------------
 		// Call parent jot method.
 		return super.jot?.( key, val ) ?? false;
 	}

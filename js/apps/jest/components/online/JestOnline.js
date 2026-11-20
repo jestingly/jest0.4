@@ -15,23 +15,23 @@ class JestOnline extends JestSavable {
 	// Connection session data
 	user			= {};				// [object] Value of user session data: id
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client		- [object] Application client creating the object.
 	// * name		- [string] Value of server name (e.g. 'primary').
 	constructor( client, name="primary" ) {
 		// Call the parent object constructor
 		super( client, name );	// construct the parent
-		// --------------------------------
+		//---------------------------------
 		// Create the server connect [object]
-		// --------------------------------
+		//---------------------------------
 		const websocket	= new JestWebsocket( this ); // server interactor
 		this.websocket	= websocket;
-		// --------------------------------
+		//---------------------------------
 		// Setup Listener(s)
-		// --------------------------------
+		//---------------------------------
 		// Set other event(s)
 		this.websocket.register( 'message:init', 'init', (e)=>this.init(e) );
 		this.websocket.register( 'message:guestJoin', 'guestJoin', (e)=>this.guestJoin(e) );
@@ -82,9 +82,9 @@ class JestOnline extends JestSavable {
 		this.reserve( data );
 		// Emit event.
 		this.emit( 'selfJoin', null, data, data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Add all guest [objects]
-		// --------------------------------
+		//---------------------------------
 		console.log( "user session loading players..." );
 		// Iterate all guests & add to client.
 		for ( const [id,info] of Object.entries(data.clients) ) {
@@ -103,9 +103,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		if ( data.id===this.client.user.id ) return false; // ignore user
-		// --------------------------------
+		//---------------------------------
 		// Add new guest [object]
-		// --------------------------------
+		//---------------------------------
 		console.log( "loading new guest..." );
 		await this.addGuest( data ); // add guest
 		return true; // success
@@ -120,9 +120,9 @@ class JestOnline extends JestSavable {
 		//console.log( e );
 		//console.log( data.id );
 		//console.log( this.client.gameboard.guests );
-		// --------------------------------
+		//---------------------------------
 		// Handle Guest Update Action
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestUpdate', null, data, data.id, data.action );
 		//console.log( data );
@@ -136,9 +136,9 @@ class JestOnline extends JestSavable {
 		// Log some information
 		//console.log( data );
 		if ( data.id===this.client.user.id ) return false; // ignore user
-		// --------------------------------
+		//---------------------------------
 		// Remove guest player [object]
-		// --------------------------------
+		//---------------------------------
 		await this.removeGuest( data ); // remove guest
 		return true; // success
 	}
@@ -172,9 +172,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		console.log( "Adding Guest:", data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Add Player [object]
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestJoin', null, data, data.id, data.username );
 		return true; // success
@@ -188,9 +188,9 @@ class JestOnline extends JestSavable {
 		console.log( this.client.user.id );
 		console.log( data.id );
 		console.log( "Removing Guest:", data.id, data.username );
-		// --------------------------------
+		//---------------------------------
 		// Remove Player [object]
-		// --------------------------------
+		//---------------------------------
 		// Emit event.
 		this.emit( 'guestLeft', null, data, data.id, data.username );
 		return true; // success

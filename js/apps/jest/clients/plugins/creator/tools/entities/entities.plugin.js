@@ -20,15 +20,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		// Create Data Form (to edit entity hook)
 		//--------------------------------
 		// Create DOM Panel element [object].
-		const form		= new JestForm( client );
+		const form   = new JestForm( client );
 		form.build(); // build the form
 
 		//--------------------------------
 		// Create String Input Fields
 		//--------------------------------
 		// Create fields.
-		const fields	= {
-			path	: 'Path',
+		const fields = {
+			path : 'Path',
 			};
 		for ( const key in fields ) { // iterate & create
 			// Create input [object]
@@ -46,8 +46,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		//--------------------------------
 		// Create coordinate fields for positioning hooks.
 		const numFields	= {
-			x	: 'X Position',
-			y	: 'Y Position'
+			x : 'X Position',
+			y : 'Y Position'
 			};
 		for ( const key in numFields ) {
 			// Create numeric input.
@@ -76,10 +76,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 		// Manually Create a Textarea
 		//--------------------------------
 		// Create script text-area input [object]
-		const input2	= new JestInputTextarea( client, 'script', null, null, 'script', 3 );
-		input2.build( `input-script` );		// build field
+		const input2 = new JestInputTextarea( client, 'script', null, null, 'script', 3 );
+		input2.build( `input-script` );    // build field
 		input2.panel.addAttribute( 'data-tooltip', 'Hook Script' );
-		form.addField( 'script', input2 );	// add field to form
+		form.addField( 'script', input2 ); // add field to form
 
 		//--------------------------------
 		// Manually Modify Some Field(s)
@@ -91,13 +91,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 	//--------------------------------
 	// Plugin Metadata
 	//--------------------------------
-	const type		= 'tools';
-	const subtype	= 'entities';
+	const type    = 'tools';
+	const subtype = 'entities';
 
 	//--------------------------------
 	// Plugin Definition
 	//--------------------------------
-	const plugin = {
+	const plugin  = {
 		//--------------------------------
 		// Initialize Plugin
 		//--------------------------------
@@ -652,9 +652,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Hook Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the hook modal.
 			client.addModal(
 				'newHook',
@@ -787,22 +787,22 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					data.script		= script;	// capture hook script
 					data.readonly	= false;	// can be edited
 
-					// --------------------------------
+					//---------------------------------
 					// Create Curator Object
-					// --------------------------------
+					//---------------------------------
 					// Create a new hook.
 					const object	= client.addHook( tool, data );
 					if ( !object ) return false;
 
-					// --------------------------------
+					//---------------------------------
 					// Create Custom Dropdown Label
-					// --------------------------------
+					//---------------------------------
 					// Item label should match the image path.
 					curator.updateOptionLabel( object.data.id, path );
 
-					// --------------------------------
+					//---------------------------------
 					// Preload Image Into Hook
-					// --------------------------------
+					//---------------------------------
 					// If an image was set & exists, load its preview.
 					if ( image ) {
 						// addHook initializes image to null; attach the resolved image.
@@ -813,9 +813,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 						client.reloadHooks( tool );
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action Inside Editing File Governor
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : `hookAdd`,
@@ -842,9 +842,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					modal.close();
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'entitiesRemember',
 				() => {
@@ -856,20 +856,20 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			client.tabbarFile.register(
 				'tabChange', 'entitiesRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.reloadHooks( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Image File Select [object] Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Add hidden image file select input to curator toolbar.
 			curator.toolbar.panel.addPanel( 'imagine', tool.panel );
 			// Add image button to curator.
@@ -1276,7 +1276,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 							const dashSpeed = 0.5;
 							const offset    = (e.tickCount * dashSpeed) % 10;
 							editorCtx.lineWidth      = 2;
-							editorCtx.strokeStyle    = 'rgba(0,255,255,0.9)';
+							editorCtx.strokeStyle    = 'rgba(255,0,0,0.9)';
 							editorCtx.setLineDash( [6,4] );
 							editorCtx.lineDashOffset = offset;
 							editorCtx.strokeRect( x-2, y-2, w*zoom+4, h*zoom+4 );
@@ -1339,21 +1339,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Settings Change Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Create event for when the magnification zoom value changes.
 			client.register(
 				'levelZoomed', 'entitiesZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Match the tool grid to the active level view zoom.
 					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});
@@ -1415,9 +1415,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				data.x		= Number( data.x ?? 0 );
 				data.y		= Number( data.y ?? 0 );
 
-				// --------------------------------
+				//---------------------------------
 				// Create Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the hook to the curator.
 				//if ( true ) {
 					// Add the hook to the curator.

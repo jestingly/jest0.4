@@ -13,9 +13,9 @@ class JestToolbar extends JestMenu {
 	// Object properties
 	//modes			= null;				// [array] of possible modes.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -26,9 +26,9 @@ class JestToolbar extends JestMenu {
 		//this.modes = modes ?? [];
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -39,9 +39,9 @@ class JestToolbar extends JestMenu {
 		super.build( name, ['toolbar'].mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate menu tool button.
 	// RETURNS: [object] JestButton or [null] on fail.
 	// * action		- [object] Value of action to create a button for.
@@ -67,9 +67,9 @@ class JestToolbar extends JestMenu {
 		return button; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handling
-	// --------------------------------
+	//---------------------------------
 	// Callback when a button was clicked.
 	// RETURNS: [void].
 	// * e			- [object] MouseEvent event listener data.

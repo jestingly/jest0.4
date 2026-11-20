@@ -19,9 +19,9 @@ class JestSwatches extends JestTool {
 	swatchId		= 0;				// [int] unique ID incrementor
 	container		= null;				// [HTMLElement] DOM container holding swatches
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -29,9 +29,9 @@ class JestSwatches extends JestTool {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -51,9 +51,9 @@ class JestSwatches extends JestTool {
 			]); // add to form
 		this.container	= this.panel.refs.listWrap; // keep ref
 
-		// --------------------------------
+		//---------------------------------
 		// Create Toolbar [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the toolbar.
 		const toolbar	= new JestToolbar( this );
 		this.toolbar	= toolbar; // set toolbar

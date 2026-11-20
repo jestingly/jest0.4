@@ -419,9 +419,9 @@ class AnimationAnimation extends AnimationObject {
 		// Clamp insertion index
 		index	= Math.max( 0, index );
 
-		// -------------------------
+		//--------------------------
 		// Move Frame If Already In Animation
-		// -------------------------
+		//--------------------------
 		// Check if frame is inside animation.
 		const currentIndex = this.frames.indexOf( frame );
 		if ( currentIndex !== -1 ) {

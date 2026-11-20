@@ -50,8 +50,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			// Create Control Panel
 			//-------------------------
 			// Generate a "form" inside the sidebar.
-			const optsPanel = new JestForm( client );      // create DOM Panel element [object].
-			optsPanel.build( 'editor', ['app-editor'] ); // build the form
+			const optsPanel = new JestForm( client );     // create DOM Panel element [object].
+			optsPanel.build( 'editor', ['app-editor'] );  // build the form
 
 			//-------------------------
 			// Crosshair Toggle Button
@@ -81,17 +81,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			// Tab Change Event
 			//-------------------------
 			// Update the crosshair grid when the active file tab changes.
-			client.tabbarFile.register(
+			/*client.tabbarFile.register(
 				'tabChange', 'editorCrosshairGrid',
 				() => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( null, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Get the level view & its dimensional information.
 					const bounds = s.levelView.anchor.getZoomed();
 					// Match the marquee grid to the newly active level view.
@@ -102,19 +102,19 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			client.register(
 				'levelZoomed', 'crosshairZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( null, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Get the level view & its dimensional information.
 					const bounds = s.levelView.anchor.getZoomed();
 					// Match the crosshair grid to the active level view zoom.
 					crosshairFollower.setGridUnits( bounds.display.units );
-				});
+				});*/
 
 			// Draw the row and column highlights after the workspace is rendered.
 			client.register(
@@ -128,24 +128,25 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 					// Get canvas context(s).
 					const editorCtx = editor.el.getContext( '2d' );
 
-					// Read the latest pointer tile; null means it left the workspace.
-					const position  = crosshairFollower.getWatchPosition();
-					if ( !position ) return;
+					// Recalculate the local position using the current padding and scroll.
+					const pointer   = crosshairFollower.getWatchPosition();
+					if ( !pointer ) return;
+					const pos       = editor.mousePos( pointer );
+					if ( !editor.containsRinkPoint(pos) ) return;
 
-					// Convert the hovered tile into workspace pixel coordinates.
-					const levelView = state.levelView; // get open tab level file
-					const bounds    = levelView.anchor.getZoomed(); // get active level rect info
-					const units = bounds.display.units;
-					const x     = position.tileX * units;
-					const y     = position.tileY * units;
+					// Draw in level-local pixels. The draw hook supplies the translation.
+					const units     = state.levelView.anchor.getUnitsZoomed();
+					const { w, h }  = editor.getRinkBounds();
+					const x         = Math.floor( pos.x/units ) * units;
+					const y         = Math.floor( pos.y/units ) * units;
 
 					// Fill the tile-wide crosshair arms, leaving the hovered tile clear.
 					editorCtx.save();
 					editorCtx.fillStyle   = 'rgba( 255, 0, 0, 0.16 )';
 					editorCtx.fillRect( 0, y, x, units );
-					editorCtx.fillRect( x+units, y, workspace.el.width-x-units, units );
+					editorCtx.fillRect( x+units, y, w-x-units, units );
 					editorCtx.fillRect( x, 0, units, y );
-					editorCtx.fillRect( x, y+units, units, workspace.el.height-y-units );
+					editorCtx.fillRect( x, y+units, units, h-y-units );
 
 					// Draw the dashed boundaries edge-to-edge around both bands.
 					editorCtx.strokeStyle = 'rgba( 255, 0, 0, 0.55 )';
@@ -153,13 +154,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 					editorCtx.setLineDash( [4,3] );
 					editorCtx.beginPath();
 					editorCtx.moveTo( 0, y );
-					editorCtx.lineTo( workspace.el.width, y );
+					editorCtx.lineTo( w, y );
 					editorCtx.moveTo( 0, y+units );
-					editorCtx.lineTo( workspace.el.width, y+units );
+					editorCtx.lineTo( w, y+units );
 					editorCtx.moveTo( x, 0 );
-					editorCtx.lineTo( x, workspace.el.height );
+					editorCtx.lineTo( x, h );
 					editorCtx.moveTo( x+units, 0 );
-					editorCtx.lineTo( x+units, workspace.el.height );
+					editorCtx.lineTo( x+units, h );
 					editorCtx.stroke();
 					editorCtx.restore();
 				});
@@ -211,8 +212,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 					// Convert tile spacing and level size into workspace pixels.
 					const units      = bounds.display.units;
 					const limit      = client.config.levelGrid;
-					const width      = workspace.el.width;
-					const height     = workspace.el.height;
+					// Limit the grid sketch to the active level's dimensions.
+					const { w: width, h: height } = editor.getRinkBounds();
 
 					// Clear the previous frame's grid.
 					sketchCtx.clearRect( 0, 0, width, height );
@@ -302,33 +303,29 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			inputZoom.register(
 				'change', 'adjustZoom',
 				value => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( null, true );
 
-					// --------------------------------
+					//---------------------------------
 					// Change Active Tab's Level Zoom
-					// --------------------------------
+					//---------------------------------
 					// Convert the value to percent.
 					const zoom = Number(value) / 100;
 					client.settings.tiler.editor.zoom = zoom;
 					s.levelView.anchor.setZoom( zoom );
 
-					// --------------------------------
+					//---------------------------------
 					// Resize Editor Workspace Canvas
-					// --------------------------------
-					// Determine if editor canvas is set.
-					const editor = this.gameboard.display.getCanvas( 'workspace' );
-					if ( !editor || !editor.el ) {
-						console.warn( 'Workspace canvas is not set or invalid' );
-						return; // abort
-					}
+					//---------------------------------
+					// Update the workspace geometry before notifying zoom listeners.
+					client.layoutLevelWorkspace( s.levelView, workspace, sketchpad );
 
-					// --------------------------------
+					//---------------------------------
 					// Emit Event(s)
-					// --------------------------------
+					//---------------------------------
 					// Emit a client-wide event to allow plugins to listen.
 					client.emit( 'levelZoomed', null, zoom );
 				});
@@ -390,19 +387,84 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 			client.tabbarFile.register(
 				'tabChange', 'editorZoom',
 				() => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s    = client.getFileStatus( null, true );
-					const zoom = s.levelView.anchor.getZoom();
+					const zoom = s?.levelView?.anchor?.getZoom() ?? 1;
 
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate Zoom Controls
-					// --------------------------------
+					//---------------------------------
 					// Match the zoom slider to the active level magnification.
 					inputZoom.setValue( zoom * 100 );
 				});
+
+			/*//--------------------------------
+			// Create Neighbor Preview Canvas(es)
+			//--------------------------------
+			// Keep the workspace and its previews in the same scroll container.
+			const board = workspace.el.parentElement;
+			workspace.el.classList.add( 'level-neighbor-workspace' );
+
+			// Create one small canvas for each edge or corner.
+			const previews = directions.map(
+				( [ direction, [x,y] ] ) => {
+					// Place the preview around the center cell, which holds the workspace.
+					const canvas = new ElementCanvas();
+					canvas.el.classList.add( 'level-neighbor-preview' );
+					canvas.el.setAttribute( 'aria-hidden', 'true' );
+					canvas.el.style.gridColumnStart = String( x+2 );
+					canvas.el.style.gridRowStart    = String( y+2 );
+					canvas.el.hidden                = true;
+					client.board.panel.addPanel( `level-neighbor-${direction}`, canvas );
+					// Retain the slot and its grid offsets for drawing.
+					return { direction, x, y, canvas };
+				});*/
+
+			//--------------------------------
+			// Draw Open Level Neighbor(s)
+			//--------------------------------
+			// Crop up to eight tiles from each linked level.
+			/*const edge = Math.min( 8*client.config.tileGrid, client.config.levelSpan );
+
+			client.register(
+				'draw', 'drawLevelNeighbors',
+				( e, state, enabled, mode, editor ) => {
+					// Enable the surrounding grid when the active view has neighbors.
+					const view         = state.levelView;
+					const relationship = view?.relationship;
+					const show         =
+						Boolean(
+							mode==='running' && relationship?.size
+							&& editor.width && editor.height );
+					board.classList.toggle( 'has-level-neighbors', show );
+
+					// Scale the displayed edges with the active tab's zoom.
+					const margin =
+						show
+							? Math.max( 1, Math.round(edge*view.anchor.getZoom()) )
+							: 0;
+					const gutter = `${margin}px`;
+					if ( board.style.getPropertyValue('--level-neighbor-margin')!==gutter )
+						board.style.setProperty( '--level-neighbor-margin', gutter );
+
+					// Refresh only assigned previews and hide empty slots.
+					for ( const { direction, x, y, canvas } of previews ) {
+						const drawn = show && relationship.drawNeighbor( direction, canvas, edge );
+						canvas.el.hidden = !drawn;
+						if ( !drawn ) continue;
+
+						// Match the shared edge to the active canvas, including at fractional zoom.
+						const width  = `${x===0 ? editor.width : margin}px`;
+						const height = `${y===0 ? editor.height : margin}px`;
+						if ( canvas.el.style.width!==width )
+							canvas.el.style.width  = width;
+						if ( canvas.el.style.height!==height )
+							canvas.el.style.height = height;
+					}
+				});*/
 
 			//-------------------------
 			// Add to Sidebar

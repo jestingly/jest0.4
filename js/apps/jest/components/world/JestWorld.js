@@ -30,13 +30,13 @@ class JestWorld extends JestSavable {
 	// Setup the [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();					// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();				// load the data
 		return true; // success
 	}
@@ -76,16 +76,16 @@ class JestWorld extends JestSavable {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	// * stem	- [string] Value of URL filename stem to load, without extension (e.g. 'jest')
 	async loadData( stem ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.prove(stem,'string') )
 			throw new Error( `Argument 'stem' must be of type [string].` );
 		stem	= stem ?? this.default;		// store stem (NOTE: file load handled separately)
 		const filename	= `presets/worlds/${stem}.json`;
-		// --------------------------------
+		//---------------------------------
 		// Load World Presets Data
-		// --------------------------------
+		//---------------------------------
 		// Use the Secretary to download a remote file's data.
 		const ok	= await this.client.loadWorldData( filename );
 		if ( ok===null ) {
@@ -99,9 +99,9 @@ class JestWorld extends JestSavable {
 			console.warn( 'Cannot find world data.' );
 			return false; // fail
 		}
-		// --------------------------------
+		//---------------------------------
 		// Process World Presets Data
-		// --------------------------------
+		//---------------------------------
 		// Load tileset(s) from data.
 		console.log( 'Attempting to load all game-world tileset(s)...' );
 		if ( record?.tilesets ) {

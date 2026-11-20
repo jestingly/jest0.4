@@ -12,9 +12,9 @@ console.log( 'jestAlert: js/apps/jest/components/editing/type/JestFileImage.js l
 class JestFileImage extends JestFile {
 	// Object properties
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.

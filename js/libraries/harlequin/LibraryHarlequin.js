@@ -20,9 +20,9 @@ JestLibraryRegistry.LibraryHarlequin =
 		constructor( libs ) {
 			// Call the parent application constructor
 			super( libs=[] );
-			// --------------------------------
+			//---------------------------------
 			// Setup application
-			// --------------------------------
+			//---------------------------------
 			this.setup(); // setup the library
 		}
 	};

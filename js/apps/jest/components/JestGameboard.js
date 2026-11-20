@@ -31,9 +31,9 @@ class JestGameboard extends JestSavable {
 		// Call the parent object constructor
 		super( client );				// construct the parent
 		this.client		= client;		// store the client [object] reference
-		// --------------------------------
+		//---------------------------------
 		// Setup object
-		// --------------------------------
+		//---------------------------------
 		this.setup(); // setup the object
 	}
 
@@ -43,13 +43,13 @@ class JestGameboard extends JestSavable {
 	// Setup the object [object].
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.build();			// build the object
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		await this.load();		// load the data
 		return true; // success
 	}
@@ -57,9 +57,9 @@ class JestGameboard extends JestSavable {
 	// Build the object.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
-		// --------------------------------
+		//---------------------------------
 		// Create Display [object]
-		// --------------------------------
+		//---------------------------------
 		// Create the display for render viewing
 		const display	= new JestDisplay();
 		display.build(); // build the display
@@ -247,9 +247,9 @@ class JestGameboard extends JestSavable {
 	// * id			- [int] value of guest id to add to the gameboard.
 	// * username	- [string] Value of user username (e.g. 'Antago').
 	async addGuest( id, username ) {
-		// --------------------------------
+		//---------------------------------
 		// Create a guest [object]
-		// --------------------------------
+		//---------------------------------
 		if ( this.guests?.[id] ) return false;			// guest exists
 		const guest		= new JestGuest( this.client ); // guest character
 		await guest.setup();

@@ -14,9 +14,9 @@ class JestDisplay extends JestElement {
 	canvases	= {};			// [object] Map of named ElementCanvas objects.
 	target		= null;			// [object] JestElement inner target object.z
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -24,13 +24,13 @@ class JestDisplay extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build( name='display', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -83,9 +83,9 @@ class JestDisplay extends JestElement {
 		return this.canvases[name] ?? null;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Add a Panel to Display
-	// --------------------------------
+	//---------------------------------
 	// Set a target element inside the display.
 	// RETURNS: [bool] success.
 	// target	- [JestElement] object to add, or [null] to autogenerate.
@@ -110,9 +110,9 @@ class JestDisplay extends JestElement {
 	// RETURNS: [object] or [null].
 	getTarget() { return this.target; }
 
-	// --------------------------------
+	//---------------------------------
 	// Enabling & Activating Method(s)
-	// --------------------------------
+	//---------------------------------
 	// Enable the display.
 	// RETURNS: [void].
 	// * action		- [string] Value of action to toggle: 'enable', 'activate', etc.

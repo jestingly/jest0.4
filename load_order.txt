@@ -195,6 +195,8 @@ js/apps/jest/components/editing/tools/css/JestToolCrate.css
 js/apps/jest/components/editing/tools/JestToolCrate.js
 
 # File viewing & editing class(es).
+js/apps/jest/components/editing/tools/JestFileRelationship.js
+js/apps/jest/components/editing/tools/JestFileRelationshipLevel.js
 js/apps/jest/components/editing/tools/JestFileView.js
 js/apps/jest/components/editing/tools/JestFileViewEditor.js
 js/apps/jest/components/editing/tools/JestFileViewEditorPainter.js
@@ -263,6 +265,9 @@ js/apps/jest/clients/plugins/jest/parsers/json.plugin.js
 # NOTE: The order they are imported is the order they will appear.
 js/apps/jest/clients/plugins/creator/settings/system.plugin.js
 js/apps/jest/clients/plugins/creator/settings/tiler/editor.plugin.js
+js/apps/jest/clients/plugins/creator/settings/tiler/css/overworld.css
+js/apps/jest/clients/plugins/creator/settings/tiler/overworld.tool.js
+js/apps/jest/clients/plugins/creator/settings/tiler/overworld.plugin.js
 js/apps/jest/clients/plugins/creator/methods/painter.plugin.js
 js/apps/jest/clients/plugins/creator/methods/editor.plugin.js
 js/apps/jest/clients/plugins/creator/methods/keyboard.plugin.js

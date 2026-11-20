@@ -133,14 +133,14 @@ class JestLiveOptionCache extends JestGamepiece {
 		}
 	}
 
-	// ------------------------------
+	//-------------------------------
 	// Apply Options to Watcher
-	// ------------------------------
+	//-------------------------------
 	// Applies filtered options to the watcher.
 	// RETURNS: [void]
 	// * input		– [object] select input element (watcher)
 	// * filterFn	– [function|null] optional per-call filter (from emit)
-	// ------------------------------
+	//-------------------------------
 	_applyToWatcher( input, filterFn=null ) {
 		// Skip if static filter fails.
 		const staticFilter	= this.watcherFilters.get( input );

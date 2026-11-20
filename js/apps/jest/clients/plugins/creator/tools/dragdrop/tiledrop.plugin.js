@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Dragdrop Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a dragdrop tool to the tileset canvas board.
 			const tool = new JestToolDragdrop( this, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -29,16 +29,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 			// Simultaneous tools allowed:
 			tool.coopt( 'tilesetMarquee' );
 
-			// --------------------------------
+			//---------------------------------
 			// Set Tiledrop Drag & Drop Source + Destination
-			// --------------------------------
+			//---------------------------------
 			// Set the "tileset" canvas as the crate source lift region for dragdrop.
 			const paletteCanvas = client.gameboard.display.getCanvas( 'palette' );
 			tool.setTarget( paletteCanvas ); // set tile-click source
 			// Set the "level" canvas as the crate drop destination for dragdrop.
 			const levelCanvas   = client.gameboard.display.getCanvas( 'workspace' );
 			const levelCanvasEl = levelCanvas.el;
-			tool.crate.addGarage( levelCanvasEl );
+			// Limit level drops to the workspace's editable rectangle.
+			tool.crate.addGarage( levelCanvasEl, levelCanvas );
 			// Set swatch panel as a garage.
 			const swatchPanelEl = client.swatchPanel.panel.el;
 			tool.crate.addGarage( swatchPanelEl );
@@ -124,9 +125,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				return true; // success
 			};
 
-			// --------------------------------
+			//---------------------------------
 			// Add Event Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Event listener when "item picked up".
 			tool.register(
 				'dragdropPickup', 'liftTile',
@@ -330,9 +331,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/til
 				// Validate an active view is open.
 				if ( !state.tileset ) return false; // no active tileset
 				const tileset  = state.tileset; // get tileset ref
-				// --------------------------------
+				//---------------------------------
 				// Draw Tile in Crate
-				// --------------------------------
+				//---------------------------------
 				// Check for an active marquee selection.
 				let w = 1, h = 1; // width & height
 				const contents = tool.getContents();

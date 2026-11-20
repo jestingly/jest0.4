@@ -27,17 +27,17 @@ class BaseWindow extends OSElement {
 	// Open the window inside the OS environment.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	open() {
-		// --------------------------------
+		//---------------------------------
 		// Create window [object]
-		// --------------------------------
+		//---------------------------------
 		// Append the window to the environment
 		const environment		= JestEnvironment.getEnvironment();
 		environment.appendChild( this.el );
 		// Bind window-specific events
 		//this.bindWindowEvents();
-		// --------------------------------
+		//---------------------------------
 		// Reframe State of window [object]
-		// --------------------------------
+		//---------------------------------
 		// Set current reframe state
 		this.jot( 'reframing', 'idle' );	// change reframing state
 		this.measure();							// Measure the window

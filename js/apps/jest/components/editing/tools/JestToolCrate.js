@@ -12,6 +12,7 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestToolCrate.js 
 class JestToolCrate extends JestTool {
 	// Object propert(ies)
 	garages       = [];           // [array] Array of garage Panel instances.
+	garageCanvases	= new WeakMap(); // Optional canvas wrappers paired with registered garages.
 	currentGarage = null;         // [Element|null] Garage currently hovered over.
 	// Miscellaneous variables
 	display       = null;         // [JestDisplay] object for displaying content(s).
@@ -41,9 +42,9 @@ class JestToolCrate extends JestTool {
 		super.build( name, defaultClasses.mergeUnique(classes) );
 		// Tool is empty by default.
 		this.jot( 'mode', 'empty' ); // tool is idle to start
-		// --------------------------------
+		//---------------------------------
 		// Create Canvas In Crate [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a canvas to the crate for tile display.
 		const display = new JestDisplay( this.client );
 		display.build();          // build the display panel
@@ -57,8 +58,9 @@ class JestToolCrate extends JestTool {
 	// Add/Remove Garage(s)
 	//-------------------------
 	// Add a Panel that acts as a drop target.
-	// * garage		- [JestElement] instance representing a garage.
-	addGarage( garage ) {
+	// * garage  - [JestElement] instance representing a garage.
+	//   canvas  - [ElementCanvas] to attach to the garage.
+	addGarage( garage, canvas=null ) {
 		// Validate argument(s).
 		if ( !(garage instanceof HTMLElement) ) {
 			console.warn( `Crate Add Garage: argument must be of type JestElement.` );
@@ -67,6 +69,9 @@ class JestToolCrate extends JestTool {
 		// Avoid duplicates
 		if ( this.garages.includes(garage) ) return false;
 		this.garages.push( garage ); // add to [array]
+		// Use the editable bounds when the garage has a matching canvas wrapper.
+		if ( canvas?.el===garage )
+			this.garageCanvases.set( garage, canvas );
 		return true; // success
 	}
 
@@ -81,7 +86,56 @@ class JestToolCrate extends JestTool {
 		}
 		// Remove garage from [array].
 		this.garages.splice( index, 1 );
+		this.garageCanvases.delete( garage );
 		return true; // success
+	}
+
+	//--------------------------------
+	// Find Garage Under Pointer
+	//--------------------------------
+	// RETURNS: [object|null] Garage, local pixels, and snapped tile coordinates.
+	// * e - [MouseEvent] Pointer event in viewport coordinates.
+	getGarageHit( e ) {
+		// Search the elements under the pointer in visual stacking order.
+		const units = this.anchor.getUnitsZoomed();
+		for ( const garage of document.elementsFromPoint(e.clientX,e.clientY) ) {
+			if ( !this.garages.includes(garage) ) continue;
+
+			// Resolve the same origin for hit testing, snapping, and dropping.
+			const canvas = this.garageCanvases.get( garage );
+			let bounds;
+			if ( canvas ) {
+				bounds = canvas.getRinkClientBounds();
+				// Neighbor previews and padding are outside the level garage.
+				if ( !bounds || e.clientX<bounds.left || e.clientX>=bounds.right ||
+					 e.clientY<bounds.top || e.clientY>=bounds.bottom )
+					continue; // skip
+			}
+			else {
+				// Swatches and other DOM garages keep their border-adjusted origin.
+				const rect = garage.getBoundingClientRect();
+				bounds = {
+					left   : rect.left + garage.clientLeft,
+					top    : rect.top + garage.clientTop,
+					scaleX : 1,
+					scaleY : 1
+					};
+			}
+
+			// Convert the pointer to garage-local pixels before snapping.
+			const x = (e.clientX-bounds.left) / bounds.scaleX;
+			const y = (e.clientY-bounds.top) / bounds.scaleY;
+			let lx  = Math.round( x / units );
+			let ly  = Math.round( y / units );
+
+			// Keep a hit near the far edge on the level's last tile.
+			const edit = canvas?.getRinkBounds();
+			if ( edit?.cols>0 ) lx = Math.min( lx, edit.cols-1 );
+			if ( edit?.rows>0 ) ly = Math.min( ly, edit.rows-1 );
+
+			return { garage, ...bounds, x, y, lx, ly };
+		}
+		return null;
 	}
 
 	//-------------------------
@@ -294,13 +348,21 @@ class JestToolCrate extends JestTool {
 	//-------------------------
 	// * e	- [object] MouseEvent event listener data.
 	move( e ) {
+		//-------------------------
+		// Gate Keep Mode
+		//-------------------------
 		//console.log( 'moving crate' );
 		// Mode / enableability requirement.
-		const enabled  = this.skim( 'enabled' );
-		const mode     = this.skim( 'mode' );
+		const enabled = this.skim( 'enabled' );
+		const mode    = this.skim( 'mode' );
 		if ( !enabled || mode!=='dragging' ) return;
+
+		//-------------------------
+		// Stop Domino DOM Event(s)
+		//-------------------------
 		e.preventDefault();  // prevent default actions underneath
 		e.stopPropagation(); // stop bubbling upward
+
 		//--------------------------------
 		// Remember Current Pointer Position
 		//--------------------------------
@@ -310,22 +372,13 @@ class JestToolCrate extends JestTool {
 			clientX : e.clientX,
 			clientY : e.clientY
 			};
+
 		//-------------------------
 		// Check If Inside Garage
 		//-------------------------
-		// Get all elements under the cursor, topmost first.
-		const els = document.elementsFromPoint( e.clientX, e.clientY );
-		let hoveredGarage = null;
-		// Walk the array in order; pick the first garage we find.
-		for ( const el of els ) {
-			for ( const garage of this.garages ) {
-				if ( el===garage ) {
-					hoveredGarage = garage;
-					break; // found it
-				}
-			}
-			if ( hoveredGarage ) break; // already found
-		}
+		// Find the garage that accepts this exact pointer position.
+		const hit = this.getGarageHit( e );
+		const hoveredGarage = hit?.garage ?? null;
 		// If hoveredGarage changed vs this.currentGarage, fire enter/leave.
 		if ( hoveredGarage!==this.currentGarage ) {
 			if ( this.currentGarage ) {
@@ -343,6 +396,7 @@ class JestToolCrate extends JestTool {
 				this.panel.addClass( 'active' );
 			}
 		}
+
 		//-------------------------
 		// Move Crate
 		//-------------------------
@@ -350,27 +404,15 @@ class JestToolCrate extends JestTool {
 		let px, py; // new coordinates
 		// Use this crate's current display-space grid size.
 		const units = this.anchor.getUnitsZoomed();
-		// Snap x & y to grid if inside garage.
-		if ( this.currentGarage!==null ) {
-			// Snap inside the garage’s bounding box
-			const el    = this.currentGarage;
-			const gRect = el.getBoundingClientRect();
-			// borderLeft & borderTop (in pixels) for this element
-			const borderLeft = el.clientLeft;
-			const borderTop  = el.clientTop;
-			// “rawX” = distance from left edge of garage to cursor
-			const rawX  = e.clientX - (gRect.left + borderLeft);
-			const rawY  = e.clientY - (gRect.top  + borderTop);
-			// Round that local coordinate to nearest tile
-			const tileX = Math.round( rawX/units );
-			const tileY = Math.round( rawY/units );
-			// Convert back to page coords by adding gRect.left/top
-			px = gRect.left + borderLeft + tileX * units;
-			py = gRect.top  + borderTop  + tileY * units;
+		// Convert the snapped tile back to viewport coordinates for the crate.
+		if ( hit ) {
+			px  = hit.left + hit.lx*units*hit.scaleX;
+			py  = hit.top  + hit.ly*units*hit.scaleY;
 		}
-		else { // Free-move: follow the cursor (no snapping)
-			px = e.clientX - this.offsetX;
-			py = e.clientY - this.offsetY;
+		else {
+			// Follow the pointer freely outside every garage.
+			px  = e.clientX - this.offsetX;
+			py  = e.clientY - this.offsetY;
 		}
 		// Update element position
 		this.anchor.move( px, py );	// update anchor coordinates to track motion
@@ -379,6 +421,7 @@ class JestToolCrate extends JestTool {
 		px -= parseFloat( elStyle.borderLeftWidth );
 		py -= parseFloat( elStyle.borderTopWidth );
 		this.panel.move( py+window.scrollY, px+window.scrollX ); // crate visual
+
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------
@@ -433,7 +476,7 @@ class JestToolCrate extends JestTool {
 		// Validate argument(s).
 		if ( !e ) {
 			console.warn( '[Crate] Cannot Drop: arg 1 must be [object] of type MouseEvent.' );
-			return;
+			return; // abort
 		}
 
 		//--------------------------------
@@ -453,31 +496,14 @@ class JestToolCrate extends JestTool {
 		//--------------------------------
 		// Calculate Garage-Local Position
 		//--------------------------------
-		// Calculate the pointer position within the garage's content area.
-		let localPos = null;
-
-		if ( this.currentGarage!==null ) {
-			// Get the garage's viewport-relative boundary.
-			const rect = this.currentGarage.getBoundingClientRect();
-
-			// Exclude the garage border so dropping and visual snapping use the
-			// exact same local coordinate origin.
-			const borderLeft = this.currentGarage.clientLeft;
-			const borderTop  = this.currentGarage.clientTop;
-
-			// Convert the mouse from viewport coordinates into garage-local pixels.
-			localPos = {
-				x : e.clientX - rect.left - borderLeft,
-				y : e.clientY - rect.top  - borderTop
-				};
-		}
-		//const pos = { x: this.anchor.x, y: this.anchor.y };
+		// Recheck the release position in case the canvas moved or resized.
+		const hit = this.getGarageHit( e );
 
 		//--------------------------------
 		// Emit Drop Crate Event & Reset
 		//--------------------------------
-		// Emit drop event with garage and local position (or null if none)
-		this.emit( 'dropped', null, this.currentGarage, localPos );
+		// Send the same tile coordinates used by the visual snap.
+		this.emit( 'dropped', null, hit?.garage ?? null, hit );
 		this.reset(); // reset the crate
 	}
 

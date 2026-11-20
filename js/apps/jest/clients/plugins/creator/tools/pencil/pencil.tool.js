@@ -29,9 +29,9 @@ class JestToolPencil extends JestTool {
 	_motionsTracked   = 0;                 // [int] total how many motions tracked (during draw).
 	_motionTrackLapse = null;              // [ms] last motion track update (external update).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client  - [object] Application client that this piece belongs to.
@@ -54,9 +54,9 @@ class JestToolPencil extends JestTool {
 		super.build( name, defaultClasses.mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -71,9 +71,9 @@ class JestToolPencil extends JestTool {
 		this.jot( 'mode', 'idle' ); // tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Threshold(s)
-	// --------------------------------
+	//---------------------------------
 	// Set the timeout threshold between draws before sending idle events.
 	// RETURNS: [void]
 	// * val	- [ms] Int value of time to wait before setting draw as idle.
@@ -89,9 +89,9 @@ class JestToolPencil extends JestTool {
 		this._swishThreshold	= val;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -270,6 +270,8 @@ class JestToolPencil extends JestTool {
 		this._mouseButton  = e.button;
 		// Calculate click position in tile units
 		const click = this.target.mousePos( e );
+		// Begin a stroke only inside the editable level.
+		if ( !this.target.containsRinkPoint(click) ) return;
 		const units = this.anchor.units;
 		const x     = Math.floor( click.x / units );
 		const y     = Math.floor( click.y / units );

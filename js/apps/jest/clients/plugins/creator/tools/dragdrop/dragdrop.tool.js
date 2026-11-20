@@ -11,21 +11,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/dragdrop/dra
 // This tool enables grabbing objects from to drop inside container(s).
 class JestToolDragdrop extends JestTool {
 	// Object propert(ies)
-	target		= null;			// [ElementCanvas] Target canvas element to draw on.
-	contents	= null;			// [...] queue content(s) for dragdrop.
-	crate		= null;			// [JestToolCrate] for carrying [object].
-	startTimer	= null;			// Timeout for double-click handling.
-	clickToDrag	= true;			// [bool] Whether click-to-drag (true) or hold-to-drag (false).
+	target      = null;         // [ElementCanvas] Target canvas element to draw on.
+	contents    = null;         // [...] queue content(s) for dragdrop.
+	crate       = null;         // [JestToolCrate] for carrying [object].
+	startTimer  = null;         // Timeout for double-click handling.
+	clickToDrag = true;         // [bool] Whether click-to-drag (true) or hold-to-drag (false).
 	// Suppression state
-	suppressed = false;			// [bool] Whether this drag owns external suppression.
+	suppressed  = false;        // [bool] Whether this drag owns external suppression.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
-	// * name		- [string] Value of tool name.
+	// * client  - [object] Application client that this piece belongs to.
+	// * name    - [string] Value of tool name.
 	constructor( client, name ) {
 		super( client, name ); // call parent constructor
 	}
@@ -42,9 +42,9 @@ class JestToolDragdrop extends JestTool {
 		if ( classes===null ) classes = [];
 		const defaultClasses = [ 'tool-dragdrop' ];
 		super.build( name, defaultClasses.mergeUnique(classes) );
-		// --------------------------------
+		//---------------------------------
 		// Create Crate Tool [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a crate tool to the editor.
 		const crate  = new JestToolCrate( this.client );
 		crate.build(); // generate crate
@@ -57,8 +57,8 @@ class JestToolDragdrop extends JestTool {
 			( garage, localPos ) => {
 				if ( garage ) {
 					//console.log( `Crate dropped into "${ droppedGarage.name }". Local coords:`, localPos );
-					// Call the drag drop draw method.
-					this.drop( garage, localPos.x, localPos.y ); // attempt to draw/place.
+					// Commit the same tile coordinates shown by the crate.
+					this.drop( garage, localPos.x, localPos.y, localPos );
 				}
 				else {
 					//console.log( 'Crate dropped outside any garage.' );
@@ -76,9 +76,9 @@ class JestToolDragdrop extends JestTool {
 				this.crate.anchor.graticulate( units );
 			});
 
-		// --------------------------------
+		//---------------------------------
 		// Create Canvas In Crate [object]
-		// --------------------------------
+		//---------------------------------
 		// Add a canvas to the crate for drag display.
 		crate.display.addCanvas( 'dragdrop' );
 		// Disable the crate & hide it.
@@ -99,9 +99,9 @@ class JestToolDragdrop extends JestTool {
 			});*/
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to make selectable.
 	// RETURNS: [void]
 	// * target  - [ElementCanvas] The target to allow selectability on.
@@ -117,9 +117,9 @@ class JestToolDragdrop extends JestTool {
 		this.jot( 'mode', 'idle' ); // tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable drawing mode.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -397,12 +397,14 @@ class JestToolDragdrop extends JestTool {
 	// * garage		- [object] of garage being dropped in.
 	// * localX		- [number] Value of relative x location in the garage.
 	// * localY		- [number] Value of relative y location in the garage.
-	drop( garage, localX, localY ) {
+	//   snapped    - [object] Local position information.
+	drop( garage, localX, localY, snapped=null ) {
 		//console.log( 'dropping dragdrop' );
 		// Mode gate keep.
 		const enabled = this.skim( 'enabled' );
 		//const mode	= this.skim( 'mode' );
 		if ( !enabled ) return;
+
 		//-------------------------
 		// Get Data for Event
 		//-------------------------
@@ -411,18 +413,22 @@ class JestToolDragdrop extends JestTool {
 		// Use the crate's current destination-space units. These may differ from
 		// the source tool units when dropping onto a zoomed surface, for example.
 		const units    = this.crate.anchor.getUnitsZoomed(); // tile units
-		const levelX   = Math.round( localX / units );
-		const levelY   = Math.round( localY / units );
+		// Use the crate's snapped coordinates, with rounding for direct callers.
+		const levelX   = snapped?.lx ?? Math.round( localX/units );
+		const levelY   = snapped?.ly ?? Math.round( localY/units );
+
 		//-------------------------
 		// Handle Crate
 		//-------------------------
 		this.crate.hide();     // hide the crate
 		this.crate.disable();  // disable if enabled
+
 		//-------------------------
 		// Reset Tool Mode
 		//-------------------------
 		// Reset the tool.
 		this.reset(); // reset tool
+
 		//-------------------------
 		// Emit Event(s)
 		//-------------------------

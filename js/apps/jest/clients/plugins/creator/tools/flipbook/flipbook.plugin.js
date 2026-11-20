@@ -115,9 +115,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			curator.toolbar.buttons.create.register(
 				'click', 'create-object', () => curator.emit('btnCreate') );
 
-			// --------------------------------
+			//---------------------------------
 			// Edit/Undo Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Handle edit / undo event(s).
 			client.register(
 				'revert', 'flipbookTool',
@@ -283,9 +283,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 						default: break;
 					}
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Sidebar
-					// --------------------------------
+					//---------------------------------
 					// Hard refresh the flipbook sidebar panel.
 					client.flipbookHardRefresh( tool );
 				});
@@ -313,9 +313,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( dir===1 ) findex ++;
 					const frame	= client.addFrame( tool, findex );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'frameAdd',
@@ -362,9 +362,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					const frame		= s.ani.getFrameAt( findex );
 					const data		= client.removeFrame( tool, frame );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'frameRemove',
@@ -407,9 +407,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( dir===1 ) lindex ++;
 					const layer		= client.addLayer( tool, s.frame, lindex );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'layerAdd',
@@ -461,9 +461,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Call removeLayer method in client.
 					const data		= client.removeLayer( tool, layer );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action : 'layerRemove',
@@ -498,16 +498,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				],
 				'flipbookPlugin',
 				() => {
-					// --------------------------------
+					//---------------------------------
 					// Hard Refresh Curator Display(s)
-					// --------------------------------
+					//---------------------------------
 					// Recalculate control(s) in the curator.
 					client.flipbookHardRefresh( tool );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Apply Changes to Field(s) Button
-			// --------------------------------
+			//---------------------------------
 			/*// Add apply button to curator.
 			curator.toolbar.createButton( { name: 'apply', text: 'Apply' } );
 			curator.toolbar.buttons.apply.register(
@@ -659,9 +659,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool,true)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Curator Object List(s)
-					// --------------------------------
+					//---------------------------------
 					// Change the active frame being viewed.
 					s.aniView.setFrameIndex( value );
 					// Recalculate layer(s) within frame.
@@ -678,17 +678,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Curator Object List(s)
-					// --------------------------------
+					//---------------------------------
 					// Change the active layer being viewed.
 					s.aniView.setLayerIndex( value );
 					this.refreshCurator( tool ); // refresh curator
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create New Sticker Modal
-			// --------------------------------
+			//---------------------------------
 			// Generate the sticker modal.
 			client.addModal(
 				'newSticker',
@@ -771,17 +771,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					// Gatekeep with file status check.
 					let s; if ( !(s=client.getFileStatus(tool)) ) return false; // abort
 
-					// --------------------------------
+					//---------------------------------
 					// Create a New Sticker
-					// --------------------------------
+					//---------------------------------
 					// Render data to pass to deinition method.
 					const data		= {}; // generic [object]
 					// Attempt to define a sticker.
 					const object	= client.defineFlipbookSticker( tool, data );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'stickerAdd',
@@ -839,15 +839,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					if ( !confirm(`Are you sure you want to remove ${type} "${name}"?`) )
 						return; // user aborted
 
-					// --------------------------------
+					//---------------------------------
 					// Create a New Sticker
-					// --------------------------------
+					//---------------------------------
 					// Remove a sticker from the layer.
 					s.layer.removeSticker( data.sticker.z );
 
-					// --------------------------------
+					//---------------------------------
 					// Log Action for Undo/Redo
-					// --------------------------------
+					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
 						action  : 'stickerRemove',
@@ -1157,9 +1157,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			curator.register(
 				'display', subtype,
 				( object ) => { // * object - [JestCuratorObject]
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate Control(s)
-					// --------------------------------
+					//---------------------------------
 					// Update the flipbook controls.
 					client.updateFlipbookControls( tool );
 
@@ -1246,9 +1246,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'flipbookRemember',
 				() => {
@@ -1260,13 +1260,13 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 			client.tabbarFile.register(
 				'tabChange', 'flipbookRefresh',
 				( view ) => {
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					client.flipbookHardRefresh( tool );
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					const s = client.getFileStatus( tool, true );
 					if ( s ) curator.restoreSelection( s.fileKey );
 				});
@@ -1324,9 +1324,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					curator.emit( 'auto:load', null, 'sticker' );
 					curator.selectTopObject(); // autoselect first sticker
 
-					// --------------------------------
+					//---------------------------------
 					// Refresh Sidebar
-					// --------------------------------
+					//---------------------------------
 					// Hard refresh the flipbook sidebar panel.
 					client.flipbookHardRefresh( tool );
 					// Recalculate layer(s) within frame.
@@ -1362,9 +1362,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				}
 				const sprite	= s.ani.getSpriteByID( sid );
 
-				// --------------------------------
+				//---------------------------------
 				// Setup Curator [object] Data
-				// --------------------------------
+				//---------------------------------
 				// Store data for curator sprite object.
 				data.file		= s.fileKey;
 				// Add next sprite id to curator sprite data.
@@ -1373,18 +1373,18 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				data.frame		= s.frame;		// frame index
 				data.layer		= s.layer;		// layer index
 
-				// --------------------------------
+				//---------------------------------
 				// Create New Sticker
-				// --------------------------------
+				//---------------------------------
 				// Default coordinates.
 				const { x, y }	= 0;
 				// Create a sticker of the sprite & add to layer.
 				const sticker	= s.layer.createSticker( data.sid, x, y );
 				data.sticker	= sticker;		// store ref in data
 
-				// --------------------------------
+				//---------------------------------
 				// Create Sticker's Curator Object
-				// --------------------------------
+				//---------------------------------
 				// Add the sticker to the curator.
 				const object	= s.curator.addObject( 'sticker', data );
 				// Update sprite select on each sticker & in modal.
@@ -1403,15 +1403,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
 
-				// --------------------------------
+				//---------------------------------
 				// Clamp Layer Selection(s) (safety fallback)
-				// --------------------------------
+				//---------------------------------
 				// Clamp all views' selected layer index.
 				s.ani._clampAllViews();
 
-				// --------------------------------
+				//---------------------------------
 				// Reset JANI Layer Slider
-				// --------------------------------
+				//---------------------------------
 				// Rescale the layer selector to match layer count.
 				const layerRange	= tool.layerForm.fields.layerRange;
 				const layersCount	= s.frame.getLayerCount();
@@ -1440,15 +1440,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Refresh the curator dropdown(s).
 				this.refreshCurator( tool ); // refresh curator
 
-				// --------------------------------
+				//---------------------------------
 				// Recalibrate Control(s)
-				// --------------------------------
+				//---------------------------------
 				// Hard-refresh update flipbook controls.
 				this.updateFlipbookControls( tool );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Curator Display(s)
-				// --------------------------------
+				//---------------------------------
 				// Recalculate layer(s) within frame.
 				this.recalculateLayers( tool );
 			}
@@ -1463,9 +1463,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
 
-				// --------------------------------
+				//---------------------------------
 				// Reset JANI Frame Slider
-				// --------------------------------
+				//---------------------------------
 				// Rescale the frame selector to match frame count.
 				const frameRange	= tool.frameForm.fields.frameRange;
 				const framesCount	= s.jani.animation.frames.length;
@@ -1682,9 +1682,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				if ( type!=='sticker' ) return;
 				const sticker	= data.sticker;
 
-				// --------------------------------
+				//---------------------------------
 				// Calculate Coordinates
-				// --------------------------------
+				//---------------------------------
 				// Capture existing coordinates.
 				//const old	= { x:sticker.x, y:sticker.y, z:sticker.z };
 				// Change the x-value of the sticker.
@@ -1700,9 +1700,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				}
 				console.log( '........' );*/
 
-				// --------------------------------
+				//---------------------------------
 				// Update Coordinates
-				// --------------------------------
+				//---------------------------------
 				// Move sticker to (x,y) coordinate.
 				sticker.move( x, y );
 				// Rearrange sticker z-coordinate.
@@ -1720,9 +1720,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 					form.setValue( 'z', data.z );
 				}
 
-				// --------------------------------
+				//---------------------------------
 				// Sort Curator Stickers (by Z-coordinate)
-				// --------------------------------
+				//---------------------------------
 				// Resort the sticker dropdown.
 				s.curator.resortOptions(
 					( a, b ) => {
@@ -1784,9 +1784,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Create a layer using active layer's index.
 				const layer	= frame._createLayerAt( index );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 				return layer; // [AnimationLayer] instance
@@ -1851,9 +1851,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				const frame	= layer.getFrame();
 				frame._removeLayerAt( lindex );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 
@@ -1887,9 +1887,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				if ( index===null ) index = s.findex;
 				const frame	= s.ani.createFrameAt( index );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 				return frame; // [AnimationFrame] instance
@@ -1965,9 +1965,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/flipbook/fli
 				// Remove frame from animation.
 				s.ani.removeFrameAt( findex );
 
-				// --------------------------------
+				//---------------------------------
 				// Refresh Sidebar
-				// --------------------------------
+				//---------------------------------
 				// Hard refresh the flipbook sidebar panel.
 				this.flipbookHardRefresh( tool );
 

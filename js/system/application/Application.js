@@ -98,9 +98,9 @@ class Application extends OSObject {
 		// Require windowObj to be part of application windows
 		if ( !this.windows.includes(windowObj) )
 			return false; // "window" not part of application
-		// --------------------------------
+		//---------------------------------
 		// Open the window
-		// --------------------------------
+		//---------------------------------
 		windowObj.open(); // open the window
 		return true; // success
 	}
@@ -110,9 +110,9 @@ class Application extends OSObject {
 	dockShortcut() {
 		// Require this element to be created
 		//if ( this.el===null ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Panel [object]
-		// --------------------------------
+		//---------------------------------
 		const shortcut	= new DockShortcut( this );
 		this.shortcut	= shortcut; // keep [object] reference
 		// Append to DOM & return

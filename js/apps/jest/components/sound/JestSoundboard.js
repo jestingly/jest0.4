@@ -11,22 +11,22 @@ console.log( 'jestAlert: js/apps/jest/components/sound/JestSoundboard.js loaded'
 // Handles preloading, caching, and playing sound from downloaded sources.
 class JestSoundboard extends JestSavable {
 	// Properties
-	filetypes			= [ 'wav', 'mp3' ];	// [array] of filetype extension(s).
-	mute				= false;		// [bool] Whether sounds are on or off.
-	sounds				= {};			// [object] Preloaded sound objects to play.
-	soundCache			= {};			// [Object] Stores preloaded sound files.
-	defaultVolume		= 0.2;			// [float] Default volume (20%).
-	volume				= 100;			// [float] Volume multiplier value (100%).
+	filetypes     = [ 'wav', 'mp3' ]; // [array] of filetype extension(s).
+	mute          = false;            // [bool] Whether sounds are on or off.
+	sounds        = {};               // [object] Preloaded sound objects to play.
+	soundCache    = {};               // [Object] Stores preloaded sound files.
+	defaultVolume = 0.2;              // [float] Default volume (20%).
+	volume        = 100;              // [float] Volume multiplier value (100%).
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
-	// * client		- [object] Application client creating the object.
-	// * name		- [string] Value of soundboard name (e.g. 'primary').
+	// * client  - [object] Application client creating the object.
+	// * name    - [string] Value of soundboard name (e.g. 'primary').
 	constructor( client, name ) {
 		// Call the parent object constructor
-		super( client, name );			// construct the parent
+		super( client, name ); // construct the parent
 	}
 
 	//-------------------------
@@ -34,7 +34,7 @@ class JestSoundboard extends JestSavable {
 	//-------------------------
 	// Obtain a sound key.
 	// RETURNS: [void].
-	// * stem		- [string] Sound filename stem (e.g. 'footstep').
+	// * stem  - [string] Sound filename stem (e.g. 'footstep').
 	soundKey( stem ) { return `${stem}`; }
 
 	//-------------------------
@@ -42,12 +42,12 @@ class JestSoundboard extends JestSavable {
 	//-------------------------
 	// Download sound file(s) asynchronously & store as JestSound [objects] for playback.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * addresses	- [array] Full address names (e.g. 'jump.wav').
-	//   network	- [string] One of: 'local', 'remote'
+	// * addresses  - [array] Full address names (e.g. 'jump.wav').
+	//   network    - [string] One of: 'local', 'remote'
 	async preload( addresses, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate argument(s)
-		// --------------------------------
+		//---------------------------------
 		// 'addresses' must be an [array<string>].
 		if ( !jsos.prove(addresses,'stray') )
 			throw new Error( `Argument 'filenames' must be of type [stray].` );
@@ -55,9 +55,9 @@ class JestSoundboard extends JestSavable {
 		if ( !jsos.prove(addresses,'array') )
 			addresses = [ addresses ]; // [array]
 
-		// --------------------------------
+		//---------------------------------
 		// Validate & Build Queue
-		// --------------------------------
+		//---------------------------------
 		// Iterate requested sound file(s) & verify request type(s).
 		const queue	= [];
 		for ( const address of addresses ) {
@@ -79,15 +79,15 @@ class JestSoundboard extends JestSavable {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Process Queue & Download
-		// --------------------------------
+		//---------------------------------
 		// Attempt to load requested sound files(s).
 		await this.client.secretary.loadFiles( queue );
 
-		// --------------------------------
+		//---------------------------------
 		// Render Downloaded Sound File(s)
-		// --------------------------------
+		//---------------------------------
 		// Iterate sound file data & create [objects]
 		for ( const address of queue ) {
 			// Create a new JestSound instance & render parsed sound data.
@@ -99,9 +99,9 @@ class JestSoundboard extends JestSavable {
 			// Continue to create sound [object].
 			const sound  = new JestSound( this.client, address );
 			const key    = this.soundKey( address );
-			this.sounds[key] = sound;		// store sound [object]
-			sound.setup();					// call any necessary setup
-			sound.render( record.blob );	// render blob into JestSound [object]
+			this.sounds[key] = sound;     // store sound [object]
+			sound.setup();                // call any necessary setup
+			sound.render( record.blob );  // render blob into JestSound [object]
 		}
 		console.log( this.sounds );
 		return true; // success
@@ -130,8 +130,9 @@ class JestSoundboard extends JestSavable {
 		const sound	= this.sounds?.[key] || null; // get sound [object]
 		if ( !sound ) {
 			console.error( `Sound not found in cache: ${key}` );
-			return;
+			return; // abort
 		}
+		//console.error( `Sound playing: ${key}` );
 		// Multiply sound by soundboard volume
 		volume *= this.volume/100;
 		// Attempt to play the sound

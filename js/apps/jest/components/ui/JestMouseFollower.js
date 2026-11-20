@@ -54,16 +54,16 @@ class JestMouseFollower extends JestElement {
 	// * name    - unique [string] value of component name in the system.
 	// * classes - [array] of classes to add to panel element.
 	build( name='mousefollower', classes=[] ) {
-		// --------------------------------
+		//---------------------------------
 		// Construct Main Panel
-		// --------------------------------
+		//---------------------------------
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-mousefollower'].mergeUnique(classes) );
 
-		// --------------------------------
+		//---------------------------------
 		// Create Mouse Follower Content Box
-		// --------------------------------
+		//---------------------------------
 		// Add internal contents element.
 		this.panel.addElements([{
 			name    : 'contents',

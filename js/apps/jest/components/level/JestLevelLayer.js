@@ -27,9 +27,9 @@ class JestLevelLayer extends JestMatrix {
 	chunks      = null;        // [array] Tile map of level compressed into chunks.
 	tiledefs    = null;        // [object] Tiledefs aligned to specific tile indices.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// * client  - [object] Application client creating the object.
 	constructor( client ) {
@@ -62,10 +62,10 @@ class JestLevelLayer extends JestMatrix {
 		// Remove layer canvas from the DOM, if attached.
 		this.canvas?.remove?.();
 		// Nullify [object] reference propert(ies).
-		this.level		= null; // nullify level property
+		this.level   = null; // nullify level property
 		// Null out large fields
-		this.tilemap	= this.chunks = this.tiledefs = null;
-		this.canvas		= this.stamp  = null;
+		this.tilemap = this.chunks = this.tiledefs = null;
+		this.canvas  = this.stamp  = null;
 		// Call parent destroy if it exists
 		if ( super.destroy ) super.destroy();
 	}
@@ -77,18 +77,18 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	async setup() {
 		// Check if setup is possible.
-		const status	= this.skim( 'status' );
+		const status = this.skim( 'status' );
 		if ( status!=='constructed' ) return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Build Level
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'building' );	// set status
 		this.build();						// build the object
 
-		// --------------------------------
+		//---------------------------------
 		// Load File(s) Data
-		// --------------------------------
+		//---------------------------------
 		this.jot( 'status', 'empty' );		// set status
 		return true; // success
 	}
@@ -97,24 +97,24 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	build() {
 		// Check if setup is possible.
-		const status	= this.skim( 'status' );
+		const status    = this.skim( 'status' );
 		if ( status!=='building' ) return false;
-		// --------------------------------
+		//---------------------------------
 		// Create Drawing [objects]
-		// --------------------------------
+		//---------------------------------
 		// Create the level rendering element canvas [object]
-		const canvas		= new ElementCanvas();
-		this.canvas			= canvas;
+		const canvas    = new ElementCanvas();
+		this.canvas     = canvas;
 		// Update canvas dimensions
-		const levelSpan		= this.client.config.levelSpan;
+		const levelSpan = this.client.config.levelSpan;
 		canvas.resize( levelSpan, levelSpan );
 		// Create a canvas for clip stamping onto level element canvas [object]
-		const stamp			= new ElementCanvas();
-		this.stamp			= stamp;
+		const stamp     = new ElementCanvas();
+		this.stamp      = stamp;
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Sizing Method(s) [object]
-		// --------------------------------
+		//---------------------------------
 		/*// Add resize event handler for canvas updating
 		this.anchor.register( 'resize', 'level', (w,h)=>this.resize(w,h) );
 		// Set tile size
@@ -124,9 +124,9 @@ class JestLevelLayer extends JestMatrix {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Tile Type Registry & Handling
-	// --------------------------------
+	//---------------------------------
 	// Build tileTypes: 2D array of Sets storing tile types per (x,y).
 	// RETURNS: [Set] of types, or empty Set if none exist.
 	// * tiles		- Ordered 2D [array] of tile tileset indices.
@@ -168,19 +168,19 @@ class JestLevelLayer extends JestMatrix {
 		return this.tiledefs[y]?.[x] ?? new Set();
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Level Rendering
-	// --------------------------------
+	//---------------------------------
 	// Clear the level board.
 	// RETURNS: [boolean] success or fail.
 	clear() {
 		// Empty the level first.
-		this.tilemap	= null;		// empty tilemap
-		this.chunks		= null;		// empty chunks
-		this.tiledefs	= null;		// empty tile definitions
+		this.tilemap  = null;       // empty tilemap
+		this.chunks   = null;       // empty chunks
+		this.tiledefs = null;       // empty tile definitions
 		// Clear the canvas.
 		if ( this.canvas?.el ) {
-			const ctx	= this.canvas.el.getContext( '2d' );
+			const ctx = this.canvas.el.getContext( '2d' );
 			ctx.clearRect( 0, 0, this.canvas.el.width, this.canvas.el.height );
 		}
 		// Revert mode to empty.
@@ -209,8 +209,8 @@ class JestLevelLayer extends JestMatrix {
 		if ( status!=='empty' && status!=='rendered' ) return false;
 		this.jot( 'status', 'rendering' ); // set status
 		// Collect all known tile-types on board.
-		this.tilemap  = tiles;		// store tiles 2D [array]
-		this.buildTileTypes( tiles );	// store tile def types
+		this.tilemap  = tiles; // store tiles 2D [array]
+		this.buildTileTypes( tiles ); // store tile def types
 		// Organize tile types into chunks for blitting.
 		const chunks  = this.encodeRawLevelToChunks( tiles );
 		this.chunks   = chunks; // save chunks
@@ -244,7 +244,7 @@ class JestLevelLayer extends JestMatrix {
 	//-------------------------
 	// Encode a 2D array of tiles into a compact string format.
 	// RETURNS: [string] Encoded tile string representation.
-	// * grid		- [array] 2D array of tiles, where each tile has `ts`, `tx`, and `ty` properties.
+	// * grid - [array] 2D array of tiles, where each tile has `ts`, `tx`, and `ty` properties.
 	encodeMatrixID( grid ) {
 		return grid.map(
 			row => row.map(
@@ -258,7 +258,7 @@ class JestLevelLayer extends JestMatrix {
 
 	// Decode a string-encoded tile representation back into a 2D tile array.
 	// RETURNS: [array] 2D array of tile objects `{ ts, tx, ty }`.
-	// * encoded	- [string] Encoded tile string representation.
+	// * encoded - [string] Encoded tile string representation.
 	decodeMatrixID( encoded ) {
 		return encoded.split('_').map(
 			row =>
@@ -273,28 +273,28 @@ class JestLevelLayer extends JestMatrix {
 
 	// Encode an object `{ x, y }` into a 4-character hex string.
 	// RETURNS: [string] Encoded hex position.
-	// * pos		- [object] `{ x, y }` position object.
+	// * pos  - [object] `{ x, y }` position object.
 	encodePosition( pos ) {
 		return pos.x.toString(16).padStart(2,'0') + pos.y.toString(16).padStart(2,'0');
 	}
 
 	// Decode an array of hex tile positions into `{ x, y }` objects.
 	// RETURNS: [array] Array of `{ x, y }` positions.
-	// * positions	- [array] Array of hex strings representing positions.
+	// * positions - [array] Array of hex strings representing positions.
 	decodeMatrixXY( positions ) {
 		return positions.map( pos => this.decodePosition(pos) );
 	}
 
 	// Decode a 4-character hex position string into `{ x, y }`.
 	// RETURNS: [object] `{ x, y }` position object.
-	// * encoded	- [string] Encoded hex position (4 characters).
+	// * encoded - [string] Encoded hex position (4 characters).
 	decodePositionString( encoded ) {
 		return encoded.match(/.{4}/g).map( pos => this.decodePosition(pos) );
 	}
 
 	// Decode a 4-character hex position string into `{ x, y }`.
 	// RETURNS: [object] `{ x, y }` position object.
-	// * encoded	- [string] Encoded hex position (4 characters).
+	// * encoded - [string] Encoded hex position (4 characters).
 	decodePosition( encoded ) {
 		return {
 			x: parseInt( encoded.substring(0,2), 16 ),
@@ -306,10 +306,10 @@ class JestLevelLayer extends JestMatrix {
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	genLevel( fillTile=null ) {
 		// Validate level width/height
-		const tiles        = []; // [array] of tiles
-		const levelGrid    = this.client.config.levelGrid;
+		const tiles     = []; // [array] of tiles
+		const levelGrid = this.client.config.levelGrid;
 		for ( let y=0; y<levelGrid; y++ ) {
-			const row      = [];
+			const row   = [];
 			for ( let x=0; x<levelGrid; x++ ) {
 				// Create tile & add to row
 				row.push( fillTile ? { ...fillTile } : null );
@@ -326,7 +326,7 @@ class JestLevelLayer extends JestMatrix {
 
 	// Encodes raw 2D [array] of tiles to level chunks [array]
 	// RETURNS: [array] of chunks or `false` on fail.
-	// * tiles		- 2D [array] of raw tiles comprising the level.
+	// * tiles  - 2D [array] of raw tiles comprising the level.
 	encodeRawLevelToChunks( tiles ) {
 		if ( !tiles || !tiles.length ) return false
 		// Group positions by tileId
@@ -364,8 +364,8 @@ class JestLevelLayer extends JestMatrix {
 
 	// Compare two tiles.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * tileA		- [object] first tile to compare.
-	// * tileB		- [object] second tile to compare.
+	// * tileA  - [object] first tile to compare.
+	// * tileB  - [object] second tile to compare.
 	sameTile( tileA, tileB ) {
 		if ( !tileA || !tileB ) return false;
 		return tileA.ts===tileB.ts && tileA.tx===tileB.tx && tileA.ty===tileB.ty;
@@ -376,31 +376,31 @@ class JestLevelLayer extends JestMatrix {
 	//-------------------------
 	// Render tilemap chunks using pre-rendered tile matrices.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
-	// * chunks   - [object] Tilemap chunks dictionary `{ matrix: [positions] }`.
+	// * chunks - [object] Tilemap chunks dictionary `{ matrix: [positions] }`.
 	blit( chunks ) {
 		// Validate argument(s)
 		if ( !chunks ) return false;
 		// Select tileset (by index)
-		let units		= this.client.config.tileGrid;
-		let tileset		= this.client.gameboard.tilesets['pics1'];
+		let units   = this.client.config.tileGrid;
+		let tileset = this.client.gameboard.tilesets['pics1'];
 		// Get the main level canvas to draw on
-		const ctx		= this.canvas.el.getContext( '2d' );
+		const ctx   = this.canvas.el.getContext( '2d' );
 		// Iterate the chunks & draw tile(s)
 		Object.entries(chunks).forEach(
 			( [ encodedMatrix, encodedPositions ] ) => {
 				// Get matrix.
-				const matrix		= this.decodeMatrixID( encodedMatrix );
+				const matrix  = this.decodeMatrixID( encodedMatrix );
 				// Resize stamp to fit matrix.
-				const width			= matrix[0].length * units;
-				const height		= matrix.length * units;
+				const width   = matrix[0].length * units;
+				const height  = matrix.length * units;
 				this.stamp.resize( width, height );		// resize stamp to match matrix dimensions
 				// Deboss the matrix onto the stamp.
 				tileset.deboss( this.stamp, matrix );	// imprint matrix into this.stamp
-				let positions		= this.decodePositionString( encodedPositions );
+				let positions = this.decodePositionString( encodedPositions );
 				positions.forEach(
 					( { x: levelX, y: levelY } ) => {
-						let dxPos	= levelX * units;
-						let dyPos	= levelY * units;
+						let dxPos = levelX * units;
+						let dyPos = levelY * units;
 						ctx.drawImage( this.stamp.el, dxPos, dyPos );
 					});
 			});
@@ -423,9 +423,9 @@ class JestLevelLayer extends JestMatrix {
 
 	// Check whether a 1D interval [origin, origin+length) lies fully inside [0, max)
 	// RETURNS: true if entirely in-bounds, false otherwise.
-	// * origin		– starting coordinate (in tiles)
-	// * length		– size of the interval (in tiles)
-	// * max		– the maximum size (in tiles), e.g. level width or height
+	// * origin  – starting coordinate (in tiles)
+	// * length  – size of the interval (in tiles)
+	// * max     – the maximum size (in tiles), e.g. level width or height
 	inBounds1D( origin, length=0, max=null ) {
 		// Default max to level grid if not set
 		if ( max===null ) {
@@ -441,14 +441,14 @@ class JestLevelLayer extends JestMatrix {
 	//   • newOrigin ≥ 0
 	//   • newOrigin+newLength ≤ max
 	//   • If the original region was completely outside, newLength becomes 0.
-	// * origin		– starting coordinate (in tiles)
-	// * length		– size of the interval (in tiles)
-	// * max		– the maximum size (in tiles), e.g. level width or height
+	// * origin  – starting coordinate (in tiles)
+	// * length  – size of the interval (in tiles)
+	// * max     – the maximum size (in tiles), e.g. level width or height
 	clip1D( origin, length, max ) {
 		// clamp the start to at least 0
-		const start	= Math.max( 0, origin );
+		const start = Math.max( 0, origin );
 		// clamp the end to at most max
-		const end	= Math.min( origin+length, max );
+		const end   = Math.min( origin+length, max );
 		// if end≤start, region is out-of-bounds (or zero-width)
 		const newLength = end>start ? end - start : 0;
 		return { origin: start, length: newLength };
@@ -457,16 +457,16 @@ class JestLevelLayer extends JestMatrix {
 	// Get a rectangle region at a location on the map with image bitmap.
 	// RETURNS: [object] with matrix [array] & ElementCanvas.
 	// Uses `deboss()` to stamp tiles into a temporary canvas.
-	// * x		– left of region rectangle to crop in the level grid.
-	// * y		- top of region rectangle to crop in the level grid.
-	// * w, h	– width & height in tiles
+	// * x     – left of region rectangle to crop in the level grid.
+	// * y     - top of region rectangle to crop in the level grid.
+	// * w, h  – width & height in tiles
 	snapshotRegion( x, y, w, h ) {
 		// Pull the tile sub-matrix
-		const matrix	= this.cloneRegion( x, y, w, h );
+		const matrix  = this.cloneRegion( x, y, w, h );
 		if ( !matrix.length ) return null;
 		// Create a new temporary ElementCanvas for the region
-		const tileset	= this.client.gameboard.tilesets['pics1'];
-		const stamp		= tileset.createStamp( matrix );
+		const tileset = this.client.gameboard.tilesets['pics1'];
+		const stamp   = tileset.createStamp( matrix );
 		// Return copied data.
 		return { matrix, stamp };
 	}
@@ -498,9 +498,9 @@ class JestLevelLayer extends JestMatrix {
 		return matrix; // region WxH 2D [array]
 	}
 
-	// -----------------------------
+	//------------------------------
 	// Get Composite Marquee Region
-	// -----------------------------
+	//------------------------------
 	// Copy a composite masked region (not just rectangular).
 	// RETURNS: [object|null] contents data, or null if invalid.]
 	// * x, y  - [int] Values of mask top-left x,y coordinates on canvas.
@@ -576,7 +576,7 @@ class JestLevelLayer extends JestMatrix {
 	// Paste a 2D tile‐matrix into tilemap at (originX, originY).
 	// RETURNS: [bool] true on success, else false.
 	// * originX, originY – top‐left tile coords to overwrite in tilemap.
-	// * matrix          – 2D [array] (h rows × w cols) of tile objects.
+	// * matrix  – 2D [array] (h rows × w cols) of tile objects.
 	overwriteRegion( originX, originY, matrix ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -605,8 +605,8 @@ class JestLevelLayer extends JestMatrix {
 
 	// Fill a rectangular region (w×h) at (originX, originY) with a single tile.
 	// * originX, originY – top-left tile coords of region to fill, in level grid.
-	// * w, h		– width & height of region to fill (in tile units).
-	// * tile		– object { ts, tx, ty } specifying the tile to fill with.
+	// * w, h   – width & height of region to fill (in tile units).
+	// * tile   – object { ts, tx, ty } specifying the tile to fill with.
 	fillRegion( originX, originY, w, h, tile ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -659,7 +659,7 @@ class JestLevelLayer extends JestMatrix {
 	// Does NOT modify tilemap—draws pixels only.
 	// RETURNS: [bool] true on success, else false.
 	// * originX, originY – top‐left tile coords on the level canvas.
-	// * matrix          – 2D [array] of tile objects to stamp.
+	// * matrix – 2D [array] of tile objects to stamp.
 	stampRegionOnLevel( originX, originY, matrix ) {
 		// Require the level canvas and a non‐empty matrix
 		if ( !this.canvas || !matrix || !matrix.length ) return false;
@@ -681,8 +681,8 @@ class JestLevelLayer extends JestMatrix {
 				// Draw image at area
 				ctx.drawImage(
 					tileset.image.file.el,
-					sx, sy, units, units,	// source rect
-					dx, dy, units, units	// dest rect
+					sx, sy, units, units,  // source rect
+					dx, dy, units, units   // dest rect
 					);
 			}
 		}
@@ -692,8 +692,8 @@ class JestLevelLayer extends JestMatrix {
 	// High‐level: Update tilemap & immediately stamp onto the level canvas.
 	// RETURNS: [bool] true if both overwriteRegion & drawImage succeed; else false.
 	// * originX, originY	– top‐left tile coords on the map.
-	// * matrix		– 2D [array] of tile objects.
-	// * stamp		– [ElementCanvas] object to stamp @ loc; use [null] to autogenerate.
+	// * matrix  – 2D [array] of tile objects.
+	// * stamp   – [ElementCanvas] object to stamp @ loc; use [null] to autogenerate.
 	dropRegion( originX, originY, matrix, stamp=null ) {
 		// Locked layers cannot be edited.
 		if ( this.locked ) return false;
@@ -711,8 +711,8 @@ class JestLevelLayer extends JestMatrix {
 				  h     = stamp.el.height;
 			// Draw the stamp at the desired location.
 			ctx.drawImage(
-				stamp.el, 0, 0, w, h,	// source rect
-				x, y, w, h				// dest rect
+				stamp.el, 0, 0, w, h,  // source rect
+				x, y, w, h             // dest rect
 				);
 		}
 		else {
@@ -746,9 +746,9 @@ class JestLevelLayer extends JestMatrix {
 			return false;
 
 		// Access the tile grid, tileset and drawing context.
-		const units		= this.client.config.tileGrid;
-		const tileset	= this.client.gameboard.tilesets['pics1'];
-		const ctx		= this.canvas.el.getContext('2d');
+		const units   = this.client.config.tileGrid;
+		const tileset = this.client.gameboard.tilesets['pics1'];
+		const ctx     = this.canvas.el.getContext('2d');
 
 		//--------------------------------
 		// Apply Individual Tile Changes
@@ -798,19 +798,19 @@ class JestLevelLayer extends JestMatrix {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// Tile‐Object Utilities
-	// -------------------------
+	//--------------------------
 	// Build a “generic” tile data object.
 	// RETURNS: { ts, tx, ty }
-	// * tileset	– [string] key used in this.client.gameboard.tilesets (e.g. "pics1").
-	// * tx, ty		– [ints] column & row (in tiles) within that tileset.
+	// * tileset  – [string] key used in this.client.gameboard.tilesets (e.g. "pics1").
+	// * tx, ty   – [ints] column & row (in tiles) within that tileset.
 	getTileData( tileset, tx, ty ) {
 		// Return a new object with keys matching { ts, tx, ty }
 		return {
-			ts: tileset,	// tileset identifier used in this.client.gameboard.tilesets
-			tx: tx,			// column index of the tile within that tileset
-			ty: ty			// row index of the tile within that tileset
+			ts: tileset,  // tileset identifier used in this.client.gameboard.tilesets
+			tx: tx,       // column index of the tile within that tileset
+			ty: ty        // row index of the tile within that tileset
 			};
 	}
 }

@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Sidebar Tileset Tabbar [object]
-			// --------------------------------
+			//---------------------------------
 			// Create the tileset tabbar.
 			const tabbarTileset  = new JestTabbar( client );
 			client.tabbarTileset = tabbarTileset; // set tabbar
@@ -66,9 +66,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tiler/ui/tabbarTil
 			// * view	- [object] JestFileView to activate as tileset selector.
 			proto.tabbarTilesetChange = function( view ) {
 				console.log( 'Tileset tab change.' );
-				// --------------------------------
+				//---------------------------------
 				// Resize Gameboard Canvas to Match Level Dimensions
-				// --------------------------------
+				//---------------------------------
 				// Attempt to get the canvas.
 				const canvas = this.gameboard.display.getCanvas( 'palette' );
 				// Check for an active view.

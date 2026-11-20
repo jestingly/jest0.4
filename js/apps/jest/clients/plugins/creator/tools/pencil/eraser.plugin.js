@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 		// Plug Tool Into Tiler Application
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Eraser Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Reuse pencil input tracking, but provide eraser drawing behavior.
 			const tool		= new JestToolPencil( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -321,21 +321,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/pencil/erase
 			// Log the entire line of tile(s) drawn as one undo/redo action.
 			tool.register( 'stop', 'logEraser', ()=>client.toolLogEraser() );
 
-			// --------------------------------
+			//---------------------------------
 			// Settings Change Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Create event for when the magnification zoom value changes.
 			client.register(
 				'levelZoomed', 'eraserZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Match the tool grid to the active level view zoom.
 					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});

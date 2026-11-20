@@ -70,9 +70,9 @@ class JestGallery extends JestGamepiece {
 	// RETURNS: [boolean] True if fallback was successfully set, false otherwise.
 	// * category	- [string] Name of the category to set as fallback.
 	setFallbackCategory( category ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Allow category to be [null].
 		if ( category===null ) {
 			this.fallbackCategory = null; // reset
@@ -84,9 +84,9 @@ class JestGallery extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Set Fallback Category
-		// --------------------------------
+		//---------------------------------
 		// Check if category already exists.
 		if ( !this.hasCategory(category) ) {
 			console.warn( `Cannot set fallback: category "${category}" does not exist.` );
@@ -99,9 +99,9 @@ class JestGallery extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------
+	//--------------------------
 	// getFallbackCategory()
-	// -------------------------
+	//--------------------------
 	// Get the current fallback category.
 	// RETURNS: [string|null] Fallback category name, or null if not set.
 	getFallbackCategory() {
@@ -113,18 +113,18 @@ class JestGallery extends JestGamepiece {
 	// RETURNS: [string|null] Valid category name or null if not found.
 	// * category - [string] The requested category to resolve.
 	resolveCategory( category ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Require category to be a [string].
 		if ( !jsos.argues({category:[category,'string']}) ) {
 			console.warn( `JestGallery resolveCategory(), invalid argument for 'category': ${category}` );
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Check Fallback Category
-		// --------------------------------
+		//---------------------------------
 		// Check if category has been registered.
 		if ( this.hasCategory(category) )
 			return category; // [string|null] value
@@ -138,9 +138,9 @@ class JestGallery extends JestGamepiece {
 		return null; // return [null]
 	}
 
-	// -------------------------
+	//--------------------------
 	// Asset Handling
-	// -------------------------
+	//--------------------------
 	// Adds an asset to an existing category.
 	// * category	- [string] Name of the category.
 	// * id			- [string] Unique identifier for the asset.
@@ -175,9 +175,9 @@ class JestGallery extends JestGamepiece {
 	//     > autoLoad   - [boolean] If true, attempts to add/load missing asset.
 	//     > extension  - [string] File extension (only used if autoLoad=true).
 	async getAsset( category, id, { autoLoad=false, extension='png' } = {} ) {
-		// --------------------------------
+		//---------------------------------
 		// Resolve and validate category
-		// --------------------------------
+		//---------------------------------
 		// Attemp to resolve the category.
 		const resolved	= this.resolveCategory( category );
 		if ( !resolved ) return null; // not found
@@ -188,14 +188,14 @@ class JestGallery extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Try to find asset by ID
-		// --------------------------------
+		//---------------------------------
 		let asset	= categoryData.assets.get( id );
 
-		// --------------------------------
+		//---------------------------------
 		// Optionally auto-add the asset if not found
-		// --------------------------------
+		//---------------------------------
 		if ( !asset && autoLoad===true ) {
 			const stem		= this.client.getFilename( id );	// e.g. 'head104' from 'head104.png'
 			const ext		= this.client.getExtension( id );	// e.g. 'png'
@@ -211,9 +211,9 @@ class JestGallery extends JestGamepiece {
 			return null;
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Lazy-load if element not yet created
-		// --------------------------------
+		//---------------------------------
 		if ( !asset.element ) {
 			asset.element	= new ElementImage( { attributes: { src: asset.url } } );
 			console.log( `JestGallery: Asset "${id}" in category "${resolved}" lazy-loading now.` );
@@ -365,9 +365,9 @@ class JestGallery extends JestGamepiece {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Image Handling
-	// --------------------------------
+	//---------------------------------
 	// Load multiple images dynamically using a single object argument.
 	// RETURNS: [boolean] `true` if all images load successfully, `false` if any fail.
 	// * assets		- [object] where keys are folder names & values are [arrays] of { stem, extension }

@@ -35,9 +35,9 @@ JestAppsRegistry.AppJestTiler =
 		board			= null;				// [JestElement] Board for editing the level.
 		sidebar			= null;				// [JestSidebar] Sidebar menu for actions & palette.
 
-		// --------------------------------
+		//---------------------------------
 		// Constructor
-		// --------------------------------
+		//---------------------------------
 		// Construct the [object].
 		// * options	- [object] Configuration options for the application.
 		constructor() {
@@ -45,9 +45,9 @@ JestAppsRegistry.AppJestTiler =
 			super();
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Initialization
-		// --------------------------------
+		//---------------------------------
 		// Setup the application.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async setup() {
@@ -61,9 +61,9 @@ JestAppsRegistry.AppJestTiler =
 			// call parent launch method
 			const ok = await super.launch();
 			if ( !ok ) return false; // failed
-			// --------------------------------
+			//---------------------------------
 			// Post Launch Action(s)
-			// --------------------------------
+			//---------------------------------
 			// Disable all side panels.
 			this.sidebar.disableAllSections();
 			// Click a default tool to use.
@@ -87,9 +87,9 @@ JestAppsRegistry.AppJestTiler =
 		// Setup the tiler work station inside the app.
 		// RETURNS: [boolean] `true` on success else `false` on fail.
 		async configure() {
-			// --------------------------------
+			//---------------------------------
 			// Set & Get Quick-Refs
-			// --------------------------------
+			//---------------------------------
 			// Get the level editing canvas
 			const gameboard	= this.gameboard;	// get gameboard reference
 			const canvas	= gameboard.display.getCanvas( 'workspace' );
@@ -106,15 +106,15 @@ JestAppsRegistry.AppJestTiler =
 			// Initiate the tiler app as having settings.
 			this.settings.tiler = {};
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin Tiler UI Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize user interface plugin(s).
 			await JestTiler.initPlugins( 'ui', this );
 
-			// --------------------------------
+			//---------------------------------
 			// Extend File Menu [object]
-			// --------------------------------
+			//---------------------------------
 			const tilerActions	= [
 				{ name: 'undo',     text: 'Undo'   },
 				{ name: 'redo',     text: 'Redo'   },
@@ -147,9 +147,9 @@ JestAppsRegistry.AppJestTiler =
 			// Delete tool tip:
 			fmBtns.delete.clicker.addAttribute( 'data-tooltip-keys', 'Delete' );
 
-			// --------------------------------
+			//---------------------------------
 			// Create Toolbar Title
-			// --------------------------------
+			//---------------------------------
 			// Create primary swatch (foreground).
 			/*const title		= new JestDisplay( this );
 			title.build( 'title', ['title'] ); // build display
@@ -161,9 +161,9 @@ JestAppsRegistry.AppJestTiler =
 				classes : []
 				}])*/
 
-			// --------------------------------
+			//---------------------------------
 			// Create Swatch Display(s)
-			// --------------------------------
+			//---------------------------------
 			// Create swatch(es) list of swatch display(s).
 			this.swatches	= {}; // [object] of tile swatches
 
@@ -181,9 +181,9 @@ JestAppsRegistry.AppJestTiler =
 			toolbar.panel.addPanel( 'swatchBg', swatchBg.panel );
 			swatchBg.panel.addAttribute( 'data-tooltip', 'Background Tile' );
 
-			// --------------------------------
+			//---------------------------------
 			// Load Default Game-World Presets [object]
-			// --------------------------------
+			//---------------------------------
 			// Attempt to download default game world presets.
 			await this.gameboard.addWorld( 'jest' );
 			const world		= this.gameboard.getWorld( 'jest' );
@@ -194,15 +194,15 @@ JestAppsRegistry.AppJestTiler =
 				await this.openTilesetFile( data.stem );
 			loadbar.update(); // step 7
 
-			// --------------------------------
+			//---------------------------------
 			// Plugin App Settings Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Initialize user interface plugin(s).
 			await JestTiler.initPlugins( 'settings', this );
 
-			// --------------------------------
+			//---------------------------------
 			// Load Toolbox Tool Plugin(s)
-			// --------------------------------
+			//---------------------------------
 			// Setup temporary loadbar variable(s).
 			// NOTE: Loadbar is accessible after UI plugins.
 			let loadStep    = 0; // tracks current step
@@ -248,9 +248,9 @@ JestAppsRegistry.AppJestTiler =
 			toolbar.panel.reorderChild( swatchFg.panel, -1 );
 			toolbar.panel.reorderChild( swatchBg.panel, -1 );
 
-			// --------------------------------
+			//---------------------------------
 			// Governor Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Notify user about a clipboard "copy" event.
 			this.governor.register(
 				'logged', 'clipboardSuccess',
@@ -274,9 +274,9 @@ JestAppsRegistry.AppJestTiler =
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Miscellaneous Event(s)
-			// --------------------------------
+			//---------------------------------
 			// Register cabinet file saved event(s).
 			this.register(
 				'file:saved', 'appResponse',
@@ -482,7 +482,7 @@ JestAppsRegistry.AppJestTiler =
 				// Attempt to read local file if requested.
 				if ( fileInfo.network!=='none' ) { // existing level
 					// Use the Secretary to read a local file's data.
-					const ok	= await this.readLevelData( fileInfo )
+					const ok  = await this.readLevelData( fileInfo )
 					if ( ok===null ) {
 						console.warn( 'Level file could not be opened!' );
 						alert( 'Could not open level file.' );
@@ -495,7 +495,7 @@ JestAppsRegistry.AppJestTiler =
 				// Create Level File [object]
 				//--------------------------------
 				// Create a blank new cabinet file [object].
-				const cabFile	= new JestFileLevel( this, 'local', fileInfo.stem );
+				const cabFile = new JestFileLevel( this, 'local', fileInfo.stem );
 
 				//--------------------------------
 				// Register Event(s)
@@ -507,6 +507,7 @@ JestAppsRegistry.AppJestTiler =
 						// Emit an app-level "open level file" data event.
 						this.emit( 'loadFileData', null, cabFile, payload )
 					});
+
 				// Attach a saved listener when the file data has been written.
 				cabFile.register(
 					'saved', 'appResponse',
@@ -538,8 +539,8 @@ JestAppsRegistry.AppJestTiler =
 				// Setup File Editing View
 				//--------------------------------
 				// Create a new view panel for level.
-				const view      = new JestFileViewEditorPainterLevel( this );
-				const skey      = view.skey;        // we'll use system key for various signature(s)
+				const view  = new JestFileViewEditorPainterLevel( this );
+				const skey  = view.skey;            // we'll use system key for various signature(s)
 				view.build();                       // build the view
 				this.easels.files.showcase( view ); // add view to "files" easel
 				// Open the file.
@@ -557,23 +558,6 @@ JestAppsRegistry.AppJestTiler =
 				//--------------------------------
 				// Set edit history state (undo/redo) limit.
 				view.governor.init( 'edit', 20 );
-
-				// Add file change event listener.
-				view.governor.register(
-					'changed', 'fileChange',
-					( state, snapshot ) => {
-						// Check if the file has changed.
-						switch ( snapshot.action ) {
-							case "dropRegion":
-							case "fillRegion":
-							case "fillTile":
-							case "sparseRegion":
-								// The file has changed.
-								view.file.jot( "changed", true );
-								break;
-							default: break;
-						}
-					});
 
 				// Listen for undo event.
 				view.register(
@@ -606,7 +590,7 @@ JestAppsRegistry.AppJestTiler =
 					'history:logged', 'labelItem',
 					( item, log ) => {
 						// Broadcast event to custom label history states.
-						this.emit( 'history:logged', null, item, log );
+						this.emit( 'history:logged', null, view, item, log );
 					});
 
 				// Add history panel to the sidebar menu.
@@ -809,9 +793,9 @@ JestAppsRegistry.AppJestTiler =
 				};
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Enable & Disable
-		// --------------------------------
+		//---------------------------------
 		// Enable the tiler application.
 		// RETURNS: [void]
 		enable() {
@@ -920,16 +904,120 @@ JestAppsRegistry.AppJestTiler =
 			this.emit( 'postupdate', null, e, state, enabled, mode );	// emit hook
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Rendering Method(s)
-		// --------------------------------
+		//---------------------------------
+		// Size the shared workspace for the active level and its previews.
+		// * view   - [JestFileViewEditorPainterLevel] Active level view.
+		// * editor - [ElementCanvas] Shared workspace canvas.
+		// * sketch - [ElementCanvas] Existing sketchpad for editing overlays.
+		layoutLevelWorkspace( view, editor, sketch ) {
+			// Resolve the active level's zoomed dimensions.
+			const display = view.anchor.getZoomed().display;
+			const w = Math.round( display.w );
+			const h = Math.round( display.h );
+
+			// Convert the requested tile padding to canvas pixels.
+			const value    = Number( this.settings.tiler?.editor?.padding ?? 8 );
+			const padTiles = Number.isFinite(value) ? value : 8;
+			const pad      =
+				Math.min(
+					w, h, Math.max( 0, Math.round(padTiles*display.units) )
+					);
+
+			// Add space only on edges occupied by an available linked view.
+			// Diagonal views require space on both of their corresponding edges.
+			let left   = 0;
+			let right  = 0;
+			let top    = 0;
+			let bottom = 0;
+			if ( view.relationship?.size ) {
+				for ( const [direction,[dx,dy]] of Object.entries(JestFileRelationshipLevel.directions) ) {
+					// An unset direction contributes no workspace padding.
+					if ( !view.relationship.getView(direction) ) continue;
+					if ( dx<0 ) left   = pad;
+					if ( dx>0 ) right  = pad;
+					if ( dy<0 ) top    = pad;
+					if ( dy>0 ) bottom = pad;
+				}
+			}
+
+			// Place the active level after its left and top margins.
+			// The rink bounds retain the active level's size and tile grid.
+			const levelGrid  = this.config.levelGrid;
+			editor.setRinkBounds( left, top, w, h, levelGrid, levelGrid );
+
+			// Size the shared canvas to the margins actually in use.
+			const workspaceW = left+w+right;
+			const workspaceH = top+h+bottom;
+
+			if ( editor.width!==workspaceW || editor.height!==workspaceH )
+				editor.resize( workspaceW, workspaceH );
+
+			// Keep editing overlays in active-level coordinates.
+			if ( sketch.width!==w || sketch.height!==h )
+				sketch.resize( w, h );
+		}
+
+		// Paint the linked levels and the active level into the same canvas.
+		// * view   - [JestFileViewEditorPainterLevel] Active level view.
+		// * editor - [ElementCanvas] Shared workspace canvas.
+		// * sketch - [ElementCanvas] Existing sketchpad for editing overlays.
+		drawLevelWorkspace( view, editor, sketch ) {
+			// Size and clear the workspace before drawing the current tab.
+			this.layoutLevelWorkspace( view, editor, sketch );
+			const { x, y, w, h } = editor.getRinkBounds();
+			editor.clear(); // wipe canvas clear
+			if ( !w || !h ) return;
+
+			//--------------------------------
+			// Draw Linked Level Layers
+			//--------------------------------
+			// Position each linked level relative to the active level.
+			const alpha = Number( this.settings.tiler?.editor?.paddingAlpha ?? 8 );
+			editor.setAlpha( alpha ); // soft translucent neighbor preview
+			const relationship = view.relationship;
+			if ( relationship?.size )
+				for ( const [direction,[dx,dy]] of Object.entries(JestFileRelationshipLevel.directions) )
+					this.drawView(
+						editor, relationship.getView(direction),
+						x+dx*w, y+dy*h, w, h
+						);
+
+			// Draw the active level at the editable origin.
+			editor.setAlpha( 1 ); // solid interior editor rendering
+			this.drawView( editor, view, x, y, w, h );
+		}
+
+		// Composite a level at native resolution and scale it onto the workspace.
+		// RETURNS: [void].
+		// * canvas     - [ElementCanvas] Destination canvas to draw upon.
+		// * sourceView - [JestFileview] to draw onto the editor canvas.
+		// * dx,dy      - [Number] Value of destination coordinates.
+		// * w,h        - [Number] Values of dimensions width x height
+		drawView( canvas, sourceView, dx, dy, w, h ) {
+			// Refresh the bitmap so it includes the latest layer edits.
+			if ( !sourceView?.refreshCanvas() ) return;
+			const image = sourceView.getViewRender();
+			if ( !image?.width || !image?.height ) return;
+
+			// Scale the complete bitmap to the active tab's display dimensions.
+			canvas.draw(
+				image,
+				false, // do not clear
+				false, // do not resize
+				dx, dy, 0, 0,
+				null, null, w, h
+				);
+		}
+
 		// Draw the central gameboard.
 		// RETURNS: [void].
 		// * e - Ticker event [object] data about frame.
 		draw( e ) {
-			// --------------------------------
+			//---------------------------------
 			// Check State & Status
-			// --------------------------------
+			//---------------------------------
 			// Get active state info.
 			let state     = this.getState(); // get current program state
 			// If no selection is made, return null.
@@ -937,9 +1025,9 @@ JestAppsRegistry.AppJestTiler =
 			const mode    = this.skim( 'mode' );
 			if ( !enabled ) return null;
 
-			// --------------------------------
+			//---------------------------------
 			// Check If Canvas Is Available
-			// --------------------------------
+			//---------------------------------
 			// Determine if editor canvas is set.
 			const editor = this.gameboard.display.getCanvas( 'workspace' );
 			if ( !editor || !editor.el ) {
@@ -968,11 +1056,12 @@ JestAppsRegistry.AppJestTiler =
 			this.emit(
 				'predraw', null,
 				e, state, enabled, mode,
-				editor, palette, sketch );
+				editor, palette, sketch
+				);
 
-			// --------------------------------
+			//---------------------------------
 			// Draw Depending Upon Mode
-			// --------------------------------
+			//---------------------------------
 			// Access the state properties.
 			const levelView   = state.levelView;    // level view
 			const tilesetView = state.tilesetView;  // tileset view
@@ -980,10 +1069,15 @@ JestAppsRegistry.AppJestTiler =
 			switch ( mode ) {
 				// App running.
 				case 'running':	// application is running
-					// --------------------------------
+					//---------------------------------
 					// Render the Editor Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
+					if ( levelView!==null ) {
+						// Draw the active tab and its linked neighbors.
+						this.drawLevelWorkspace( levelView, editor, sketch );
+					}
+					/*// Require a file to be open.
 					if ( levelView!==null ) {
 						//editorCtx.fillStyle = 'transparent';
 						// --------------------------------
@@ -1002,16 +1096,16 @@ JestAppsRegistry.AppJestTiler =
 							levelImage.width, levelImage.height // source WxH
 							//editor.width, editor.height // destination WxH
 							);
-					}
+					}*/
 
-					// --------------------------------
+					//---------------------------------
 					// Render the Palette Canvas
-					// --------------------------------
+					//---------------------------------
 					// Require a file to be open.
 					if ( tilesetView!==null ) {
-						// --------------------------------
+						//---------------------------------
 						// Draw Tileset Board on Palette
-						// --------------------------------
+						//---------------------------------
 						// Draw active view on palette.
 						tilesetView.refreshCanvas(); // refresh render
 						const tilesetImage = tilesetView.getViewRender(); // get canvas
@@ -1030,15 +1124,37 @@ JestAppsRegistry.AppJestTiler =
 				// Unknown mode.
 				default: break; // no mode to draw
 			}
-			// Emit post-draw hooks.
-			this.emit(
-				'draw', null,
-				e, state, enabled, mode,
-				editor, palette, sketch );
-			this.emit(
-				'postdraw', null,
-				e, state, enabled, mode,
-				editor, palette, sketch );
+
+			//---------------------------------
+			// Draw Active Level Overlays
+			//---------------------------------
+			// Translate level-local plugin drawing into the active workspace rectangle.
+			editorCtx.save();
+			try {
+				// Require the application to be running + active level.
+				if ( mode==='running' && levelView!==null ) {
+					// Constrain editing visuals to the active level.
+					const { x, y, w, h } = editor.getRinkBounds();
+					editorCtx.translate( x, y );
+					editorCtx.beginPath();
+					editorCtx.rect( 0, 0, w, h );
+					editorCtx.clip();
+					editorCtx.beginPath();
+				}
+
+				// Run the existing grid, marquee, and Hook drawing callbacks.
+				this.emit( 'draw', null, e, state, enabled, mode, editor, palette, sketch );
+			}
+			finally {
+				// Restore workspace coordinates for the next drawing pass.
+				editorCtx.restore();
+			}
+			//this.emit( 'draw', null, e, state, enabled, mode, editor, palette, sketch );
+
+			//---------------------------------
+			// Emit Post-Draw Event(s)
+			//---------------------------------
+			this.emit( 'postdraw', null, e, state, enabled, mode, editor, palette, sketch );
 		}
 
 		//--------------------------------
@@ -1091,9 +1207,9 @@ JestAppsRegistry.AppJestTiler =
 			// Validate an active view is open.
 			if ( !state.tilesetView ) return false;    // no active tileset
 			if ( !this.swatches?.[key] ) return false; // no swatch
-			// --------------------------------
+			//---------------------------------
 			// Get Double-Clicked Tile
-			// --------------------------------
+			//---------------------------------
 			const { tx, ty } = tile;
 			// Grab the tile snapshot & store in display backend contents data.
 			const data    = state.tileset.getTileData( tx, ty );

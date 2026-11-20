@@ -28,9 +28,9 @@ class JestToolFloodfill extends JestTool {
 	//_offsetX, _offsetY, _spacingX, _spacingY, _floodOriginX,
 	//_floodOriginY, _useSwatch, _pCols, _pRows
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -56,9 +56,9 @@ class JestToolFloodfill extends JestTool {
 		this.jot( 'mode', 'idle' );	// tool is idle to start
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target Canvas
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to enable floodfill for.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -78,9 +78,9 @@ class JestToolFloodfill extends JestTool {
 		this.target	= target; // set clickable canvas
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the floodfill tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -235,8 +235,8 @@ class JestToolFloodfill extends JestTool {
 		let count = 0;
 		while ( queue.length>0 ) {
 			// Pop next tile from queue
-			const [ cx, cy ]	= queue.shift();
-			const id			= `${cx},${cy}`;
+			const [ cx, cy ] = queue.shift();
+			const id         = `${cx},${cy}`;
 
 			// Skip if already visited
 			if ( visited.has(id) ) continue;
@@ -267,6 +267,8 @@ class JestToolFloodfill extends JestTool {
 			}
 		}
 
+		// If count > 0, emit filled event.
+		if ( count>0 ) this.emit( 'floodFilled', null, count );
 		// Return Total Changed
 		return count; // total count of tile(s) changed
 	}

@@ -15,9 +15,9 @@ class JestSecretary extends JestGamepiece {
 	filetypes	= {};			// [object] Specs for supported extensions
 	records		= {};			// [object] Cached parsed data per extension
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct with a default base URL.
 	// * client		- Client [object] that this piece belongs to.
 	// * baseURL	- [string] Base URL for all image(s) / image folder(s).
@@ -26,9 +26,9 @@ class JestSecretary extends JestGamepiece {
 		this.baseURL	= baseURL;	// Set the global placeholder.
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Register Filetype(s)
-	// --------------------------------
+	//---------------------------------
 	// Add a new filetype dynamically.
 	// RETURNS: [void] on success, throws [object[ Error on fail.
 	// * ext	- [string] Extension (e.g. 'png', 'json')
@@ -67,9 +67,9 @@ class JestSecretary extends JestGamepiece {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Get a Record (with Warning)
-	// --------------------------------
+	//---------------------------------
 	// Get a record full path.
 	// RETURNS: [object] of file information, else [null] on fail.
 	// * address	- [string] Full path to file, with filename + extension.
@@ -84,15 +84,15 @@ class JestSecretary extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Add to Queue
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const fileInfo	= this.client.getFileInfo( address );
 
-		// --------------------------------
+		//---------------------------------
 		// Validate Specs Defined for Filetype
-		// --------------------------------
+		//---------------------------------
 		// Check if specs have been defined for this filetype.
 		const specs		= this.filetypes[fileInfo.extension];
 		if ( !specs ) {
@@ -141,9 +141,9 @@ class JestSecretary extends JestGamepiece {
 		const prefix	= network==='local' ? 'loc' : 'web';
 		const key		= `${prefix}:${fullPath}${filename}`;
 
-		// --------------------------------
+		//---------------------------------
 		// Create Purview & Return Data
-		// --------------------------------
+		//---------------------------------
 		// Define purview [object] return data.
 		let purview		= {
 			key:			key,
@@ -161,9 +161,9 @@ class JestSecretary extends JestGamepiece {
 		return purview;		// return purview
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Storing & Filing Data
-	// --------------------------------
+	//---------------------------------
 	// Store a file's result in the secretary's records.
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * ext		- [string] Value of file filetype extension.
@@ -198,9 +198,9 @@ class JestSecretary extends JestGamepiece {
 		}*/
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Web File Downloading
-	// --------------------------------
+	//---------------------------------
 	// Retrieves *.* file, parses it, then stores the file by stem.
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * address - [string] value of address path
@@ -212,22 +212,22 @@ class JestSecretary extends JestGamepiece {
 	// RETURNS: [boolean] `true` if all load, `false` if any fail.
 	// * addresses - [array] of [string] address paths
 	async loadFiles( addresses ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Argument(s)
-		// --------------------------------
+		//---------------------------------
 		// Validate argument(s)
 		if ( !jsos.prove(addresses,'array') )
 			throw new Error( 'Secretary loadFiles(): `addresses` must be [array]' );
 
-		// --------------------------------
+		//---------------------------------
 		// Setup Data For Transfer
-		// --------------------------------
+		//---------------------------------
 		const queue = [];
 		// Iterate all addresses & load file(s).
 		for ( const address of addresses ) {
-			// --------------------------------
+			//---------------------------------
 			// Attempt to Purview Address
-			// --------------------------------
+			//---------------------------------
 			// Purview the address & queue if successful.
 			const purview	= this.getRecordPurview( address );
 			// Check if purview succeeded.
@@ -236,15 +236,15 @@ class JestSecretary extends JestGamepiece {
 			queue.push( purview );
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Begin Downloading
-		// --------------------------------
+		//---------------------------------
 		// Use transmitter to load files queue in batches of 3
 		await this.client.transmitter.loadFiles( queue, 3, this.defaultCacheTime, false, false );
 
-		// --------------------------------
+		//---------------------------------
 		// Process Each Result
-		// --------------------------------
+		//---------------------------------
 		// Process results
 		let allOK	= true;
 		for ( const request of queue ) {
@@ -283,9 +283,9 @@ class JestSecretary extends JestGamepiece {
 		return allOK; // success status
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Local File Reading
-	// --------------------------------
+	//---------------------------------
 	// Read a File object (e.g., from drag-drop or input).
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * item		– either a File or a FileInfo [object]
@@ -299,9 +299,9 @@ class JestSecretary extends JestGamepiece {
 	// RETURNS: [boolean] `true` on success, `false` if any file fails.
 	// * items		– [array] of File or FileInfo [objects]
 	async readFiles( items ) {
-		// --------------------------------
+		//---------------------------------
 		// Initialize Debugging
-		// --------------------------------
+		//---------------------------------
 		// Track execution time and identify this operation in the console.
 		const debugID	= `[readFiles ${Date.now()}]`;
 		const startTime	= performance.now();
@@ -313,9 +313,9 @@ class JestSecretary extends JestGamepiece {
 		console.log( '📋 Registered filetypes:', this.filetypes );
 
 		try {
-			// --------------------------------
+			//---------------------------------
 			// Validate Argument(s)
-			// --------------------------------
+			//---------------------------------
 			// Ensure the supplied items are an array.
 			console.log( '🔍 Validating input array...' );
 
@@ -326,9 +326,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.log( '✅ Input validation passed.' );
 
-			// --------------------------------
+			//---------------------------------
 			// Prevent Re-Reading Previously Read Files
-			// --------------------------------
+			//---------------------------------
 			// Build a queue containing only files that have not already been stored.
 			const queue = [];
 
@@ -387,9 +387,9 @@ class JestSecretary extends JestGamepiece {
 				return true;
 			}
 
-			// --------------------------------
+			//---------------------------------
 			// Begin Reading
-			// --------------------------------
+			//---------------------------------
 			// Request the transmitter to load queued files as ArrayBuffers.
 			console.group( '📡 TRANSMITTER READ' );
 
@@ -427,9 +427,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.groupEnd();
 
-			// --------------------------------
+			//---------------------------------
 			// Process Each Result
-			// --------------------------------
+			//---------------------------------
 			// Track whether every file was processed successfully.
 			let allOK = true;
 
@@ -450,9 +450,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '📁 File object:', file );
 				console.log( '📦 Raw result:', result );
 
-				// --------------------------------
+				//---------------------------------
 				// Extract File Information
-				// --------------------------------
+				//---------------------------------
 				// Get overview of address and file information.
 				const { address, filename, path, extension: ext, stem } = request;
 
@@ -462,9 +462,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '🔖 Extension:', ext );
 				console.log( '🏷️ Stem:', stem );
 
-				// --------------------------------
+				//---------------------------------
 				// Resolve Record Purview
-				// --------------------------------
+				//---------------------------------
 				// Resolve the local address and extract its storage key.
 				console.log( '🔍 Calling getRecordPurview()...' );
 
@@ -476,9 +476,9 @@ class JestSecretary extends JestGamepiece {
 				console.log( '🗃️ Existing extension records:', this.records?.[ext] );
 				console.log( '🗃️ Existing key record:', this.records?.[ext]?.[key] );
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Filetype Registration
-				// --------------------------------
+				//---------------------------------
 				// Retrieve the registered specifications for this extension.
 				console.log( `🔍 Looking up filetype specifications for "${ext}"...` );
 
@@ -502,9 +502,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.log( '✅ Filetype registration found.' );
 
-				// --------------------------------
+				//---------------------------------
 				// Convert File Data
-				// --------------------------------
+				//---------------------------------
 				// Determine the conversion format required by this filetype.
 				const parseFormat = specs.parse || 'text';
 
@@ -541,9 +541,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.groupEnd();
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Parsed Data
-				// --------------------------------
+				//---------------------------------
 				// Reject files whose conversion returned a falsy result.
 				if ( !parsed ) {
 					console.error( `❌ Failed to read/parse file: ${filename}` );
@@ -561,9 +561,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.log( '✅ File data parsed successfully.' );
 
-				// --------------------------------
+				//---------------------------------
 				// Store File in Secretary Records
-				// --------------------------------
+				//---------------------------------
 				// File the converted data under its extension and resolved key.
 				console.groupCollapsed( '🗃️ RECORD STORAGE' );
 
@@ -586,9 +586,9 @@ class JestSecretary extends JestGamepiece {
 
 				console.groupEnd();
 
-				// --------------------------------
+				//---------------------------------
 				// Validate Filing Result
-				// --------------------------------
+				//---------------------------------
 				// Continue processing other files even when one filing fails.
 				if ( !filed ) {
 					console.error( `❌ Failed to store file: ${filename}` );
@@ -614,9 +614,9 @@ class JestSecretary extends JestGamepiece {
 
 			console.groupEnd();
 
-			// --------------------------------
+			//---------------------------------
 			// Final Processing Summary
-			// --------------------------------
+			//---------------------------------
 			// Report the total number of successful and failed operations.
 			console.group( '📊 READ FILES SUMMARY' );
 
@@ -656,9 +656,9 @@ class JestSecretary extends JestGamepiece {
 			return allOK;
 		}
 		catch ( error ) {
-			// --------------------------------
+			//---------------------------------
 			// Unexpected Error Reporting
-			// --------------------------------
+			//---------------------------------
 			// Preserve the original exception while reporting diagnostic information.
 			console.error( '💥 UNEXPECTED ERROR IN readFiles()' );
 			console.error( 'Error:', error );
@@ -671,9 +671,9 @@ class JestSecretary extends JestGamepiece {
 			throw error;
 		}
 		finally {
-			// --------------------------------
+			//---------------------------------
 			// Close Main Debug Group
-			// --------------------------------
+			//---------------------------------
 			// Always close the outer console group, including after exceptions.
 			console.log( `${debugID} 🏁 READ FILES FINISHED` );
 			console.groupEnd();
@@ -701,16 +701,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Return Record
-		// --------------------------------
+		//---------------------------------
 		// Check if record exists.
 		if ( this.hasRecord(address,network) )
 			return this.records[ext][key];
@@ -724,16 +724,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	hasRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Check Record
-		// --------------------------------
+		//---------------------------------
 		// Validate arguments
 		if ( !jsos.prove(ext,'string') || !jsos.prove(key,'string') ) {
 			console.warn( 'Invalid argument(s). `ext` and `key` must both be of type [string].' );
@@ -747,16 +747,16 @@ class JestSecretary extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	removeRecord( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Parse Path & Get Extension
-		// --------------------------------
+		//---------------------------------
 		// Get overview of address file info.
 		const purview	= this.getRecordPurview( address, network );
 		const ext		= purview.extension; // filetype extension (no stem)
 		const key		= purview.key;
-		// --------------------------------
+		//---------------------------------
 		// Proceed to Remove Record
-		// --------------------------------
+		//---------------------------------
 		// Check if record already exists.
 		if ( this.hasRecord(address,network) ) {
 			delete this.records[ext][key]; // remove it

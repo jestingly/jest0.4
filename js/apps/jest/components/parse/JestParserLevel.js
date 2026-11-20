@@ -180,9 +180,9 @@ class JestParserLevel extends JestGamepiece {
 		if ( !['GLEVNW01','JESTNW02'].includes(version) )
 			throw new Error( `Unsupported level version: ${version}` );
 
-		// -------------------------
+		//--------------------------
 		// Encode Plugin Keyword Blocks
-		// -------------------------
+		//--------------------------
 		// Begin return output with level file version.
 		let out	  = `${version}\n`;
 		// Iterate each registered keyword & compile applicable code.

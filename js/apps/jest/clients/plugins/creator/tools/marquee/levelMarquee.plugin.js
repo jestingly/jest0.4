@@ -102,9 +102,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Grab the sketchpad for off-screen drawing & rendering.
 			const sketchpad = client.gameboard.display.getCanvas( 'sketchpad' );
 
-			// --------------------------------
+			//---------------------------------
 			// Create Marquee Tool [object]
-			// --------------------------------
+			//---------------------------------
 			// Add a marquee tool to the level canvas board.
 			const tool      = new JestToolMarquee( client, subtype );
 			client.toolbox.registerTool( subtype, tool );
@@ -201,28 +201,28 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			// Add the curator panel to the sidebar.
 			client.sidebar.addSection( 'marquee', 'Marquee', curator );
 
-			// --------------------------------
+			//---------------------------------
 			// Settings Change Listener(s)
-			// --------------------------------
+			//---------------------------------
 			// Create event for when the magnification zoom value changes.
 			client.register(
 				'levelZoomed', 'levelMarqueeZoom',
 				zoom => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
-					// --------------------------------
+					//---------------------------------
 					// Recalibrate to Zoomed Grid-Size
-					// --------------------------------
+					//---------------------------------
 					// Match the tool grid to the active level view zoom.
 					tool.anchor.graticulate( s.levelView.anchor.getUnitsZoomed() );
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Refresh & Remmber Settings Between Tab Change
-			// --------------------------------
+			//---------------------------------
 			client.tabbarFile.register(
 				'pretabChange', 'levelMarqueeRemember',
 				() => {
@@ -239,27 +239,27 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 			client.tabbarFile.register(
 				'tabChange', 'levelMarqueeRefresh',
 				view => {
-					// --------------------------------
+					//---------------------------------
 					// Get Current File State
-					// --------------------------------
+					//---------------------------------
 					// Get current file status.
 					const s = client.getFileStatus( tool, true );
 
-					// --------------------------------
+					//---------------------------------
 					// Reload Dropdown(s)
-					// --------------------------------
+					//---------------------------------
 					curator.flushVisibleCache();   // flush cache
 					curator.refreshOptions();      // refresh list
 
-					// --------------------------------
+					//---------------------------------
 					// Save / Restore Tab Selection(s)
-					// --------------------------------
+					//---------------------------------
 					// Remember curator dropdown.
 					if ( !s ) return tool.restoreSelectionState();
 
-					// --------------------------------
+					//---------------------------------
 					// Restore Marquee Selection
-					// --------------------------------
+					//---------------------------------
 					// Restore curator dropdown.
 					curator.restoreSelection( s.fileKey );
 					// Restore the tab's contextual marquee state.
@@ -388,9 +388,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					}
 				});
 
-			// --------------------------------
+			//---------------------------------
 			// Create Modal(s)
-			// --------------------------------
+			//---------------------------------
 			// Generate the "sign" region modal.
 			client.addModal(
 				'newSign',
@@ -1454,9 +1454,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					const editorCtx  = editor.el.getContext( '2d' );
 					const paletteCtx = palette.el.getContext( '2d' );
 
-					// --------------------------------
+					//---------------------------------
 					// Draw Tool Visual(s)
-					// --------------------------------
+					//---------------------------------
 					// Get level marquee tool mode.
 					const toolMode = tool.skim( 'mode' );
 					// Do not draw if nothing to draw.
@@ -1464,9 +1464,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						 && toolMode!=='floating' && toolMode!=='dragging'
 						 && toolMode!=='transforming' ) return;
 
-					 // -----------------------------
+					 //------------------------------
 					 // Validate Marquee Mask/Trace
-					 // -----------------------------
+					 //------------------------------
 					 // Get tile measurements.
 					 const units  = tool.anchor.units;
 					 // Check if current marquee has either valid mask or traced rectangle.
@@ -1490,10 +1490,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 					 // Exit if nothing to process
 					 if ( !masked && !traced ) return;
 
-					// -------------------------------
+					//--------------------------------
 					// Mode: selected / selecting
 					// Draw irregular marquee outline
-					// -------------------------------
+					//--------------------------------
 					if ( toolMode==='selected' || toolMode==='selecting' ) {
 						// Determine dashed outline.
 						const dashSpeed  = 0.5;
@@ -1502,11 +1502,11 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						// Check if a composite selection exists.
 						if ( masked ) {
 							// Calculate dimensions.
-							const cols   = tool.target.width  / units;
-							const rows   = tool.target.height / units;
-
-							// Composite stroke style(s).
+							const { cols, rows } = tool.getTargetGridSize();
+							// Preserve the current canvas rendering state.
 							editorCtx.save();
+							// Composite stroke style(s).
+							//editorCtx.globalCompositeOperation = 'source-over';
 							editorCtx.globalCompositeOperation = 'difference';
 							const stroke =
 								[{
@@ -1534,6 +1534,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							const rows = trace.h;  // trace region height
 							// Composite stroke style(s).
 							editorCtx.save();
+							// Determine blend-mode for marquee dancing-ants outline.
+							//editorCtx.globalCompositeOperation = 'source-over';
 							editorCtx.globalCompositeOperation = 'difference';
 							const stroke =
 								[{
@@ -1638,8 +1640,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 							editorCtx,
 							{
 								units : units,
-								cols  : tool.target.width / units,
-								rows  : tool.target.height / units
+								...tool.getTargetGridSize()
 							},
 							bounds.x, bounds.y, mask,
 							null,               // no background fill
@@ -1887,16 +1888,16 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						curator.addObject(
 							'warp',
 							{
-							action  : 'levelMarquee',	// Action type
-							file	: file.skey,		// Use file's skey
-							name	: name,				// Name with index
-							level   : name,				// Target level
-							w	   : item.w ?? 4,		// Width (default 4)
-							h	   : item.h ?? 4,		// Height (default 4)
-							x	   : item.x ?? 0,		// X coordinate
-							y	   : item.y ?? 0,		// Y coordinate
-							dx	  : item.dx ?? 0,		// Delta X (default 0)
-							dy	  : item.dy ?? 0		// Delta Y (default 0)
+							action : 'levelMarquee',    // Action type
+							file   : file.skey,         // Use file's skey
+							name   : name,              // Name with index
+							level  : name,              // Target level
+							w	   : item.w ?? 4,       // Width (default 4)
+							h	   : item.h ?? 4,       // Height (default 4)
+							x	   : item.x ?? 0,       // X coordinate
+							y	   : item.y ?? 0,       // Y coordinate
+							dx	   : item.dx ?? 0,      // Delta X (default 0)
+							dy	   : item.dy ?? 0       // Delta Y (default 0)
 							});
 						});
 					//-----------------------------
@@ -1908,14 +1909,14 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 						curator.addObject(
 							'sign',
 							{
-							action  : 'levelMarquee',	// Action type
-							file	: file.skey,		// Use file's skey
-							name	: item.name,		// Name the sign
-							dialog  : item.dialog,		// Sign message
-							w	   : item.w ?? 4,		// Width (default 4)
-							h	   : item.h ?? 4,		// Height (default 4)
-							x	   : item.x ?? 0,		// X coordinate
-							y	   : item.y ?? 0,		// Y coordinate
+							action : 'levelMarquee',    // Action type
+							file   : file.skey,         // Use file's skey
+							name   : item.name,         // Name the sign
+							dialog : item.dialog,       // Sign message
+							w	   : item.w ?? 4,       // Width (default 4)
+							h	   : item.h ?? 4,       // Height (default 4)
+							x	   : item.x ?? 0,       // X coordinate
+							y	   : item.y ?? 0,       // Y coordinate
 							});
 						});
 				});
@@ -1939,9 +1940,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 		// New Method(s) In Tiler Application
 		//--------------------------------
 		extend: function( Klass, proto ) {
-			// -----------------------------
+			//------------------------------
 			// Get Composite Marquee Region
-			// -----------------------------
+			//------------------------------
 			// Copy a composite masked region (not just rectangular).
 			// RETURNS: [object|null] contents data, or null if invalid.]
 			// * x,y		- [int] Values of mask top-left x,y coordinates on canvas.
@@ -1989,7 +1990,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Generate Stamp Using Matrix
 				//--------------------------------
 				// Build stamp canvas.
-				const stamp		= tileset.createStamp( matrix );
+				const stamp = tileset.createStamp( matrix );
 
 				//--------------------------------
 				// Return Data
@@ -2063,32 +2064,32 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/marquee/leve
 				// Access the Active Level
 				//--------------------------------
 				// Validate an active view is open.
-				const state		= this.getState();			// get current program state
+				const state  = this.getState();     // get current program state
 				// Convert the region to a stamp.
-				const view		= state.levelView;
-				if ( !view ) return false;					// no active level view
-				const level		= view.file.context;		// access current level
+				const view   = state.levelView;
+				if ( !view ) return false;          // no active level view
+				const level  = view.file.context;   // access current level
 
 				//--------------------------------
 				// Get Mask Level-Region Inside Tool Contents
 				//--------------------------------
 				// Validate marquee tool and activeView.
-				const region	= tool.contents;
+				const region = tool.contents;
 				if ( !region ) return false;
 
 				//--------------------------------
 				// Get Region Localized Data
 				//--------------------------------
 				// Resolve level layer.
-				const layer		= level.getLayer( region.layerId );
+				const layer  = level.getLayer( region.layerId );
 				if ( !layer || layer.locked ) return false;	// can't find / edit layer
-				const { x, y }	= tool.bounds; // extract coordinates
+				const { x, y } = tool.bounds; // extract coordinates
 
 				//--------------------------------
 				// Replace Level Region With Mask Level-Region
 				//--------------------------------
 				// Replace the tiles in the region.
-				const tiles		=
+				const tiles  =
 					this.toolLevelReplaceRegion(
 						x, y, region.matrix, region.stamp, false, layer.id );
 				if ( !tiles ) return false;

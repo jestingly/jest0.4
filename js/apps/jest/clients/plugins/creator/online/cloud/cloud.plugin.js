@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud/cloud
 		// Plugin Setup Function
 		//--------------------------------
 		init: async function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Cloud Hook(s)
-			// --------------------------------
+			//---------------------------------
 			// Register "synchronize" save event (with notification).
 			client.cloud.register(
 				'save', 'systemNotice',
@@ -103,9 +103,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/online/cloud/cloud
 			// Set the default sort type of the cloud file list.
 			client.cloud.fileViewer.listView.sortByColumn( 'level_name' ); // sort by filename
 
-			// --------------------------------
+			//---------------------------------
 			// Load Cloud List After Login
-			// --------------------------------
+			//---------------------------------
 			// Fetch the list whenever login succeeds after startup.
 			client.login.register(
 				'loggedIn', 'loadList',

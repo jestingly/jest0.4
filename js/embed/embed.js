@@ -11,25 +11,25 @@ function log( message ) { console.log(message); }
 async function jestBootup( request ) {
 	try {
 		console.log( 'jestAlert: content.js response' );
-		// --------------------------------
+		//---------------------------------
 		// Handle content by status
-		// --------------------------------
+		//---------------------------------
 		switch ( JestEnvironmentStatus ) {
 			case 'shutdown': // environment not running
 				if ( request.action==='openJestEnvironment' ) {
 					(async () => {
 						console.log( 'jestAlert: openJestEnvironment message received.' );
 						try {
-							// --------------------------------
+							//---------------------------------
 							// Load up the helper utility
-							// --------------------------------
+							//---------------------------------
 							// Generate the Jest interface [object]
 							console.log( 'jestAlert: Create interface.' );
 							jsos = new JSOSInterface();
 
-							// --------------------------------
+							//---------------------------------
 							// Load up the enviroment
-							// --------------------------------
+							//---------------------------------
 							// Generate the Jest environment
 							console.log( 'jestAlert: Create environment.' );
 							JestEnvironment = new JSOSEnvironment();
@@ -37,16 +37,16 @@ async function jestBootup( request ) {
 							setStatus( 'running' );
 							jsos.build(); // build the JSOS
 
-							// --------------------------------
+							//---------------------------------
 							// Import libraries
-							// --------------------------------
+							//---------------------------------
 							// Harlequin
 							JestEnvironment.librarian.ship( 'Harlequin' );
 							JestEnvironment.librarian.libs.Harlequin.ship( ['HarlequinWindow'] );
 
-							// --------------------------------
+							//---------------------------------
 							// Open the game application
-							// --------------------------------
+							//---------------------------------
 							//JestEnvironment.execute( 'JestPlay' );
 							//const app  = JestEnvironment.apps.JestPlay;
 
@@ -56,9 +56,9 @@ async function jestBootup( request ) {
 							//JestEnvironment.execute( 'JestAnimator' );
 							//const app  = JestEnvironment.apps.JestAnimator;
 
-							// --------------------------------
+							//---------------------------------
 							// Setup application
-							// --------------------------------
+							//---------------------------------
 							await app.setup();	// setup the application
 							await app.launch();	// auto-launch
 						}

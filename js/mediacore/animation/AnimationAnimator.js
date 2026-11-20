@@ -79,9 +79,9 @@ class AnimationAnimator {
 		// Access context & clear the board
 		const ctx = this.canvas.el.getContext( '2d' );
 
-		// -----------------------------------------
+		//------------------------------------------
 		// Render all view layers onto canvas
-		// -----------------------------------------
+		//------------------------------------------
 		// * views	- [array] of View objects sorted by Y.
 		// * ctx	- [CanvasRenderingContext2D] target canvas
 		// RETURNS: [void].

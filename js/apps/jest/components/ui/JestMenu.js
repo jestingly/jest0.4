@@ -14,9 +14,9 @@ class JestMenu extends JestElement {
 	actions			= [];			// [array] of possible action(s).
 	buttons			= {};			// [object] of active buttons.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- client [object] that this piece belongs to.
@@ -24,9 +24,9 @@ class JestMenu extends JestElement {
 		super( client ); // call parent constructor
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialization
-	// --------------------------------
+	//---------------------------------
 	// Build the element [object].
 	// RETURNS: [void].
 	// * name		- unique [string] value of component name in the system.
@@ -37,9 +37,9 @@ class JestMenu extends JestElement {
 		super.build( "div", name, ['menu'].mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Action Handling
-	// --------------------------------
+	//---------------------------------
 	// Generate menu action button(s)
 	// RETURNS: [void].
 	// * action		- [object] Data of action(s) to create a button for.
@@ -126,9 +126,9 @@ class JestMenu extends JestElement {
 		return true; // success
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button State Handling
-	// --------------------------------
+	//---------------------------------
 	// Toggle a menu button on/off.
 	// * key		- [string] Value of menu button to toggle.
 	// * lever		- [bool] Value whether to toggle on `true` else `false`.
@@ -152,9 +152,9 @@ class JestMenu extends JestElement {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Button State Handling
-	// --------------------------------
+	//---------------------------------
 	// Enable or disable a single button.
 	// RETURNS: [void].
 	// * name		- [string] Value of button name.
@@ -182,9 +182,9 @@ class JestMenu extends JestElement {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Event Handling
-	// --------------------------------
+	//---------------------------------
 	// Callback when a button was clicked.
 	// RETURNS: [void].
 	// * e			- [object] MouseEvent event listener data.

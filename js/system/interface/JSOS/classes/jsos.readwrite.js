@@ -4,34 +4,34 @@
 // Copyright ® 1999-2026
 //-------------------------------------------------------
 console.log( 'jestAlert: js/system/interface/JSOS/classes/JSOSReadWrite.js loaded' );
-// --------------------------------
+//---------------------------------
 // JSOSReadWrite
-// --------------------------------
+//---------------------------------
 // A hybrid storage system supporting:
 // - browser.storage (Firefox)
 // - chrome.storage (Chrome)
 // - localStorage (Embedded Web)
-// --------------------------------
+//---------------------------------
 class JSOSReadWrite extends JSOSValidation {
-	// --------------------------------
+	//---------------------------------
 	// Class Variables
-	// --------------------------------
+	//---------------------------------
 	storage				= null;			// [object] The selected storage system
 	useChrome			= false;		// [bool] Whether Chrome storage is used
 	useBrowser			= false;		// [bool] Whether Firefox browser storage is used
 	useLocalStorage		= false;		// [bool] Whether fallback localStorage is used
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [object] A new hybrid storage system
 	// * options	- [object] Configuration (unused)
 	constructor( options={} ) {
 		super(); // call parent constructor
 
-		// --------------------------------
+		//---------------------------------
 		// Detect Available Storage System
-		// --------------------------------
+		//---------------------------------
 		if ( typeof browser!=='undefined' && browser.storage ) {
 			this.storage		= browser.storage;
 			this.useBrowser		= true;
@@ -52,9 +52,9 @@ class JSOSReadWrite extends JSOSValidation {
 		}
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Write Data
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [promise] resolve or reject value
 	// * key	- [string] Data key
 	// * val	- [mixed] Value to store
@@ -92,9 +92,9 @@ class JSOSReadWrite extends JSOSValidation {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Read Data
-	// --------------------------------
+	//---------------------------------
 	// RETURNS: [promise] resolve with data
 	// * key	- [string] Data key to read
 	readData( key ) {
@@ -132,9 +132,9 @@ class JSOSReadWrite extends JSOSValidation {
 			});
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Download Data
-	// --------------------------------
+	//---------------------------------
 	// Convert a canvas into a downloadable image file.
 	// RETURNS: [void].
 	// * filename	- [string] Value of filename to download.

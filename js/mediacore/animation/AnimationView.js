@@ -65,25 +65,25 @@ class AnimationView extends AnimationObject {
 	// If no frame set, returns 0. If frame not found, clamps safely.
 	// RETURNS: [int] the index of the current active frame.
 	getFrameIndex() {
-		// --------------------------------
+		//---------------------------------
 		// Validate Frame Reference
-		// --------------------------------
+		//---------------------------------
 		// If frame is null or animation missing, default to 0.
 		if ( !this.frame || !this.animation || !Array.isArray(this.animation.frames) )
 			return 0; // default to first frame
 
-		// --------------------------------
+		//---------------------------------
 		// Resolve Index
-		// --------------------------------
+		//---------------------------------
 		// Find index inside animation.frames array.
 		let index = this.animation.frames.indexOf( this.frame );
 
 		// If frame not found (rare but possible), clamp to 0.
 		if ( index===-1 ) index = 0;
 
-		// --------------------------------
+		//---------------------------------
 		// Constrain to Valid Range
-		// --------------------------------
+		//---------------------------------
 		// Prevent OOB: clamp within [0 .. frames.length-1].
 		index = Math.max( 0, Math.min( index, this.animation.frames.length-1 ));
 

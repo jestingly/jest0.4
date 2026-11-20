@@ -19,9 +19,9 @@ class JestToolEyedropper extends JestTool {
 	follower    = null;     // [JestMouseFollower] Positions the tile preview.
 	preview     = null;     // [HTMLCanvasElement|null] Floating tile preview.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client		- [object] Application client that this piece belongs to.
@@ -72,9 +72,9 @@ class JestToolEyedropper extends JestTool {
 		this.preview  = preview;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set Target Canvas
-	// --------------------------------
+	//---------------------------------
 	// Set the canvas [object] to enable eyedropper for.
 	// RETURNS: [void]
 	// * target		- [ElementCanvas] The target to allow selectability on.
@@ -163,9 +163,9 @@ class JestToolEyedropper extends JestTool {
 		return null;
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Enable & Disable
-	// --------------------------------
+	//---------------------------------
 	// Enable the eyedropper tool.
 	// RETURNS: [boolean] `true` on success else `false` on fail.
 	enable() {
@@ -206,6 +206,9 @@ class JestToolEyedropper extends JestTool {
 		const enabled  = this.skim( 'enabled' );
 		const mode     = this.skim( 'mode' );
 		if ( !enabled || mode!=='idle' ) return;
+		// Sample only from the active level.
+		if ( !this.target.containsRinkPoint(this.target.mousePos(e)) )
+			return; // not inside applicable area
 		// Switch eyedropper mode to live sampling a tile.
 		this.jot( 'mode', 'sampling' );	// change mode
 		// Emit start event.
@@ -388,6 +391,11 @@ class JestToolEyedropper extends JestTool {
 		const client   = this.client;
 		const state    = this.client.getState();
 		const pos      = this.target.mousePos( e );
+		// Clear the sample when crossing from the level into its padding.
+		if ( !this.target.containsRinkPoint(pos) ) {
+			if ( this.hovering ) this.exitTarget();
+			return false; // abort
+		}
 		const units    = this.anchor.units;
 		const x        = Math.floor( pos.x / units );
 		const y        = Math.floor( pos.y / units );

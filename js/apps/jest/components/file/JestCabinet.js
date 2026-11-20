@@ -14,9 +14,9 @@ class JestCabinet extends JestGamepiece {
 	openFiles		= {};				// [object] { skey: JestFile } for open file instances.
 	activeKey		= null;				// [string|null] Currently active file key.
 
-	// -------------------------------
+	//--------------------------------
 	// Constructor
-	// -------------------------------
+	//--------------------------------
 	// Construct a new JestCabinet.
 	// * game - [object] Client or app instance.
 	constructor( game ) {
@@ -24,9 +24,9 @@ class JestCabinet extends JestGamepiece {
 		this.openFiles	= {};			// Open file registry
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Save an Open File
-	// -------------------------------
+	//--------------------------------
 	// Accesses a file inside the cabinet & saves it.
 	// RETURNS: [bool] true on success or false if fail.
 	// * file	- [JestFile] Instance to track.
@@ -49,9 +49,9 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Add a New File
-	// -------------------------------
+	//--------------------------------
 	// Adds a file to the cabinet and activates it.
 	// RETURNS: [string] Key of added file.
 	// * file	- [JestFile] instance to track.
@@ -63,9 +63,9 @@ class JestCabinet extends JestGamepiece {
 		return key;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Switch Active File
-	// -------------------------------
+	//--------------------------------
 	// Sets a file as the active working file.
 	// RETURNS: [bool] true on success.
 	// * key	- [string] Key of the file to activate.
@@ -76,18 +76,18 @@ class JestCabinet extends JestGamepiece {
 		return true;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Get Active File
-	// -------------------------------
+	//--------------------------------
 	// Returns the currently active file.
 	// RETURNS: [JestFile|null].
 	getActiveFile( ) {
 		return this.openFiles[this.activeKey] || null;
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Close One File
-	// -------------------------------
+	//--------------------------------
 	// Removes one open file.
 	// RETURNS: [bool] true on success.
 	// * key	- [string] Key to remove.
@@ -109,9 +109,9 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Close All Open Files
-	// -------------------------------
+	//--------------------------------
 	// Attempts to close all files, warns if unsaved.
 	// RETURNS: [bool] true if successful.
 	closeAll() {
@@ -123,18 +123,18 @@ class JestCabinet extends JestGamepiece {
 		return true; // success
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Get All Open Keys
-	// -------------------------------
+	//--------------------------------
 	// Returns keys of all open files.
 	// RETURNS: [array<string>].
 	getOpenKeys() {
 		return Object.keys( this.openFiles );
 	}
 
-	// -------------------------------
+	//--------------------------------
 	// Has Unsaved Changes?
-	// -------------------------------
+	//--------------------------------
 	// Checks all files for pending changes.
 	// RETURNS: [bool].
 	hasUnsavedChanges() {

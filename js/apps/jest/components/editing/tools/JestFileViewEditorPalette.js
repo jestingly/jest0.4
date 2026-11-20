@@ -38,9 +38,9 @@ class JestFileViewEditorPalette extends JestFileViewEditor {
 		super.build( name, defaultClasses.mergeUnique(classes) );
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void]
 	// * file - [JestFile] The file to assign.
@@ -54,9 +54,9 @@ class JestFileViewEditorPalette extends JestFileViewEditor {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void]
 	initView() {

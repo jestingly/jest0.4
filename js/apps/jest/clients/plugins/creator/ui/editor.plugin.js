@@ -15,9 +15,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/editor.plugin.j
 		// Plugin Setup Function
 		//--------------------------------
 		init: function( client ) {
-			// --------------------------------
+			//---------------------------------
 			// Create Editor Panel [object]
-			// --------------------------------
+			//---------------------------------
 			// Create editor panel to store the editing/playing area.
 			client.editor	=
 				client.panel.refs.interface.refs.center.createPanel({
@@ -27,9 +27,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/editor.plugin.j
 					});
 			//client.editor.resize( null, 100px );
 
-			// --------------------------------
+			//---------------------------------
 			// Add Gameboard Canvas [object]
-			// --------------------------------
+			//---------------------------------
 			// Create possible modes.
 			//const modes			= [ 'draw', 'fill', 'erase', 'select' ];
 			// Add canvas to editor.

@@ -53,10 +53,10 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 				// Get the column and row span of the validated mask.
 				const rows = mask.length;
 				const cols = mask[0].length;
-				
-				// -------------------------
+
+				//--------------------------
 				// Compute Composite Mask
-				// -------------------------
+				//--------------------------
 				// Build boolean tile grid
 				/*const mask	=
 					Array.from(
@@ -81,9 +81,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					}
 				}*/
 
-				// -------------------------
+				//--------------------------
 				// Fill Background Shadow
-				// -------------------------
+				//--------------------------
 				// Check if shadow supplied.
 				if ( shadow ) {
 					// Save context state & render stroke.
@@ -102,9 +102,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					ctx.restore(); // restore state
 				}
 
-				// -------------------------
+				//--------------------------
 				// Fill Active Selection Area
-				// -------------------------
+				//--------------------------
 				// Check if fill value supplied.
 				if ( fill ) {
 					// Save context state & render stroke.
@@ -120,9 +120,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 					ctx.restore(); // restore state
 				}
 
-				// -------------------------
+				//--------------------------
 				// Draw Contents (Image)
-				// -------------------------
+				//--------------------------
 				// Check for contents to draw.
 				if ( contents && contents.img ) {
 					// Draw image onto canvas.
@@ -133,9 +133,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 						);
 				}
 
-				// -------------------------
+				//--------------------------
 				// Stroke Masked Perimeter
-				// -------------------------
+				//--------------------------
 				// Use Path2D to draw an irregular rectangle region.
 				const path = new Path2D();
 				for ( let my=0; my<rows; my++ ) {
@@ -168,9 +168,9 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/painter.pl
 						}
 					}
 				}
-				// -------------------------
+				//--------------------------
 				// Render Stroke(s)
-				// -------------------------
+				//--------------------------
 				// Check for stroke to draw.
 				if ( stroke ) {
 					const strokes = Array.isArray(stroke) ? stroke : [stroke];

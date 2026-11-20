@@ -25,9 +25,9 @@ class JestList extends JestElement {
 	header			= null;			// Panel [object] containing the list header(s).
 	container		= null;			// Panel [object] containing the body of list items.
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
 	// * client  - client [object] that this piece belongs to.
@@ -179,9 +179,9 @@ class JestList extends JestElement {
 	// RETURNS: [bool] true if valid and selected
 	// * index – [int]
 	selectItemAt( index ) {
-		// -----------------------------
+		//------------------------------
 		// If index is invalid (-1), deselect all
-		// -----------------------------
+		//------------------------------
 		// If index is less than 0, all items are deactivated.
 		if ( index<0 ) {
 			// Reset both selection references.
@@ -195,9 +195,9 @@ class JestList extends JestElement {
 			return true; // success
 		}
 
-		// -----------------------------
+		//------------------------------
 		// Index Range Sanity Check
-		// -----------------------------
+		//------------------------------
 		// Clamp index.
 		if ( index>=this.items.length ) return false;
 

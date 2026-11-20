@@ -40,9 +40,9 @@ class JestFileLoader extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getKey( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
 			return false; // abort
@@ -52,33 +52,33 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Generate Key Value [string]
-		// --------------------------------
+		//---------------------------------
 		const prefix	= network==='local' ? 'loc' : 'url';
 		const key		= `${prefix}:${address}`;
 		return key; // key [string]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// File Handling
-	// --------------------------------
+	//---------------------------------
 	// Download a file & generate a file [object].
 	// RETURNS: File [object] or [bool] `false` on fail.
 	// * address	- [string] Full address to file (e.g. 'head/head1.png')
 	//   forceReload	- [bool] If true, skips cache and reloads all.
 	async loadFile( address, forceReload=false ) {
-		// -------------------------
+		//--------------------------
 		// Validate Argument
-		// -------------------------
+		//--------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
 			return false; // abort
 		}
 
-		// -------------------------
+		//--------------------------
 		// Load File via Multi-Loader
-		// -------------------------
+		//--------------------------
 		// Load result, passing `name` as [array].
 		const result	= await this.loadFiles( [address], forceReload );
 		const key		= this.getKey( address, 'remote' );
@@ -90,9 +90,9 @@ class JestFileLoader extends JestGamepiece {
 	// * addresses	- [array] Full address names (e.g. 'heads/head1.png').
 	//   forceReload	- [bool] If true, skips cache and reloads all.
 	async loadFiles( addresses, forceReload=false ) {
-		// -------------------------
+		//--------------------------
 		// Validate Arguments
-		// -------------------------
+		//--------------------------
 		if ( !jsos.argues({addresses:[addresses,'array']}) ) {
 			if ( jsos.argues({addresses:[addresses,'string']}) )
 				addresses = [addresses]; // wrap single address
@@ -109,9 +109,9 @@ class JestFileLoader extends JestGamepiece {
 		const toLoad	= [];			// array of [address] to be downloaded
 		const groups	= {};			// map of [ext → address[]] for batch secretary load
 
-		// -------------------------
+		//--------------------------
 		// Group by Extension
-		// -------------------------
+		//--------------------------
 		// Map: extension → [filename stem]
 		for ( const address of addresses ) {
 			// Get file info using the address.
@@ -152,9 +152,9 @@ class JestFileLoader extends JestGamepiece {
 			await this.client.secretary.loadFiles( extGroup );
 		}
 
-		// -------------------------
+		//--------------------------
 		// Generate File Objects
-		// -------------------------
+		//--------------------------
 		// Iterate all addresses & create [object].
 		for ( const address of toLoad ) {
 			// Render downloaded data into proper [object].
@@ -230,9 +230,9 @@ class JestFileLoader extends JestGamepiece {
 		}
 		else console.log( `Local file data read successfully!` );
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt to Render File
-		// --------------------------------
+		//---------------------------------
 		// Render the remote data into a file [object].
 		const file	= await this._generateFile( fileInfo.address, 'local' );
 		return file; // return file result
@@ -244,9 +244,9 @@ class JestFileLoader extends JestGamepiece {
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	async _generateFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		// Check whether arguments are right data type.
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `Invalid argument for 'address': ${address}` );
@@ -257,9 +257,9 @@ class JestFileLoader extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path Information
-		// --------------------------------
+		//---------------------------------
 		// Get file info using the address.
 		const fileInfo	= this.client.getFileInfo( address, null, null, null, network );
 
@@ -273,25 +273,25 @@ class JestFileLoader extends JestGamepiece {
 			return null; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Access Loaded File Data
-		// --------------------------------
+		//---------------------------------
 		//console.warn( fileInfo );
 		// Attempt to access the loaded file data [object].
 		//console.log( this.client.secretary );
 		const remote	= network==='local' ? false : true; // whether local or web file
 		const record	= this.client.secretary.getRecord(address,network) ?? null;
 
-		// -------------------------
+		//--------------------------
 		// Attempt to Create File [object]
-		// -------------------------
+		//--------------------------
 		// Continue to create file [object].
 		const file		= await this._createFileObject( record, fileInfo, address, network );
 		if ( !file ) return null; // file not created
 
-		// --------------------------------
+		//---------------------------------
 		// Store Result & Return It
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		// Store reference to created file data in this.files container.
@@ -323,17 +323,17 @@ class JestFileLoader extends JestGamepiece {
 	//   file		- (optional) File [object].
 	//   network	- [string] One of: 'local', 'remote'
 	async addFile( address, file, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Propert(ies)
-		// --------------------------------
+		//---------------------------------
 		if ( this.getFile(address) ) {
 			console.warn( `addFile() cannot overwrite existing file: ${address}.` );
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) ) {
 			console.warn( `addFile() invalid argument for 'address': ${address}` );
 			return false; // abort
@@ -343,9 +343,9 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Parse Path Information
-		// --------------------------------
+		//---------------------------------
 		// Get file info using the address.
 		const fileInfo	= this.client.getFileInfo( address, null, null, null, network );
 
@@ -359,9 +359,9 @@ class JestFileLoader extends JestGamepiece {
 			return false; // abort
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt Download (if requested)
-		// --------------------------------
+		//---------------------------------
 		// Determine if file [object] exists.
 		if ( file===null ) {
 			const file	= await this.loadFile( address );
@@ -371,9 +371,9 @@ class JestFileLoader extends JestGamepiece {
 			}
 		}
 
-		// --------------------------------
+		//---------------------------------
 		// Store File [object] Reference
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		// Set file [object].
@@ -381,23 +381,23 @@ class JestFileLoader extends JestGamepiece {
 		return file; // return [object]
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Access File [object] from Registry
-	// --------------------------------
+	//---------------------------------
 	// Retrieves a file [object] by its name, if it exists and is valid.
 	// RETURNS: File [object] on success, else `null`.
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	getFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) )
 			return null; // abort
 
-		// --------------------------------
+		//---------------------------------
 		// Return File [object] or [null]
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key		= this.getKey( address, network ); // key [string]
 		const file		= this.files?.[key] ?? null;
@@ -414,23 +414,23 @@ class JestFileLoader extends JestGamepiece {
 		return (this.files?.[key] instanceof this.fileClass);
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Remove File [object] from Registry
-	// --------------------------------
+	//---------------------------------
 	// Deletes a file [object] by name from the registry.
 	// RETURNS: [boolean] `true` if removed, else `false` if not found or invalid.
 	// * address	- [string] Full path to file, with filename + extension.
 	//   network	- [string] One of: 'local', 'remote'
 	removeFile( address, network='remote' ) {
-		// --------------------------------
+		//---------------------------------
 		// Validate Arguments
-		// --------------------------------
+		//---------------------------------
 		if ( !jsos.argues({address:[address,'string']}) )
 			return false;
 
-		// --------------------------------
+		//---------------------------------
 		// Attempt Removal
-		// --------------------------------
+		//---------------------------------
 		// Get full file address key [string] value.
 		const key	= this.getKey( address, network ); // key [string]
 		const exists = (this.files?.[key] instanceof this.fileClass);
@@ -439,15 +439,15 @@ class JestFileLoader extends JestGamepiece {
 		return exists; // return result
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Retrieve All Registered File Names
-	// --------------------------------
+	//---------------------------------
 	// Gets an [array] of all registered file addresses in fantascope.
 	// RETURNS: [array] of [string] addresses of loaded file [objects].
 	getAllKeys() {
-		// --------------------------------
+		//---------------------------------
 		// Gather All Keys from Registry
-		// --------------------------------
+		//---------------------------------
 		return Object.keys( this.files )
 			.filter( key => this.files[key] instanceof this.fileClass );
 	}

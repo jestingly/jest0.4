@@ -12,12 +12,12 @@ console.log( 'jestAlert: js/apps/jest/components/editing/tools/JestFileViewEdito
 class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	// Object propert(ies)
 
-	// --------------------------------
+	//---------------------------------
 	// Constructor
-	// --------------------------------
+	//---------------------------------
 	// Construct the [object].
 	// RETURNS: [void].
-	// * client		- [object] Application client that this piece belongs to.
+	// * client - [object] Application client that this piece belongs to.
 	constructor( client ) {
 		super( client ); // call parent constructor
 	}
@@ -27,8 +27,8 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 	//-------------------------
 	// Build the element [object].
 	// RETURNS: [void].
-	// * name		- unique [string] value of component name in the system.
-	// * classes	- [array] of classes to add to panel element.
+	// * name    - unique [string] value of component name in the system.
+	// * classes - [array] of classes to add to panel element.
 	build ( name='file-view-editor-painter-level', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
@@ -38,9 +38,18 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Copy level canvas content to this canvas.
 	}
 
-	// --------------------------------
+	//--------------------------------
+	// Create Level Relationship
+	//--------------------------------
+	// RETURNS: [JestFileLevelRelationship] Neighbor links for this level view.
+	createRelationship() {
+		// Give this view compass directions and level edge rendering.
+		return new JestFileRelationshipLevel( this );
+	}
+
+	//---------------------------------
 	// Set File
-	// --------------------------------
+	//---------------------------------
 	// Set the file object to view/edit.
 	// RETURNS: [void].
 	// * file - [JestFile] The file to assign.
@@ -54,9 +63,9 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		super.setFile( file ); // call parent method
 	}
 
-	// --------------------------------
+	//---------------------------------
 	// Initialize View
-	// --------------------------------
+	//---------------------------------
 	// Prepares layout and visuals (graticulation, containers, etc.).
 	// RETURNS: [void].
 	initView() {
@@ -72,36 +81,6 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		const levelGrid = this.client.config.levelGrid;
 		this.anchor.resize( levelGrid*units, levelGrid*units );
 	}
-
-	//-------------------------
-	// Copy Canvas Content
-	//-------------------------
-	// Copies the source canvas to the destination canvas at (0,0).
-	// RETURNS: [void]
-	// * sourceCanvas	- [HTMLCanvasElement] Source canvas.
-	// * destCanvas		- [HTMLCanvasElement] Destination canvas.
-	/*refreshCanvas() {
-		// Require file to be set.
-		if ( !this.file ) return;
-		super.refreshCanvas(); // call parent method
-		// Obtain file canvas context & copy contents to canvas.
-		const render		= this.getViewRender();
-		if ( !render ) {
-			console.error( '[JestFileViewEditorPainterLevel] Could not access level layer canvas.' );
-			return false;
-		}
-		const sourceCanvas	= render.el; // canvas element
-		const destCanvas	= this.canvas.el;
-		const ctx			= destCanvas.getContext('2d');
-		ctx.clearRect( 0, 0, destCanvas.width, destCanvas.height ); // optional clear
-		ctx.drawImage(
-			sourceCanvas, // image contents being copied
-			0, 0, // source crop x,y
-			sourceCanvas.width, sourceCanvas.height, // source W x H
-			0, 0, // destination x,y
-			destCanvas.width, destCanvas.height // destination W x H
-			);
-	}*/
 
 	//--------------------------------
 	// Refresh Level Canvas
@@ -127,10 +106,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Resolve Level and Destination
 		//--------------------------------
 		// Retrieve the level represented by this file.
-		const level      = this.file.context;
-		// Retrieve the destination canvas.
-		const destCanvas = this.canvas;
-
+		const level = this.file.context;
 		// Validate the required rendering objects.
 		if ( !level ) return false;
 
@@ -138,7 +114,7 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Clear Previous Preview
 		//--------------------------------
 		// Remove the previous composite before rebuilding.
-		destCanvas.clear();
+		this.canvas.clear();
 
 		//--------------------------------
 		// Composite Visible Layers
@@ -146,22 +122,20 @@ class JestFileViewEditorPainterLevel extends JestFileViewEditorPainter {
 		// Iterate from the bottom layer to the top layer.
 		for ( const layer of level.getLayers() ) {
 			// Hidden layers must not appear in the preview.
-			if ( !layer.visible ) continue; // skip
-
-			// Retrieve this layer's rendered canvas.
-			const sourceCanvas = layer.canvas;
-			// Skip layers without an initialized canvas.
-			if ( !sourceCanvas ) continue; // skip
+			if ( !layer.visible || !layer.canvas ) continue; // skip
 
 			// Draw the layer over the existing composite.
-			destCanvas.draw(
-				sourceCanvas, false, false, 0, 0, 0, 0,
-				null, null, destCanvas.width, destCanvas.height
+			this.canvas.draw(
+				layer.canvas,
+				false, // do not clear
+				false, // do not resize
+				0, 0, 0, 0,
+				null, null, this.canvas.width, this.canvas.height
 				);
 		}
 
 		// Rendering completed.
-		return true;
+		return true; // success
 	}
 
 	// Get level rendering canvas.

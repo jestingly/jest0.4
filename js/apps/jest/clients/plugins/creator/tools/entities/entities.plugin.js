@@ -385,7 +385,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					const log = {
 						action : 'hookMove',
 						type   : 'hook',
-						id	 : object.data.id,
+						id	   : object.data.id,
 						before,
 						after
 						};
@@ -766,8 +766,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					// Validate Input Value(s)
 					//--------------------------------
 					// Convert coordinates to numbers.
-					const x		= Number( rawX );
-					const y		= Number( rawY );
+					const x = Number( rawX );
+					const y = Number( rawY );
 					if ( !rawX || !rawY || !Number.isFinite(x) || !Number.isFinite(y) ) {
 						alert( 'Enter valid numeric X and Y coordinates.' );
 						return false;
@@ -780,12 +780,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					// Begin Data For New Curator Object
 					//--------------------------------
 					// Store data for curator hook object.
-					const data		= {};		// new curator [object] data
-					data.path		= path;		// capture hook image path
-					data.x			= x;		// capture hook X coordinate
-					data.y			= y;		// capture hook Y coordinate
-					data.script		= script;	// capture hook script
-					data.readonly	= false;	// can be edited
+					const data    = {};     // new curator [object] data
+					data.path     = path;   // capture hook image path
+					data.x        = x;      // capture hook X coordinate
+					data.y        = y;      // capture hook Y coordinate
+					data.script   = script; // capture hook script
+					data.readonly = false;  // can be edited
 
 					//---------------------------------
 					// Create Curator Object
@@ -818,17 +818,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
-						action  : `hookAdd`,
-						type	: 'hook',
-						id	  : object.data.id,
-						object  : { ...object.data, image: null }
+						action : `hookAdd`,
+						type   : 'hook',
+						id	   : object.data.id,
+						object : { ...object.data, image: null }
 						};
 					// Label the action for history panel.
 					s.levelView.governor.enqueue(
 						'edit', { history: `Add hook.` }
 						);
 					// Log inside governor.
-					const snapshot	= s.levelView.governor.log( 'edit', log );
+					const snapshot = s.levelView.governor.log( 'edit', log );
 					s.file.jot( 'changed', true );
 
 					//--------------------------------
@@ -1836,7 +1836,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			// Copy the selected entity's editable properties.
 			// Excludes its unique ID and runtime image object.
 			// RETURNS: [boolean].
-			// * tool		- [JestToolEntities] emitting the event.
+			// * tool  - [JestToolEntities] emitting the event.
 			proto.copySelectedHook = function( tool ) {
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
@@ -1845,21 +1845,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				// Access Selected Hook Item
 				//--------------------------------
 				// Retrieve the selected hook using the active tool.
-				const object	= this.getSelectedHook( tool );
+				const object = this.getSelectedHook( tool );
 				if ( !object ) return false;
 				// Retrieve entity properties.
-				const data		= object.data;
+				const data   = object.data;
 
 				//--------------------------------
 				// Log Essential Data For Clipboard
 				//--------------------------------
 				// Create log of entity data.
-				const log		= {
+				const log    = {
 					action : "levelHook",
 					path   : data.path   ?? '',
 					script : data.script ?? '',
-					x: Number(data.x) || 0,
-					y: Number(data.y) || 0
+					x      : Number(data.x) || 0,
+					y      : Number(data.y) || 0
 					};
 
 				//--------------------------------

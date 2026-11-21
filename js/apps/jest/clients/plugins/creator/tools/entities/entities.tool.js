@@ -400,6 +400,7 @@ class JestToolEntities extends JestTool {
 		// Store original coordinates.
 		this.dragStartX  = Number( object.data.x );
 		this.dragStartY  = Number( object.data.y );
+		console.log(this.dragStartX,this.dragStartY);
 		// Calculate entity's pixel position.
 		const x     = this.dragStartX * units;
 		const y     = this.dragStartY * units;
@@ -524,11 +525,12 @@ class JestToolEntities extends JestTool {
 				before : { x: this.dragStartX, y: this.dragStartY },
 				after  : { x: Number(object.data.x), y: Number(object.data.y) }
 				});
+			console.log(this.dragStartX,this.dragStartY);
 		}
 		// Clear drag state.
-		this.moved		= false;
-		this.dragStartX	= null;
-		this.dragStartY	= null;
+		this.moved      = false;
+		this.dragStartX = null;
+		this.dragStartY = null;
 		this.updateCursor( e ); // update cursor
 	}
 

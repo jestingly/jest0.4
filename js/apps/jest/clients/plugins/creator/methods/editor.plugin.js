@@ -158,24 +158,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			//--------------------------------
 			// Listen to undo an action inside an open level file's governor.
 			// RETURNS: [boolean].
-			// * dir		- [string] Value of whether "undo" or "redo".
-			// * skey		- [string] Level editor view unique system key.
-			// * snapshot	- [object] Data from undo/redo event.
+			// * dir       - [string] Value of whether "undo" or "redo".
+			// * skey      - [string] Level editor view unique system key.
+			// * snapshot  - [object] Data from undo/redo event.
 			proto.fileReverted = function( dir, skey, snapshot ) {
 				//--------------------------------
 				// Gatekeep & Access Level Propert(ies)
 				//--------------------------------
 				// Validate an active view is open.
-				const easel		= this.easels?.files;		// get easel for finding view
-				const view		= easel?.getView( skey );	// file viewer
-				const file		= view?.file?.context;		// active JestLevel instance
+				const easel = this.easels?.files;       // get easel for finding view
+				const view  = easel?.getView( skey );   // file viewer
+				const file  = view?.file?.context;      // active JestLevel instance
 				if ( !snapshot || !view || !file ) return false; // can't access file view
 
 				//--------------------------------
 				// Resolve Target Level Layer
 				//--------------------------------
 				// Resolve target level layer from history.
-				const level		= view.file.context;		// active JestLevel instance
+				const level = view.file.context;        // active JestLevel instance
 
 				//--------------------------------
 				// Revert Level Layer History
@@ -215,7 +215,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 						case 'layerAdd': {
 							// Undo creation by removing the created layer.
 							if ( dir==='undo' )
-								success = level.removeLayer( snapshot.after.id );
+								success  = level.removeLayer( snapshot.after.id );
 							// Redo creation using its original ID and data.
 							else success = !!level.restoreLayer( snapshot.after );
 							break;
@@ -227,7 +227,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 						case 'layerDelete': {
 							// Undo deletion by rebuilding the original layer.
 							if ( dir==='undo' )
-								success = !!level.restoreLayer( snapshot.before );
+								success  = !!level.restoreLayer( snapshot.before );
 							// Redo deletion by removing that same layer.
 							else success = level.removeLayer( snapshot.before.id );
 							break;
@@ -342,8 +342,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 					return true; // success
 				}
 
+				// Hook history belongs to the level, not a tile layer.
+				if ( snapshot.type==='hook' ) {
+					this.emit( 'revert', null, dir, snapshot );
+					this.markChanged( view );
+					return true;
+				}
+
 				// Check for layer using layer id from history snapshot.
-				const layer     = level.getLayer( snapshot.layerId ); // get layer
+				const layer = level.getLayer( snapshot.layerId ); // get layer
 				if ( !layer ) return false;
 
 				//--------------------------------

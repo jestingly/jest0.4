@@ -96,7 +96,7 @@ class JestToolOverworld extends JestTool {
 		// Use the existing JestButton click handling and native focus behavior.
 		this.launcher =
 			this.makeButton(
-				this.panel, 'open', 'Graph',
+				this.panel, 'open', 'Matrix',
 				()=>this.open(), ['ow-launcher','toolbar']
 				);
 	}
@@ -108,8 +108,8 @@ class JestToolOverworld extends JestTool {
 	buildDialogs() {
 		// Main overview: cancel discards the draft, apply commits all slots.
 		this.client.addModal( 'overworldNeighbors', {
-			title   : 'Overworld Neighbors',
-			text    : 'Choose an edge or corner.',
+			title   : 'Overworld',
+			text    : 'Choose an edge or corner level neighbor.',
 			buttons : {
 				cancel : {
 					label   : 'Cancel',
@@ -135,7 +135,7 @@ class JestToolOverworld extends JestTool {
 
 		// Candidate picker: clear is an explicit choice, separate from Back.
 		this.client.addModal( 'overworldNeighborPicker', {
-			title   : 'Choose level',
+			title   : 'Choose Level',
 			text    : 'Browse the other open level tabs.',
 			buttons : {
 				cancel : {
@@ -670,7 +670,7 @@ class JestToolOverworld extends JestTool {
 		this.wheelTime   = 0;
 
 		// Keep assistive labels synchronized with the current compass direction.
-		const title = `Choose ${direction} level`;
+		const title = `Choose ${direction} Level Neighbor`;
 		this.card.el.dataset.dir = 'none';
 		this.picker.setTitle( title );
 		this.picker.box.addAttribute( 'aria-label', title );

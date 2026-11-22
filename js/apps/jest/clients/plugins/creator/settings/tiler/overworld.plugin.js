@@ -126,8 +126,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/overworld/ov
 				  maxPadAlpha = 1;
 			const inputPaddingAlpha =
 				new JestInputRange(
-					client, 'Transparency', 1,
-					client.settings.tiler.editor.paddingAlpha, 'Transparency'
+					client, 'Alpha', 1,
+					client.settings.tiler.editor.paddingAlpha, 'Alpha'
 					);
 			inputPaddingAlpha.setMin( minPadAlpha );
 			inputPaddingAlpha.setMax( maxPadAlpha );

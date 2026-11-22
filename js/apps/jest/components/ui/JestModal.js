@@ -42,12 +42,17 @@ class JestModal extends JestElement {
 	// Build Component
 	//--------------------------------
 	// Build modal layout.
-	// * name		- [string] unique identifier
-	// * classes	- [array] extra CSS class names
+	// * name     - [string] unique identifier
+	// * classes  - [array] extra CSS class names
 	build( name='modal', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-modal'].mergeUnique(classes) );
+
+		//--------------------------------
+		// Build DOM Element
+		//--------------------------------
+		// Build the modal DOM element panel.
 		this.panel.addElements([
 			{
 				name     : 'overlay',
@@ -67,13 +72,24 @@ class JestModal extends JestElement {
 					]
 			}
 		]);
+
 		// Keep inner box reference.
 		this.box = this.panel.refs.box;
+
+		//--------------------------------
+		// Configure Default State
+		//--------------------------------
+		// Auto-hide the modal for on-demand basis.
+		this.hide(); // hidden
+		this.opened = false; // not open
+
+		//--------------------------------
+		// Configure Input/Output
+		//--------------------------------
 		// Close on overlay click
 		this.panel.refs.overlay.register( 'click', 'close', ()=>this.close(), 'dom' );
-		// Auto-hide the modal for on-demand basis.
-		this.hide();         // hidden
-		this.opened = false; // not open
+		// Finally, configure the keyboard event(s).
+		this.configureKeyboard();
 	}
 
 	//--------------------------------
@@ -538,4 +554,83 @@ class JestModal extends JestElement {
 	// Determine if dialog is currently open or closed.
 	// REUTRNS: [boolean] `true` if dialog open, else `false`.
 	isOpened() { return this.opened; }
+
+	//--------------------------------
+	// Configure Modal Keyboard
+	//--------------------------------
+	// Install dialog semantics, local keyboard handling, and input isolation.
+	configureKeyboard() {
+		// Focus the box when opening, even before a candidate is available.
+		this.box.addAttributes({
+			tabindex     : -1,
+			role         : 'dialog',
+			'aria-modal' : 'true',
+			'aria-label' : this.titleText
+			});
+		this.panel.register( 'keydown', 'modelKeyboard', e=>this.onModalKeyDown(e), 'window' );
+
+		// Prevent modal pointer and key events from reaching editor listeners.
+		const events = [ 'keyup', 'keypress', 'pointerdown', 'mousedown', 'mouseup', 'click' ];
+		for ( const name of events )
+			this.panel.register( name, 'modalIsolation', e=>e.stopPropagation(), 'dom' );
+	}
+
+	//--------------------------------
+	// Handle Dialog Keyboard
+	//--------------------------------
+	// Close, browse, or contain focus within the active dialog.
+	// * event - [KeyboardEvent] Native keyboard event.
+	onModalKeyDown( event ) {
+		// Keep ordinary text and navigation keys away from editor shortcuts.
+		event.stopPropagation();
+
+		// Escape follows the modal's normal close event and cleanup path.
+		if ( event.key==='Escape' ) {
+			event.preventDefault();
+			this.close();
+			return; // handled
+		}
+
+		// Emit a keyboard key press event.
+		this.emit( 'keydown', null, this, event );
+
+		// Other keys retain their native button behavior.
+		if ( event.key==='Tab' )
+			this.containFocus( event );
+	}
+
+	//--------------------------------
+	// Contain Dialog Focus
+	//--------------------------------
+	// Wrap Tab and Shift+Tab between the dialog's available controls.
+	// * event - [KeyboardEvent] Tab key event.
+	containFocus( event ) {
+		// Exclude disabled and hidden controls from the focus sequence.
+		const box      = this.box.el;
+		const selector = 'button,input,select,textarea,a[href],[tabindex]';
+		const nodes    =
+			[...box.querySelectorAll(selector)].filter(
+				element => element.tabIndex>=0 && !element.disabled && element.getClientRects().length
+				);
+		const first    = nodes[0];
+		const last     = nodes[nodes.length-1];
+		const active   = document.activeElement;
+
+		// An empty dialog keeps focus on its own box.
+		if ( !first ) {
+			event.preventDefault();
+			box.focus();
+			return; // handled
+		}
+
+		// Focus begins on the dialog box, then wraps at either end.
+		if ( event.shiftKey && [first,box].includes(active) ) {
+			event.preventDefault();
+			last.focus();
+		}
+		else if ( !event.shiftKey && [last,box].includes(active) ) {
+			event.preventDefault();
+			first.focus();
+		}
+	}
 }

@@ -108,7 +108,7 @@ class JestToolOverworld extends JestTool {
 	buildDialogs() {
 		// Main overview: cancel discards the draft, apply commits all slots.
 		this.client.addModal( 'overworldNeighbors', {
-			title   : 'Overworld neighbors',
+			title   : 'Overworld Neighbors',
 			text    : 'Choose an edge or corner.',
 			buttons : {
 				cancel : {
@@ -242,7 +242,7 @@ class JestToolOverworld extends JestTool {
 		this.previousButton =
 			this.makeButton(
 				this.reel, 'previous', '‹',
-				() => this.step(-1), 'ow-arrow'
+				()=>this.step(-1), 'ow-arrow'
 				);
 		this.previousButton.clicker.addAttribute( 'aria-label', 'Previous Level' );
 
@@ -274,16 +274,11 @@ class JestToolOverworld extends JestTool {
 	// Route modal dismissal through the same cleanup used by tool methods.
 	registerDialogEvents() {
 		// Overlay clicks and Escape emit the same close event as Cancel.
-		this.modal.register(
-			'close', 'overworldCleanup', ()=>this.reset()
-			);
-		this.picker.register(
-			'close', 'overworldPickerCleanup', ()=>this.resetPicker()
-			);
-
-		// Keep editor shortcuts outside the dialog's local keyboard handling.
-		this.configureKeyboard( this.modal );
-		this.configureKeyboard( this.picker );
+		this.modal.register( 'close', 'overworldCleanup', ()=>this.reset() );
+		this.picker.register( 'close', 'overworldPickerCleanup', ()=>this.resetPicker() );
+		// Register the modal & picker special keystroke event(s).
+		this.modal.register( 'keydown', 'overworldKeyboard', (m,e)=>this.onModalKeyDown(m,e) );
+		this.picker.register( 'keydown', 'overworldKeyboard', (m,e)=>this.onModalKeyDown(m,e) );
 	}
 
 	//--------------------------------
@@ -330,92 +325,17 @@ class JestToolOverworld extends JestTool {
 	}
 
 	//--------------------------------
-	// Configure Modal Keyboard
-	//--------------------------------
-	// Install dialog semantics, local keyboard handling, and input isolation.
-	// * modal - [JestModal] Dialog to configure.
-	configureKeyboard( modal ) {
-		// Focus the box when opening, even before a candidate is available.
-		modal.box.addAttributes({
-			tabindex     : -1,
-			role         : 'dialog',
-			'aria-modal' : 'true',
-			'aria-label' : modal.titleText
-			});
-		modal.panel.register(
-			'keydown', 'overworldKeyboard',
-			event=>this.onModalKeyDown(modal,event), 'dom'
-			);
-
-		// Prevent modal pointer and key events from reaching editor listeners.
-		const events = [ 'keyup', 'keypress', 'pointerdown', 'mousedown', 'mouseup', 'click' ];
-		for ( const name of events )
-			modal.panel.register(
-				name, 'overworldIsolation', event=>event.stopPropagation(), 'dom'
-				);
-	}
-
-	//--------------------------------
 	// Handle Dialog Keyboard
 	//--------------------------------
 	// Close, browse, or contain focus within the active dialog.
-	// * modal - [JestModal] Dialog that received the event.
+	// * modal - [JestModal] Current dialog.
 	// * event - [KeyboardEvent] Native keyboard event.
 	onModalKeyDown( modal, event ) {
-		// Keep ordinary text and navigation keys away from editor shortcuts.
-		event.stopPropagation();
-
-		// Escape follows the modal's normal close event and cleanup path.
-		if ( event.key==='Escape' ) {
-			event.preventDefault();
-			modal.close();
-			return; // handled
-		}
-
 		// Arrow keys browse only while the candidate picker is active.
 		if ( modal===this.picker && ['ArrowLeft','ArrowRight'].includes(event.key) ) {
 			event.preventDefault();
 			this.step( event.key==='ArrowLeft' ? -1 : 1 );
 			return; // handled
-		}
-
-		// Other keys retain their native button behavior.
-		if ( event.key==='Tab' )
-			this.containFocus( modal, event );
-	}
-
-	//--------------------------------
-	// Contain Dialog Focus
-	//--------------------------------
-	// Wrap Tab and Shift+Tab between the dialog's available controls.
-	// * modal - [JestModal] Current dialog.
-	// * event - [KeyboardEvent] Tab key event.
-	containFocus( modal, event ) {
-		// Exclude disabled and hidden controls from the focus sequence.
-		const box      = modal.box.el;
-		const selector = 'button,input,select,textarea,a[href],[tabindex]';
-		const nodes    = [...box.querySelectorAll(selector)].filter(
-			element => element.tabIndex>=0 && !element.disabled && element.getClientRects().length
-			);
-		const first    = nodes[0];
-		const last     = nodes[nodes.length-1];
-		const active   = document.activeElement;
-
-		// An empty dialog keeps focus on its own box.
-		if ( !first ) {
-			event.preventDefault();
-			box.focus();
-			return; // handled
-		}
-
-		// Focus begins on the dialog box, then wraps at either end.
-		if ( event.shiftKey && [first,box].includes(active) ) {
-			event.preventDefault();
-			last.focus();
-		}
-		else if ( !event.shiftKey && [last,box].includes(active) ) {
-			event.preventDefault();
-			first.focus();
 		}
 	}
 
@@ -728,13 +648,6 @@ class JestToolOverworld extends JestTool {
 		const changed = label.el.textContent!==text;
 		label.setText( text );
 		label.addAttribute( 'title', text );
-
-		// Fade the new filename in so browsing feels continuous.
-		if ( changed && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches )
-			label.el.animate?.(
-				[ { opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'none' } ],
-				{ duration:380, easing:'cubic-bezier(0.22,1,0.36,1)' }
-				);
 		return label; // label panel
 	}
 

@@ -3675,9 +3675,10 @@ button.jest-button.jest-style-harlequin:active {
 		--ow-red-glow   : rgba( 255, 42, 69, 0.55 );
 		--ow-red-wash   : rgba( 255, 42, 69, 0.10 );
 		--ow-ease       : cubic-bezier( 0.22, 1, 0.36, 1 );
-		--ow-spring     : cubic-bezier( 0.34, 1.56, 0.64, 1 );
+		--ow-spring     : cubic-bezier( 0.34, 1.26, 0.64, 1 );
 		--ow-mono       : ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
 		--ow-sans       : 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+		/*--ow-springtime : 360ms;*/
 	}
 
 
@@ -3858,8 +3859,8 @@ button.jest-button.jest-style-harlequin:active {
 		padding   : 0;
 		margin    : 0;
 		/* Staggered entrance — each slot lands a beat after the last. */
-		animation : ow-slot-in 560ms var( --ow-ease ) both;
-		animation-delay: calc( 180ms + var( --ow-i, 0 ) * 55ms );
+		animation : ow-slot-in 360ms var( --ow-ease ) both;
+		/*animation-delay: calc( 20ms + var( --ow-i, 0 ) * 55ms );*/
 	}
 
 	.ow-grid > .ow-slot:nth-child( 2 )  { --ow-i: 1; }
@@ -3900,7 +3901,7 @@ button.jest-button.jest-style-harlequin:active {
 		transition   :
 			border-color 260ms var( --ow-ease ),
 			box-shadow   260ms var( --ow-ease ),
-			transform    360ms var( --ow-ease ),
+			transform    300ms var( --ow-ease ),
 			background   260ms var( --ow-ease );
 	}
 
@@ -3924,7 +3925,7 @@ button.jest-button.jest-style-harlequin:active {
 		opacity        : 0.38;
 		filter         : grayscale( 1 ) contrast( 1.15 ) brightness( 0.9 );
 		pointer-events : none;
-		transition     : opacity 360ms var( --ow-ease ), filter 360ms var( --ow-ease ), transform 600ms var( --ow-ease );
+		transition     : opacity 360ms var( --ow-ease ), filter 360ms var( --ow-ease ), transform 300ms var( --ow-ease );
 		animation      : ow-canvas-in 520ms var( --ow-ease ) both;
 	}
 
@@ -3939,7 +3940,7 @@ button.jest-button.jest-style-harlequin:active {
 		font-size     : 20px;
 		font-weight   : 200;
 		/*color         : var( --ow-faint );*/
-		transition    : color 260ms, transform 360ms var( --ow-spring ), opacity 260ms;
+		transition    : color 260ms, transform 300ms var( --ow-spring ), opacity 260ms;
 		pointer-events: none;
 	}
 	:is( .jest-overworld-modal, .jest-overworld-picker ) .ow-slot.is-linked::before { opacity: 0; }
@@ -3950,7 +3951,7 @@ button.jest-button.jest-style-harlequin:active {
 		left           : 0;
 		right          : 0;
 		bottom         : 0;
-		display        : block;
+		display        : none; /*block;*/
 		max-width      : 100%;
 		overflow       : hidden;
 		white-space    : nowrap;
@@ -3964,7 +3965,7 @@ button.jest-button.jest-style-harlequin:active {
 		text-align     : left;
 		color          : var( --ow-dim );
 		/*background     : linear-gradient( 0deg, rgba(0,0,0,.92), transparent );*/
-		transition     : color 260ms, transform 360ms var( --ow-ease );
+		transition     : color 260ms, transform 300ms var( --ow-ease );
 	}
 
 	/* Linked relationships: red border, live color preview, soft glow. */
@@ -4037,7 +4038,7 @@ button.jest-button.jest-style-harlequin:active {
 		border     : 1px solid var( --ow-red );
 		background : #000;
 		box-shadow : 0 0 0 1px rgba(0,0,0,.8), 0 0 40px -6px var( --ow-red-glow ), inset 0 0 40px rgba(0,0,0,.6);
-		animation  : ow-center-in 700ms var( --ow-spring ) 100ms both;
+		animation  : ow-center-in 200ms var( --ow-spring ) 100ms both;
 	}
 
 	/* Center keeps full-color preview, tinted by a subtle red vignette. */
@@ -4137,7 +4138,7 @@ button.jest-button.jest-style-harlequin:active {
 			0 0 50px -8px var( --ow-red-glow ),
 			0 20px 50px rgba(0,0,0,.7),
 			inset 0 0 40px rgba(0,0,0,.5);
-		animation    : ow-card-in 640ms var( --ow-spring ) 120ms both;
+		animation    : ow-card-in 300ms var( --ow-spring ) 120ms both;
 	}
 
 	/* Corner brackets framing the card. */
@@ -4384,18 +4385,6 @@ button.jest-button.jest-style-harlequin:active {
 		20%, 80% { transform: translateX( 2px ); }
 		30%, 50%, 70% { transform: translateX( -3px ); }
 		40%, 60% { transform: translateX( 3px ); }
-	}
-
-	/* Respect people who prefer reduced motion. */
-	@media ( prefers-reduced-motion: reduce ) {
-		:is( .jest-overworld-modal, .jest-overworld-picker ),
-		:is( .jest-overworld-modal, .jest-overworld-picker ) *,
-		:is( .jest-overworld-modal, .jest-overworld-picker ) *::before,
-		:is( .jest-overworld-modal, .jest-overworld-picker ) *::after {
-			animation-duration       : 1ms !important;
-			animation-iteration-count: 1 !important;
-			transition-duration      : 1ms !important;
-		}
 	}
 }
 

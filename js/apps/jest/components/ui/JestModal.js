@@ -12,24 +12,33 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestModal.js loaded' );
 // Extends: JestElement
 class JestModal extends JestElement {
 	// Object properties
-	opened          = false;            // [boolean] Whether modal is open or closed
-	titleText		= '';				// [string] title of modal
-	bodyText		= '';				// [string] body content
-	noticeText		= '';				// [string] modal notice message
-	inputs			= {};				// [object] map of name -> JestInputText
-	box				= null;				// DOM [object] of the inner box
-	payload			= null;				// [any] contextual data passed to modal when opened.
+	opened       = false;          // [boolean] Whether modal is open or closed
+	titleText    = '';             // [string] title of modal
+	bodyText     = '';             // [string] body content
+	noticeText   = '';             // [string] modal notice message
+	inputs       = {};             // [object] map of name -> JestInputText
+	box          = null;           // DOM [object] of the inner box
+	payload      = null;           // [any] contextual data passed to modal when opened.
 	// Button storage & sequencing
-	buttons			= {};				// [object<string,JestButton>] keyed by our own keys (e.g., 'ok','cancel')
-	buttonSeq		= 0;				// [int] monotonically increasing counter to build unique button ids
+	buttons      = {};             // [object<string,JestButton>] keyed by our own keys (e.g., 'ok','cancel')
+	buttonSeq    = 0;              // [int] monotonically increasing counter to build unique button ids
+	// Media propert(ies)
+	sfx          = null;           // [JestSoundPresetLibrary] SFX library container instance.
 
 	//--------------------------------
 	// Constructor
 	//--------------------------------
 	// Construct the [object].
-	// * client		- [object] parent controller
+	// * client - [object] parent controller
 	constructor( client ) {
 		super( client ); // call parent constructor
+		// Copy of standard sound assignments.
+		this.sfx = new JestSoundPresetLibrary( client );
+		// Create the presets once, then reuse or change them.
+		this.sfx.add( 'open', new JestSoundPreset('jest_prompt','mp3',1.1) );
+		this.sfx.add( 'close', new JestSoundPreset('jest_close0','mp3',1.1) );
+		this.sfx.add( 'btnDown', new JestSoundPreset('jest_mouse_down','mp3',1.1) );
+		this.sfx.add( 'btnUp', new JestSoundPreset('jest_mouse_up','mp3',1.1) );
 	}
 
 	// Destroy the dialog.
@@ -432,11 +441,9 @@ class JestModal extends JestElement {
 		if ( typeof callback==='function' )
 			button.register( 'click', `btn-${key}`, callback );
 
-		// Optional SFX (leave exactly as you had it)
-		button.register( 'mousedown', 'sfx',
-			() => this.client.soundboard.playSound( 'jest_mouse_down', 'mp3', 1.1 ) );
-		//button.register( 'mouseup', 'sfx',
-			//() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
+		// Optional SFX.
+		button.register( 'mousedown', 'sfx', ()=>this.sfx.play('btnDown') );
+		//button.register( 'mouseup', 'sfx', ()=>this.sfx.play('btnUp') );
 
 		// Append into footer container
 		this.box.refs.buttons.addPanel( key, button.panel );
@@ -504,12 +511,13 @@ class JestModal extends JestElement {
 	// * data - [any] optional override payload (if different from open)
 	close( data=null ) {
 		// Prevent dialog from double-closing.
-		if ( !this.opened ) return; // abort
+		if ( !this.opened ) return;  // abort
 		// Hide the panel.
 		this.hide(); // remove from visibility
 		// Emit close event.
+		this.sfx.play( 'close' );    // play close sound effect
 		this.emit( 'close', null, this.payload, data ); // emit close event
-		this.payload = null; // clear context
+		this.payload = null;         // clear context
 	}
 
 	// Hide the dialog.
@@ -537,7 +545,7 @@ class JestModal extends JestElement {
 		// Open the panel.
 		this.show(); // show the dialog
 		// Play a "prompt" sound-effect for affirmation.
-		this.client.soundboard.playSound( 'jest_prompt', 'mp3', 1.1 );
+		this.sfx.play( 'open' );
 		// Emit open event.
 		this.emit( 'open' );
 	}

@@ -1,4 +1,4 @@
-# jest0.43
+# jest0.44
 
 ```text
 //-------------------------------------------------------
@@ -20,6 +20,13 @@ Edit the following files to configure your application:
 • css/vars_local.css
 • js/apps/jest/components/JestConfiguration_loc.js
 • js/apps/jest/components/JestConfiguration_rem.js
+
+//-------------------------------------------------------
+       DEVELOPER NOTES • CHANGES from v0.43 to v0.44
+//-------------------------------------------------------
+
+• New JestSoundPreset & JestSoundPresetLibrary classes for swift-handling of sound libraries.
+  - _JestSoundboard_ already incorporates the presets using its new play() method
 
 //-------------------------------------------------------
        DEVELOPER NOTES • CHANGES from v0.42 to v0.43

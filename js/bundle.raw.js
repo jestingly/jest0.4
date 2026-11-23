@@ -19449,24 +19449,33 @@ console.log( 'jestAlert: js/apps/jest/components/ui/JestModal.js loaded' );
 // Extends: JestElement
 class JestModal extends JestElement {
 	// Object properties
-	opened          = false;            // [boolean] Whether modal is open or closed
-	titleText		= '';				// [string] title of modal
-	bodyText		= '';				// [string] body content
-	noticeText		= '';				// [string] modal notice message
-	inputs			= {};				// [object] map of name -> JestInputText
-	box				= null;				// DOM [object] of the inner box
-	payload			= null;				// [any] contextual data passed to modal when opened.
+	opened       = false;          // [boolean] Whether modal is open or closed
+	titleText    = '';             // [string] title of modal
+	bodyText     = '';             // [string] body content
+	noticeText   = '';             // [string] modal notice message
+	inputs       = {};             // [object] map of name -> JestInputText
+	box          = null;           // DOM [object] of the inner box
+	payload      = null;           // [any] contextual data passed to modal when opened.
 	// Button storage & sequencing
-	buttons			= {};				// [object<string,JestButton>] keyed by our own keys (e.g., 'ok','cancel')
-	buttonSeq		= 0;				// [int] monotonically increasing counter to build unique button ids
+	buttons      = {};             // [object<string,JestButton>] keyed by our own keys (e.g., 'ok','cancel')
+	buttonSeq    = 0;              // [int] monotonically increasing counter to build unique button ids
+	// Media propert(ies)
+	sfx          = null;           // [JestSoundPresetLibrary] SFX library container instance.
 
 	//--------------------------------
 	// Constructor
 	//--------------------------------
 	// Construct the [object].
-	// * client		- [object] parent controller
+	// * client - [object] parent controller
 	constructor( client ) {
 		super( client ); // call parent constructor
+		// Copy of standard sound assignments.
+		this.sfx = new JestSoundPresetLibrary( client );
+		// Create the presets once, then reuse or change them.
+		this.sfx.add( 'open', new JestSoundPreset('jest_prompt','mp3',1.1) );
+		this.sfx.add( 'close', new JestSoundPreset('jest_close0','mp3',1.1) );
+		this.sfx.add( 'btnDown', new JestSoundPreset('jest_mouse_down','mp3',1.1) );
+		this.sfx.add( 'btnUp', new JestSoundPreset('jest_mouse_up','mp3',1.1) );
 	}
 
 	// Destroy the dialog.
@@ -19479,12 +19488,17 @@ class JestModal extends JestElement {
 	// Build Component
 	//--------------------------------
 	// Build modal layout.
-	// * name		- [string] unique identifier
-	// * classes	- [array] extra CSS class names
+	// * name     - [string] unique identifier
+	// * classes  - [array] extra CSS class names
 	build( name='modal', classes=[] ) {
 		// Construct the parent panel.
 		if ( classes===null ) classes = [];
 		super.build( 'div', name, ['jest-modal'].mergeUnique(classes) );
+
+		//--------------------------------
+		// Build DOM Element
+		//--------------------------------
+		// Build the modal DOM element panel.
 		this.panel.addElements([
 			{
 				name     : 'overlay',
@@ -19504,13 +19518,24 @@ class JestModal extends JestElement {
 					]
 			}
 		]);
+
 		// Keep inner box reference.
 		this.box = this.panel.refs.box;
+
+		//--------------------------------
+		// Configure Default State
+		//--------------------------------
+		// Auto-hide the modal for on-demand basis.
+		this.hide(); // hidden
+		this.opened = false; // not open
+
+		//--------------------------------
+		// Configure Input/Output
+		//--------------------------------
 		// Close on overlay click
 		this.panel.refs.overlay.register( 'click', 'close', ()=>this.close(), 'dom' );
-		// Auto-hide the modal for on-demand basis.
-		this.hide();         // hidden
-		this.opened = false; // not open
+		// Finally, configure the keyboard event(s).
+		this.configureKeyboard();
 	}
 
 	//--------------------------------
@@ -19853,11 +19878,9 @@ class JestModal extends JestElement {
 		if ( typeof callback==='function' )
 			button.register( 'click', `btn-${key}`, callback );
 
-		// Optional SFX (leave exactly as you had it)
-		button.register( 'mousedown', 'sfx',
-			() => this.client.soundboard.playSound( 'jest_mouse_down', 'mp3', 1.1 ) );
-		//button.register( 'mouseup', 'sfx',
-			//() => this.client.soundboard.playSound( 'jest_mouse_up', 'mp3', 1.1 ) );
+		// Optional SFX.
+		button.register( 'mousedown', 'sfx', ()=>this.sfx.play('btnDown') );
+		//button.register( 'mouseup', 'sfx', ()=>this.sfx.play('btnUp') );
 
 		// Append into footer container
 		this.box.refs.buttons.addPanel( key, button.panel );
@@ -19925,12 +19948,13 @@ class JestModal extends JestElement {
 	// * data - [any] optional override payload (if different from open)
 	close( data=null ) {
 		// Prevent dialog from double-closing.
-		if ( !this.opened ) return; // abort
+		if ( !this.opened ) return;  // abort
 		// Hide the panel.
 		this.hide(); // remove from visibility
 		// Emit close event.
+		this.sfx.play( 'close' );    // play close sound effect
 		this.emit( 'close', null, this.payload, data ); // emit close event
-		this.payload = null; // clear context
+		this.payload = null;         // clear context
 	}
 
 	// Hide the dialog.
@@ -19958,7 +19982,7 @@ class JestModal extends JestElement {
 		// Open the panel.
 		this.show(); // show the dialog
 		// Play a "prompt" sound-effect for affirmation.
-		this.client.soundboard.playSound( 'jest_prompt', 'mp3', 1.1 );
+		this.sfx.play( 'open' );
 		// Emit open event.
 		this.emit( 'open' );
 	}
@@ -19975,6 +19999,85 @@ class JestModal extends JestElement {
 	// Determine if dialog is currently open or closed.
 	// REUTRNS: [boolean] `true` if dialog open, else `false`.
 	isOpened() { return this.opened; }
+
+	//--------------------------------
+	// Configure Modal Keyboard
+	//--------------------------------
+	// Install dialog semantics, local keyboard handling, and input isolation.
+	configureKeyboard() {
+		// Focus the box when opening, even before a candidate is available.
+		this.box.addAttributes({
+			tabindex     : -1,
+			role         : 'dialog',
+			'aria-modal' : 'true',
+			'aria-label' : this.titleText
+			});
+		this.panel.register( 'keydown', 'modelKeyboard', e=>this.onModalKeyDown(e), 'window' );
+
+		// Prevent modal pointer and key events from reaching editor listeners.
+		const events = [ 'keyup', 'keypress', 'pointerdown', 'mousedown', 'mouseup', 'click' ];
+		for ( const name of events )
+			this.panel.register( name, 'modalIsolation', e=>e.stopPropagation(), 'dom' );
+	}
+
+	//--------------------------------
+	// Handle Dialog Keyboard
+	//--------------------------------
+	// Close, browse, or contain focus within the active dialog.
+	// * event - [KeyboardEvent] Native keyboard event.
+	onModalKeyDown( event ) {
+		// Keep ordinary text and navigation keys away from editor shortcuts.
+		event.stopPropagation();
+
+		// Escape follows the modal's normal close event and cleanup path.
+		if ( event.key==='Escape' ) {
+			event.preventDefault();
+			this.close();
+			return; // handled
+		}
+
+		// Emit a keyboard key press event.
+		this.emit( 'keydown', null, this, event );
+
+		// Other keys retain their native button behavior.
+		if ( event.key==='Tab' )
+			this.containFocus( event );
+	}
+
+	//--------------------------------
+	// Contain Dialog Focus
+	//--------------------------------
+	// Wrap Tab and Shift+Tab between the dialog's available controls.
+	// * event - [KeyboardEvent] Tab key event.
+	containFocus( event ) {
+		// Exclude disabled and hidden controls from the focus sequence.
+		const box      = this.box.el;
+		const selector = 'button,input,select,textarea,a[href],[tabindex]';
+		const nodes    =
+			[...box.querySelectorAll(selector)].filter(
+				element => element.tabIndex>=0 && !element.disabled && element.getClientRects().length
+				);
+		const first    = nodes[0];
+		const last     = nodes[nodes.length-1];
+		const active   = document.activeElement;
+
+		// An empty dialog keeps focus on its own box.
+		if ( !first ) {
+			event.preventDefault();
+			box.focus();
+			return; // handled
+		}
+
+		// Focus begins on the dialog box, then wraps at either end.
+		if ( event.shiftKey && [first,box].includes(active) ) {
+			event.preventDefault();
+			last.focus();
+		}
+		else if ( !event.shiftKey && [last,box].includes(active) ) {
+			event.preventDefault();
+			first.focus();
+		}
+	}
 }
 
 /* --- BEGIN js/apps/jest/components/ui/JestLiveOptionCache.js --- */
@@ -27826,6 +27929,153 @@ class JestJani extends JestSavable {
 	}
 }
 
+/* --- BEGIN js/apps/jest/components/sound/JestSoundPreset.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/components/sound/JestSoundPreset.js loaded' );
+
+//-------------------------
+// JestSoundPreset Class
+//-------------------------
+// Stores the filename and playback volume for a sound.
+class JestSoundPreset {
+	// Sound properties
+	stem      = '';     // [string] Filename without its extension.
+	extension = 'wav';  // [string] Filename extension without the dot.
+	volume    = 0.2;    // [float] Playback volume (20%).
+
+	//---------------------------------
+	// Constructor
+	//---------------------------------
+	// Create a sound preset that can be passed to JestSoundboard.
+	// * stem      - [string] Sound filename stem (e.g. 'footstep').
+	// * extension - [string] Sound extension (e.g. 'wav', 'mp3').
+	// * volume    - [float] Playback volume.
+	constructor( stem, extension='wav', volume=0.2 ) {
+		// Store the requested sound and its playback volume.
+		this.stem      = stem;
+		this.extension = extension;
+		this.volume    = volume;
+	}
+
+	//-------------------------
+	// Modify Preset
+	//-------------------------
+	// Change the filename stem and return this preset for chaining.
+	// * stem - [string] Sound filename stem.
+	setStem( stem ) {
+		this.stem = stem; // store filename stem
+		return this;      // allow chained changes
+	}
+
+	// Change the filename extension and return this preset for chaining.
+	// * extension - [string] Extension without the dot.
+	setExtension( extension ) {
+		this.extension = extension; // store extension
+		return this;                // allow chained changes
+	}
+
+	// Change the playback volume and return this preset for chaining.
+	// * volume - [float] Playback volume.
+	setVolume( volume ) {
+		this.volume = volume; // store playback volume
+		return this;          // allow chained changes
+	}
+}
+
+/* --- BEGIN js/apps/jest/components/sound/JestSoundPresetLibrary.js --- */
+//-------------------------------------------------------
+// JEST ® All Rights Reserved
+// Antago (God of Gravity), author of Graal2001 & Destiny
+// Copyright ® 1999-2026
+//-------------------------------------------------------
+console.log( 'jestAlert: js/apps/jest/components/sound/JestSoundPresetLibrary.js loaded' );
+
+//-------------------------
+// JestSoundPresetLibrary Class
+//-------------------------
+// Stores named sound presets for one component or interface.
+class JestSoundPresetLibrary extends JestSavable {
+	// Library properties
+	soundboard = null;       // [JestSoundboard] Soundboard used for playback.
+	presets    = new Map();  // [Map] Named JestSoundPreset objects.
+
+	//---------------------------------
+	// Constructor
+	//---------------------------------
+	// Create a library and install its initial sound presets.
+	// * client     - [object] Application client creating the object.
+	// * soundboard - [JestSoundboard] Soundboard used for playback.
+	// * presets    - [object] Initial presets keyed by event name.
+	constructor( client, presets={} ) {
+		// Call the parent object constructor
+		super( client, name ); // construct the parent
+
+		// Add each initial preset as an independent copy.
+		for ( const [name,preset] of Object.entries(presets) )
+			this.add( name, preset );
+	}
+
+	//-------------------------
+	// Preset Handling
+	//-------------------------
+	// Add or replace a named sound preset.
+	// RETURNS: [JestSoundPresetLibrary] This library for chaining.
+	// * name   - [string] Event name (e.g. 'btnRelease').
+	// * preset - [JestSoundPreset] Sound assigned to the event.
+	add( name, preset ) {
+		// Require a sound preset so playback receives the expected properties.
+		if ( !(preset instanceof JestSoundPreset) )
+			throw new TypeError( `Sound preset '${name}' must be a JestSoundPreset.` );
+
+		// Copy the preset so changes in another component cannot affect this one.
+		const copy =
+			new JestSoundPreset(
+				preset.stem,
+				preset.extension,
+				preset.volume
+				);
+
+		// Add the preset or replace the existing event sound.
+		this.presets.set( name, copy );
+		return this; // allow chained additions
+	}
+
+	// Get the live preset so its properties can be modified directly.
+	// RETURNS: [JestSoundPreset|null] Preset if found, otherwise null.
+	// * name - [string] Event name.
+	get( name ) {
+		return this.presets.get(name) ?? null;
+	}
+
+	// Remove a sound assignment, leaving that event silent.
+	// RETURNS: [boolean] Whether an assignment was removed.
+	// * name - [string] Event name.
+	remove( name ) {
+		return this.presets.delete( name );
+	}
+
+	//-------------------------
+	// Playback
+	//-------------------------
+	// Play the sound assigned to an event.
+	// RETURNS: [boolean] Whether the event had a sound assignment.
+	// * name         - [string] Event name.
+	// * simultaneous - [bool] Whether another instance may play.
+	play( name, simultaneous=true ) {
+		// A missing assignment means this event has no sound.
+		const preset = this.get( name );
+		if ( !preset ) return false;
+
+		// Let the soundboard handle caching, mute, and master volume.
+		this.client.soundboard.play( preset, simultaneous );
+		return true;
+	}
+}
+
 /* --- BEGIN js/apps/jest/components/sound/JestSoundboard.js --- */
 //-------------------------------------------------------
 // JEST ® All Rights Reserved
@@ -27937,14 +28187,26 @@ class JestSoundboard extends JestSavable {
 	}
 
 	//-------------------------
+	// Play a Sound Preset
+	//-------------------------
+	// Plays a preset using the soundboard's existing cache, mute, and volume handling.
+	// RETURNS: [void].
+	// * preset       - [JestSoundPreset] Sound and playback settings.
+	// * simultaneous - [bool] Whether another audio instance may play.
+	play( preset, simultaneous=true ) {
+		// Read the preset and pass its properties to the existing playback method.
+		this.playSound( preset.stem, preset.extension, preset.volume, simultaneous );
+	}
+
+	//-------------------------
 	// Play a Sound
 	//-------------------------
 	// Plays an sound file from memory.
 	// RETURNS: [void].
-	// * filename		- [string] Sound filename stem (e.g. 'footstep').
-	// * type			- [string] Value of type (e.g. 'wav', 'mp3').
-	// * volume			- [float] Playback volume (default: `defaultVolume`).
-	// * simultaneous	- [bool] If true, plays a separate instance instead of reusing the cached instance.
+	// * filename     - [string] Sound filename stem (e.g. 'footstep').
+	// * type         - [string] Value of type (e.g. 'wav', 'mp3').
+	// * volume       - [float] Playback volume (default: `defaultVolume`).
+	// * simultaneous - [bool] If true, plays a separate instance instead of reusing the cached instance.
 	playSound( filename, type='wav', volume=this.defaultVolume, simultaneous=true ) {
 		//-------------------------
 		// Check For Mute
@@ -27972,7 +28234,7 @@ class JestSoundboard extends JestSavable {
 	// pauseSound
 	//-------------------------
 	// Pauses a currently playing sound file.
-	// * key		- [string] Sound key.
+	// * key - [string] Sound key.
 	// RETURNS: [void].
 	//pauseSound( key ) {
 		/*const sound = this.soundCache[key];
@@ -40145,7 +40407,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 
 			// Create the zoom magnifier slider.
 			const minZoom   = 1,
-				  maxZoom   = 1000;
+				  maxZoom   = 200;
 			const inputZoom =
 				new JestInputRange(
 					client, 'zoom', null,
@@ -40447,7 +40709,7 @@ class JestToolOverworld extends JestTool {
 		// Use the existing JestButton click handling and native focus behavior.
 		this.launcher =
 			this.makeButton(
-				this.panel, 'open', 'Graph',
+				this.panel, 'open', 'Matrix',
 				()=>this.open(), ['ow-launcher','toolbar']
 				);
 	}
@@ -40459,8 +40721,8 @@ class JestToolOverworld extends JestTool {
 	buildDialogs() {
 		// Main overview: cancel discards the draft, apply commits all slots.
 		this.client.addModal( 'overworldNeighbors', {
-			title   : 'Overworld neighbors',
-			text    : 'Choose an edge or corner.',
+			title   : 'Overworld',
+			text    : 'Choose an edge or corner level neighbor.',
 			buttons : {
 				cancel : {
 					label   : 'Cancel',
@@ -40486,7 +40748,7 @@ class JestToolOverworld extends JestTool {
 
 		// Candidate picker: clear is an explicit choice, separate from Back.
 		this.client.addModal( 'overworldNeighborPicker', {
-			title   : 'Choose level',
+			title   : 'Choose Level',
 			text    : 'Browse the other open level tabs.',
 			buttons : {
 				cancel : {
@@ -40593,7 +40855,7 @@ class JestToolOverworld extends JestTool {
 		this.previousButton =
 			this.makeButton(
 				this.reel, 'previous', '‹',
-				() => this.step(-1), 'ow-arrow'
+				()=>this.step(-1), 'ow-arrow'
 				);
 		this.previousButton.clicker.addAttribute( 'aria-label', 'Previous Level' );
 
@@ -40625,16 +40887,11 @@ class JestToolOverworld extends JestTool {
 	// Route modal dismissal through the same cleanup used by tool methods.
 	registerDialogEvents() {
 		// Overlay clicks and Escape emit the same close event as Cancel.
-		this.modal.register(
-			'close', 'overworldCleanup', ()=>this.reset()
-			);
-		this.picker.register(
-			'close', 'overworldPickerCleanup', ()=>this.resetPicker()
-			);
-
-		// Keep editor shortcuts outside the dialog's local keyboard handling.
-		this.configureKeyboard( this.modal );
-		this.configureKeyboard( this.picker );
+		this.modal.register( 'close', 'overworldCleanup', ()=>this.reset() );
+		this.picker.register( 'close', 'overworldPickerCleanup', ()=>this.resetPicker() );
+		// Register the modal & picker special keystroke event(s).
+		this.modal.register( 'keydown', 'overworldKeyboard', (m,e)=>this.onModalKeyDown(m,e) );
+		this.picker.register( 'keydown', 'overworldKeyboard', (m,e)=>this.onModalKeyDown(m,e) );
 	}
 
 	//--------------------------------
@@ -40681,92 +40938,17 @@ class JestToolOverworld extends JestTool {
 	}
 
 	//--------------------------------
-	// Configure Modal Keyboard
-	//--------------------------------
-	// Install dialog semantics, local keyboard handling, and input isolation.
-	// * modal - [JestModal] Dialog to configure.
-	configureKeyboard( modal ) {
-		// Focus the box when opening, even before a candidate is available.
-		modal.box.addAttributes({
-			tabindex     : -1,
-			role         : 'dialog',
-			'aria-modal' : 'true',
-			'aria-label' : modal.titleText
-			});
-		modal.panel.register(
-			'keydown', 'overworldKeyboard',
-			event=>this.onModalKeyDown(modal,event), 'dom'
-			);
-
-		// Prevent modal pointer and key events from reaching editor listeners.
-		const events = [ 'keyup', 'keypress', 'pointerdown', 'mousedown', 'mouseup', 'click' ];
-		for ( const name of events )
-			modal.panel.register(
-				name, 'overworldIsolation', event=>event.stopPropagation(), 'dom'
-				);
-	}
-
-	//--------------------------------
 	// Handle Dialog Keyboard
 	//--------------------------------
 	// Close, browse, or contain focus within the active dialog.
-	// * modal - [JestModal] Dialog that received the event.
+	// * modal - [JestModal] Current dialog.
 	// * event - [KeyboardEvent] Native keyboard event.
 	onModalKeyDown( modal, event ) {
-		// Keep ordinary text and navigation keys away from editor shortcuts.
-		event.stopPropagation();
-
-		// Escape follows the modal's normal close event and cleanup path.
-		if ( event.key==='Escape' ) {
-			event.preventDefault();
-			modal.close();
-			return; // handled
-		}
-
 		// Arrow keys browse only while the candidate picker is active.
 		if ( modal===this.picker && ['ArrowLeft','ArrowRight'].includes(event.key) ) {
 			event.preventDefault();
 			this.step( event.key==='ArrowLeft' ? -1 : 1 );
 			return; // handled
-		}
-
-		// Other keys retain their native button behavior.
-		if ( event.key==='Tab' )
-			this.containFocus( modal, event );
-	}
-
-	//--------------------------------
-	// Contain Dialog Focus
-	//--------------------------------
-	// Wrap Tab and Shift+Tab between the dialog's available controls.
-	// * modal - [JestModal] Current dialog.
-	// * event - [KeyboardEvent] Tab key event.
-	containFocus( modal, event ) {
-		// Exclude disabled and hidden controls from the focus sequence.
-		const box      = modal.box.el;
-		const selector = 'button,input,select,textarea,a[href],[tabindex]';
-		const nodes    = [...box.querySelectorAll(selector)].filter(
-			element => element.tabIndex>=0 && !element.disabled && element.getClientRects().length
-			);
-		const first    = nodes[0];
-		const last     = nodes[nodes.length-1];
-		const active   = document.activeElement;
-
-		// An empty dialog keeps focus on its own box.
-		if ( !first ) {
-			event.preventDefault();
-			box.focus();
-			return; // handled
-		}
-
-		// Focus begins on the dialog box, then wraps at either end.
-		if ( event.shiftKey && [first,box].includes(active) ) {
-			event.preventDefault();
-			last.focus();
-		}
-		else if ( !event.shiftKey && [last,box].includes(active) ) {
-			event.preventDefault();
-			first.focus();
 		}
 	}
 
@@ -41079,13 +41261,6 @@ class JestToolOverworld extends JestTool {
 		const changed = label.el.textContent!==text;
 		label.setText( text );
 		label.addAttribute( 'title', text );
-
-		// Fade the new filename in so browsing feels continuous.
-		if ( changed && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches )
-			label.el.animate?.(
-				[ { opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'none' } ],
-				{ duration:380, easing:'cubic-bezier(0.22,1,0.36,1)' }
-				);
 		return label; // label panel
 	}
 
@@ -41108,7 +41283,7 @@ class JestToolOverworld extends JestTool {
 		this.wheelTime   = 0;
 
 		// Keep assistive labels synchronized with the current compass direction.
-		const title = `Choose ${direction} level`;
+		const title = `Choose ${direction} Level Neighbor`;
 		this.card.el.dataset.dir = 'none';
 		this.picker.setTitle( title );
 		this.picker.box.addAttribute( 'aria-label', title );
@@ -41369,8 +41544,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/overworld/ov
 				  maxPadAlpha = 1;
 			const inputPaddingAlpha =
 				new JestInputRange(
-					client, 'Transparency', 1,
-					client.settings.tiler.editor.paddingAlpha, 'Transparency'
+					client, 'Alpha', 1,
+					client.settings.tiler.editor.paddingAlpha, 'Alpha'
 					);
 			inputPaddingAlpha.setMin( minPadAlpha );
 			inputPaddingAlpha.setMax( maxPadAlpha );
@@ -41889,24 +42064,24 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 			//--------------------------------
 			// Listen to undo an action inside an open level file's governor.
 			// RETURNS: [boolean].
-			// * dir		- [string] Value of whether "undo" or "redo".
-			// * skey		- [string] Level editor view unique system key.
-			// * snapshot	- [object] Data from undo/redo event.
+			// * dir       - [string] Value of whether "undo" or "redo".
+			// * skey      - [string] Level editor view unique system key.
+			// * snapshot  - [object] Data from undo/redo event.
 			proto.fileReverted = function( dir, skey, snapshot ) {
 				//--------------------------------
 				// Gatekeep & Access Level Propert(ies)
 				//--------------------------------
 				// Validate an active view is open.
-				const easel		= this.easels?.files;		// get easel for finding view
-				const view		= easel?.getView( skey );	// file viewer
-				const file		= view?.file?.context;		// active JestLevel instance
+				const easel = this.easels?.files;       // get easel for finding view
+				const view  = easel?.getView( skey );   // file viewer
+				const file  = view?.file?.context;      // active JestLevel instance
 				if ( !snapshot || !view || !file ) return false; // can't access file view
 
 				//--------------------------------
 				// Resolve Target Level Layer
 				//--------------------------------
 				// Resolve target level layer from history.
-				const level		= view.file.context;		// active JestLevel instance
+				const level = view.file.context;        // active JestLevel instance
 
 				//--------------------------------
 				// Revert Level Layer History
@@ -41946,7 +42121,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 						case 'layerAdd': {
 							// Undo creation by removing the created layer.
 							if ( dir==='undo' )
-								success = level.removeLayer( snapshot.after.id );
+								success  = level.removeLayer( snapshot.after.id );
 							// Redo creation using its original ID and data.
 							else success = !!level.restoreLayer( snapshot.after );
 							break;
@@ -41958,7 +42133,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 						case 'layerDelete': {
 							// Undo deletion by rebuilding the original layer.
 							if ( dir==='undo' )
-								success = !!level.restoreLayer( snapshot.before );
+								success  = !!level.restoreLayer( snapshot.before );
 							// Redo deletion by removing that same layer.
 							else success = level.removeLayer( snapshot.before.id );
 							break;
@@ -42073,8 +42248,15 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/methods/editor.plu
 					return true; // success
 				}
 
+				// Hook history belongs to the level, not a tile layer.
+				if ( snapshot.type==='hook' ) {
+					this.emit( 'revert', null, dir, snapshot );
+					this.markChanged( view );
+					return true;
+				}
+
 				// Check for layer using layer id from history snapshot.
-				const layer     = level.getLayer( snapshot.layerId ); // get layer
+				const layer = level.getLayer( snapshot.layerId ); // get layer
 				if ( !layer ) return false;
 
 				//--------------------------------
@@ -56042,9 +56224,9 @@ class JestToolEntities extends JestTool {
 				});
 		}
 		// Clear drag state.
-		this.moved		= false;
-		this.dragStartX	= null;
-		this.dragStartY	= null;
+		this.moved      = false;
+		this.dragStartX = null;
+		this.dragStartY = null;
 		this.updateCursor( e ); // update cursor
 	}
 
@@ -56467,7 +56649,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					const log = {
 						action : 'hookMove',
 						type   : 'hook',
-						id	 : object.data.id,
+						id	   : object.data.id,
 						before,
 						after
 						};
@@ -56848,8 +57030,8 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					// Validate Input Value(s)
 					//--------------------------------
 					// Convert coordinates to numbers.
-					const x		= Number( rawX );
-					const y		= Number( rawY );
+					const x = Number( rawX );
+					const y = Number( rawY );
 					if ( !rawX || !rawY || !Number.isFinite(x) || !Number.isFinite(y) ) {
 						alert( 'Enter valid numeric X and Y coordinates.' );
 						return false;
@@ -56862,12 +57044,12 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					// Begin Data For New Curator Object
 					//--------------------------------
 					// Store data for curator hook object.
-					const data		= {};		// new curator [object] data
-					data.path		= path;		// capture hook image path
-					data.x			= x;		// capture hook X coordinate
-					data.y			= y;		// capture hook Y coordinate
-					data.script		= script;	// capture hook script
-					data.readonly	= false;	// can be edited
+					const data    = {};     // new curator [object] data
+					data.path     = path;   // capture hook image path
+					data.x        = x;      // capture hook X coordinate
+					data.y        = y;      // capture hook Y coordinate
+					data.script   = script; // capture hook script
+					data.readonly = false;  // can be edited
 
 					//---------------------------------
 					// Create Curator Object
@@ -56900,17 +57082,17 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 					//---------------------------------
 					// Log undo/redo action.
 					const log	= {
-						action  : `hookAdd`,
-						type	: 'hook',
-						id	  : object.data.id,
-						object  : { ...object.data, image: null }
+						action : `hookAdd`,
+						type   : 'hook',
+						id	   : object.data.id,
+						object : { ...object.data, image: null }
 						};
 					// Label the action for history panel.
 					s.levelView.governor.enqueue(
 						'edit', { history: `Add hook.` }
 						);
 					// Log inside governor.
-					const snapshot	= s.levelView.governor.log( 'edit', log );
+					const snapshot = s.levelView.governor.log( 'edit', log );
 					s.file.jot( 'changed', true );
 
 					//--------------------------------
@@ -57918,7 +58100,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 			// Copy the selected entity's editable properties.
 			// Excludes its unique ID and runtime image object.
 			// RETURNS: [boolean].
-			// * tool		- [JestToolEntities] emitting the event.
+			// * tool  - [JestToolEntities] emitting the event.
 			proto.copySelectedHook = function( tool ) {
 				// Gatekeep with file status check.
 				let s; if ( !(s=this.getFileStatus(tool,true)) ) return false; // abort
@@ -57927,21 +58109,21 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/tools/entities/ent
 				// Access Selected Hook Item
 				//--------------------------------
 				// Retrieve the selected hook using the active tool.
-				const object	= this.getSelectedHook( tool );
+				const object = this.getSelectedHook( tool );
 				if ( !object ) return false;
 				// Retrieve entity properties.
-				const data		= object.data;
+				const data   = object.data;
 
 				//--------------------------------
 				// Log Essential Data For Clipboard
 				//--------------------------------
 				// Create log of entity data.
-				const log		= {
+				const log    = {
 					action : "levelHook",
 					path   : data.path   ?? '',
 					script : data.script ?? '',
-					x: Number(data.x) || 0,
-					y: Number(data.y) || 0
+					x      : Number(data.x) || 0,
+					y      : Number(data.y) || 0
 					};
 
 				//--------------------------------

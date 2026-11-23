@@ -48,7 +48,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/ui/statusbar.plugi
 				name       : 'copyright',
 				tag        : 'div',
 				classes    : [ 'jest-copyright' ],
-				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.43</strong>. All rights reserved.'
+				text       : 'Copyright <b>©</b> 2026 <strong>JEST® v0.44</strong>. All rights reserved.'
 				});
 
 			//---------------------------------

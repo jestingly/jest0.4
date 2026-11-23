@@ -137,6 +137,8 @@
 <script src="js/apps/jest/components/tileset/JestTileset.js"></script>
 <script src="js/apps/jest/components/animation/JestFantascope.js"></script>
 <script src="js/apps/jest/components/animation/JestJani.js"></script>
+<script src="js/apps/jest/components/sound/JestSoundPreset.js"></script>
+<script src="js/apps/jest/components/sound/JestSoundPresetLibrary.js"></script>
 <script src="js/apps/jest/components/sound/JestSoundboard.js"></script>
 <script src="js/apps/jest/components/play/JestHuman.js"></script>
 <script src="js/apps/jest/components/play/JestPlayer.js"></script>

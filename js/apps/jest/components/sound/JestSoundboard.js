@@ -108,14 +108,26 @@ class JestSoundboard extends JestSavable {
 	}
 
 	//-------------------------
+	// Play a Sound Preset
+	//-------------------------
+	// Plays a preset using the soundboard's existing cache, mute, and volume handling.
+	// RETURNS: [void].
+	// * preset       - [JestSoundPreset] Sound and playback settings.
+	// * simultaneous - [bool] Whether another audio instance may play.
+	play( preset, simultaneous=true ) {
+		// Read the preset and pass its properties to the existing playback method.
+		this.playSound( preset.stem, preset.extension, preset.volume, simultaneous );
+	}
+
+	//-------------------------
 	// Play a Sound
 	//-------------------------
 	// Plays an sound file from memory.
 	// RETURNS: [void].
-	// * filename		- [string] Sound filename stem (e.g. 'footstep').
-	// * type			- [string] Value of type (e.g. 'wav', 'mp3').
-	// * volume			- [float] Playback volume (default: `defaultVolume`).
-	// * simultaneous	- [bool] If true, plays a separate instance instead of reusing the cached instance.
+	// * filename     - [string] Sound filename stem (e.g. 'footstep').
+	// * type         - [string] Value of type (e.g. 'wav', 'mp3').
+	// * volume       - [float] Playback volume (default: `defaultVolume`).
+	// * simultaneous - [bool] If true, plays a separate instance instead of reusing the cached instance.
 	playSound( filename, type='wav', volume=this.defaultVolume, simultaneous=true ) {
 		//-------------------------
 		// Check For Mute
@@ -143,7 +155,7 @@ class JestSoundboard extends JestSavable {
 	// pauseSound
 	//-------------------------
 	// Pauses a currently playing sound file.
-	// * key		- [string] Sound key.
+	// * key - [string] Sound key.
 	// RETURNS: [void].
 	//pauseSound( key ) {
 		/*const sound = this.soundCache[key];

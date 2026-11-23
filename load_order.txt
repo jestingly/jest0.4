@@ -211,6 +211,8 @@ js/apps/jest/components/tileset/JestTiledefs.js
 js/apps/jest/components/tileset/JestTileset.js
 js/apps/jest/components/animation/JestFantascope.js
 js/apps/jest/components/animation/JestJani.js
+js/apps/jest/components/sound/JestSoundPreset.js
+js/apps/jest/components/sound/JestSoundPresetLibrary.js
 js/apps/jest/components/sound/JestSoundboard.js
 js/apps/jest/components/play/JestHuman.js
 js/apps/jest/components/play/JestPlayer.js

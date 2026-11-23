@@ -286,7 +286,7 @@ console.log( 'jestAlert: js/apps/jest/clients/plugins/creator/settings/tiler/edi
 
 			// Create the zoom magnifier slider.
 			const minZoom   = 1,
-				  maxZoom   = 1000;
+				  maxZoom   = 200;
 			const inputZoom =
 				new JestInputRange(
 					client, 'zoom', null,
